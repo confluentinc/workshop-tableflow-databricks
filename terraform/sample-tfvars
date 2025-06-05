@@ -1,0 +1,14 @@
+# PROVIDER
+email                      = ""
+confluent_cloud_api_key    = ""
+confluent_cloud_api_secret = ""
+
+# SHADOW TRAFFIC
+shadowtraffic_license_id           = ""
+shadowtraffic_license_edition      = ""
+shadowtraffic_license_email        = ""
+shadowtraffic_license_expiration   = ""
+shadowtraffic_license_organization = ""
+shadowtraffic_license_signature    = ""
+
+shadowtraffic_number_of_tasks = 0

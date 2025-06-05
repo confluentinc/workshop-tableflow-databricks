@@ -1,0 +1,832 @@
+{
+    "generators": [
+        {
+            "connection": "oracle",
+            "name": "customer_generator",
+            "table": "sample.customer",
+            "localConfigs": {
+                "maxEvents": 19998
+            },
+            "row": {
+                "CUSTOMER_ID": {
+                    "_gen": "sequentialString",
+                    "startingFrom": 200000303,
+                    "expr": "C~d"
+                },
+                "EMAIL": {
+                    "_gen": "string",
+                    "expr": "#{Internet.emailAddress}"
+                },
+                "FIRST_NAME": {
+                    "_gen": "string",
+                    "expr": "#{Name.firstName}"
+                },
+                "LAST_NAME": {
+                    "_gen": "string",
+                    "expr": "#{Name.lastName}"
+                },
+                "BIRTH_DATE": {
+                    "_gen": "string",
+                    "expr": "#{Date.birthday 'yyyy-MM-dd'}"
+                }
+            }
+        },
+        {
+            "connection": "oracle",
+            "name": "hotel_generator",
+            "table": "sample.hotel",
+            "localConfigs": {
+                "maxEvents": 498
+            },
+            "vars": {
+                "hotel_type": {
+                    "_gen": "oneOf",
+                    "choices": [
+                        "Hotel",
+                        "Resort",
+                        "Tower",
+                        "Luxury Tower",
+                        "Luxury Hotel",
+                        "Luxury Inn",
+                        "Boutique Hotel",
+                        "Resort Hotel",
+                        "Lodge",
+                        "Luxury Lodge",
+                        "Inn",
+                        "Luxury Inn",
+                        "Extended Stay",
+                        "Suites",
+                        "Luxury Suites",
+                        "Spa",
+                        "Luxury Spa"
+                    ]
+                },
+                "location": {
+                    "_gen": "oneOf",
+                    "choices": [
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "Bengaluru",
+                                    "Mumbai",
+                                    "Delhi",
+                                    "Chennai",
+                                    "Kolkata",
+                                    "Hyderabad",
+                                    "Surat",
+                                    "Pune",
+                                    "Jaipur",
+                                    "Ahmedabad"
+                                ]
+                            },
+                            "country": "India"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "New York",
+                                    "Los Angeles",
+                                    "Chicago",
+                                    "Houston",
+                                    "Phoenix",
+                                    "Seattle",
+                                    "Orlando",
+                                    "Miami",
+                                    "Denver",
+                                    "San Francisco"
+                                ]
+                            },
+                            "country": "United States"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "London",
+                                    "Manchester",
+                                    "Birmingham",
+                                    "Liverpool",
+                                    "Leeds",
+                                    "Newcastle",
+                                    "Bristol",
+                                    "Sheffield",
+                                    "Nottingham",
+                                    "Cardiff"
+                                ]
+                            },
+                            "country": "England"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "Paris",
+                                    "Marseille",
+                                    "Lyon",
+                                    "Toulouse",
+                                    "Nice",
+                                    "Nantes",
+                                    "Strasbourg",
+                                    "Montpellier",
+                                    "Bordeaux",
+                                    "Lille"
+                                ]
+                            },
+                            "country": "France"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "Berlin",
+                                    "Hamburg",
+                                    "Munich",
+                                    "Cologne",
+                                    "Frankfurt",
+                                    "Stuttgart",
+                                    "Dusseldorf",
+                                    "Dortmund",
+                                    "Essen",
+                                    "Leipzig"
+                                ]
+                            },
+                            "country": "Germany"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "Rome",
+                                    "Milan",
+                                    "Naples",
+                                    "Turin",
+                                    "Palermo",
+                                    "Genoa",
+                                    "Bologna",
+                                    "Florence",
+                                    "Bari",
+                                    "Catania"
+                                ]
+                            },
+                            "country": "Italy"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "Tokyo",
+                                    "Yokohama",
+                                    "Osaka",
+                                    "Nagoya",
+                                    "Sapporo",
+                                    "Fukuoka",
+                                    "Kobe",
+                                    "Kyoto",
+                                    "Kawasaki",
+                                    "Saitama"
+                                ]
+                            },
+                            "country": "Japan"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "Sydney",
+                                    "Melbourne",
+                                    "Brisbane",
+                                    "Perth",
+                                    "Adelaide",
+                                    "Gold Coast",
+                                    "Newcastle",
+                                    "Canberra",
+                                    "Wollongong",
+                                    "Sunshine Coast"
+                                ]
+                            },
+                            "country": "Australia"
+                        },
+                        {
+                            "city": {
+                                "_gen": "oneOf",
+                                "choices": [
+                                    "Cairo",
+                                    "Alexandria",
+                                    "Giza",
+                                    "Shubra El-Kheima",
+                                    "Port Said",
+                                    "Suez",
+                                    "Luxor",
+                                    "Mansoura",
+                                    "El-Mahalla El-Kubra",
+                                    "Tanta"
+                                ]
+                            },
+                            "country": "Egypt"
+                        }
+                    ]
+                },
+                "city": {
+                    "_gen": "var",
+                    "var": "location",
+                    "path": [
+                        "city"
+                    ]
+                }
+            },
+            "row": {
+                "HOTEL_ID": {
+                    "_gen": "sequentialString",
+                    "startingFrom": 10000305,
+                    "expr": "H~d"
+                },
+                "NAME": {
+                    "_gen": "string",
+                    "expr": "River #{city} #{hotel_type}"
+                },
+                "AMENITIES": {
+                    "_gen": "oneOf",
+                    "choices": [
+                        "Swimming Pool",
+                        "Business Center"
+                    ]
+                },
+                "DESCRIPTION": {
+                    "_gen": "oneOf",
+                    "choices": [
+                        "Exquisite Elegance - Nestled in the heart of the city, our hotel offers an oasis of tranquility amidst the bustling urban landscape. The meticulously designed rooms blend comfort with elegance, providing a haven for those seeking a luxurious escape.",
+                        "Gastronomic Delight - Savor the culinary masterpieces at our signature restaurants, where each dish is a testament to our chefs' artistry. Experience dining like never before, with flavors that tantalize your taste buds and an ambiance that takes your breath away.",
+                        "Urban Oasis - Step into a world of unmatched opulence at our rooftop pool, offering panoramic views of the skyline. It's an idyllic retreat for guests wishing to unwind and soak in the sun in an unparalleled setting.",
+                        "Sanctuary of Serenity - Our hotel spa is a haven of peace, offering a range of treatments designed to rejuvenate the body and soul. From invigorating massages to refreshing facials, each experience is curated to your individual needs, ensuring a bespoke spa journey.",
+                        "Architectural Marvel - The hotel's stunning architecture and elegant décor create an atmosphere of sophisticated luxury. Each space is thoughtfully designed, from the grand lobby to the serene guestrooms, making every moment of your stay an experience in unparalleled elegance.",
+                        "Gateway to Wonder - Located just moments away from the city's renowned tourist attractions, our hotel is the perfect base for explorers keen to uncover the hidden gems of the locale. Our knowledgeable staff are on hand to recommend the must-see sights and hidden spots.",
+                        "Healthful Harmony - Our state-of-the-art exercise room is designed for those who wish to continue their fitness regime while traveling. Equipped with the latest in fitness technology, it offers an invigorating environment for a satisfying workout.",
+                        "Immersive Experience - Indulge in the rich cultural tapestry of the area with our hotel's prime location. Just steps away from vibrant markets, historic landmarks, and local eateries, guests are perfectly positioned to experience the essence of the destination.",
+                        "Personalized Perfection - Our hotel staff goes above and beyond to ensure your stay is nothing short of extraordinary. From bespoke dining experiences to personalized room settings, every aspect of your visit is tailored to your preferences, making each moment uniquely yours.",
+                        "Enclave of Luxury - Discover the ultimate in luxury lodging with our spacious and opulent suites, where refined decor meets modern convenience. Complete with breathtaking views and exclusive amenities, our suites offer an unparalleled accommodation experience for the discerning traveler.",
+                        "Iconic Retreat - Discover a haven of sophistication at our flagship hotel, where timeless elegance meets modern luxury. Guests can indulge in our world-class spa, offering bespoke treatments that promise rejuvenation and tranquility, making every stay an unforgettable escape into lavishness.",
+                        "Culinary Journey - Embark on a gastronomic adventure in our award-winning restaurants, where each meal is a celebration of international flavors crafted by renowned chefs. The elegant ambiance and impeccable service complement the exquisite dining experience, setting the stage for memorable moments.",
+                        "Serene Getaway - Our idyllic resort, set against the backdrop of breathtaking natural landscapes, offers an exclusive sanctuary. The meticulously landscaped gardens and serene pools create an atmosphere of peace and relaxation, inviting guests to unwind and reconnect with nature in luxury.",
+                        "Metropolitan Oasis - Situated in the heart of the world's most vibrant cities, our hotels boast unbeatable locations. Guests can step out into the bustling city life or retreat to our tranquil rooftop pools and bars, enjoying striking cityscapes as they sip on artisan cocktails.",
+                        "Bespoke Elegance - Our hotels are celebrated for their distinctive decor, blending local culture with sophisticated design. Each room and suite is a masterpiece of craftsmanship and style, offering an intimate and luxurious space for guests to relax and feel at home.",
+                        "Impeccable Hospitality - Experience hospitality redefined, where our dedicated staff provide personalized service that anticipates every need. From arranging exclusive tours to ensuring your room has all the comforts, our team is committed to making your stay perfectly seamless and exceptionally memorable.",
+                        "Wellness Sanctuary - Prioritize your well-being at our holistic wellness center, complete with state-of-the-art exercise equipment, yoga studios, and nutritious dining options. Our wellness experts are on hand to guide you through tailored programs, ensuring a rejuvenating experience from arrival to departure.",
+                        "Historic Grandeur - Stay in a living piece of history as our hotels often occupy heritage buildings that have been meticulously restored. Guests can immerse themselves in the rich past of their surroundings while enjoying the luxuries and comforts of the present.",
+                        "Secluded Paradise - Our resort locations are carefully chosen for their stunning secluded settings, offering ultimate privacy and exclusivity. Whether nestled on a private beach or hidden away in lush forests, guests can enjoy a slice of paradise all to themselves, with luxury at their fingertips.",
+                        "Dynamic Events - Our hotels are premier destinations for high-profile events, offering glamorous ballrooms, cutting-edge conference facilities, and customizable spaces. Whether hosting a landmark celebration or an international meeting, guests can expect flawless execution and unparalleled ambiance."
+                    ]
+                },
+                "CITY": {
+                    "_gen": "var",
+                    "var": "city"
+                },
+                "COUNTRY": {
+                    "_gen": "var",
+                    "var": "location",
+                    "path": [
+                        "country"
+                    ]
+                },
+                "ROOM_CAPACITY": {
+                    "_gen": "normalDistribution",
+                    "mean": 250,
+                    "sd": 50,
+                    "clamp": [
+                        150,
+                        500
+                    ]
+                }
+            }
+        },
+        {
+            "connection": "confluent",
+            "name": "activity_generator",
+            "topic": "clickstream",
+            "localConfigs": {
+                "kafkaValueAvroSchemaHint": {
+                    "type": "record",
+                    "name": "recordValue",
+                    "fields": [
+                        {
+                            "name": "ACTIVITY_ID",
+                            "type": "string"
+                        },
+                        {
+                            "name": "CUSTOMER_EMAIL",
+                            "type": "string"
+                        },
+                        {
+                            "name": "HOTEL_ID",
+                            "type": "string"
+                        },
+                        {
+                            "name": "ACTION",
+                            "type": "string"
+                        },
+                        {
+                            "name": "EVENT_DURATION",
+                            "type": "int"
+                        },
+                        {
+                            "name": "URL",
+                            "type": "string"
+                        },
+                        {
+                            "name": "CREATED_AT",
+                            "type": {
+                                "type": "long",
+                                "flink.precision": 3,
+                                "flink.version": "1",
+                                "logicalType": "local-timestamp-millis"
+                            }
+                        }
+                    ]
+                },
+                "throttleMs": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [
+                        4000,
+                        7000
+                    ]
+                }
+            },
+            "vars": {
+                "hotel_id": {
+                    "_gen": "lookup",
+                    "connection": "oracle",
+                    "table": "sample.hotel",
+                    "path": [
+                        "row",
+                        "HOTEL_ID"
+                    ]
+                },
+                "room_id": {
+                    "_gen": "uniformDistribution",
+                    "decimals": 0,
+                    "bounds": [
+                        1,
+                        500
+                    ]
+                }
+            },
+            "value": {
+                "ACTIVITY_ID": {
+                    "_gen": "sequentialString",
+                    "startingFrom": 300000100,
+                    "expr": "A~d"
+                },
+                "CUSTOMER_EMAIL": {
+                    "_gen": "lookup",
+                    "connection": "oracle",
+                    "table": "sample.customer",
+                    "path": [
+                        "row",
+                        "EMAIL"
+                    ],
+                    "histogram": {
+                        "_gen": "histogram",
+                        "bins": [
+                            {
+                                "bin": 0.8,
+                                "frequency": 1
+                            },
+                            {
+                                "bin": 0.2,
+                                "frequency": 0
+                            }
+                        ]
+                    }
+                },
+                "HOTEL_ID": {
+                    "_gen": "var",
+                    "var": "hotel_id"
+                },
+                "ACTION": {
+                    "_gen": "weightedOneOf",
+                    "choices": [
+                        {
+                            "weight": 5,
+                            "value": "page-view"
+                        },
+                        {
+                            "weight": 3,
+                            "value": "page-click"
+                        },
+                        {
+                            "weight": 2,
+                            "value": "booking-click"
+                        }
+                    ]
+                },
+                "EVENT_DURATION": {
+                    "_gen": "normalDistribution",
+                    "mean": 180,
+                    "sd": 30,
+                    "decimals": 0,
+                    "clamp": [
+                        53,
+                        592
+                    ]
+                },
+                "URL": {
+                    "_gen": "oneOf",
+                    "choices": [
+                        {
+                            "_gen": "string",
+                            "expr": "/hotels/#{hotel_id"
+                        },
+                        {
+                            "_gen": "string",
+                            "expr": "/hotels/#{hotel_id}/rooms/#{room_id}"
+                        }
+                    ]
+                },
+                "CREATED_AT": {
+                    "_gen": "now"
+                }
+            }
+        },
+        {
+            "connection": "confluent",
+            "name": "booking_generator",
+            "topic": "bookings",
+            "vars": {
+                "currentTime": {
+                    "_gen": "now"
+                }
+            },
+            "localConfigs": {
+                "kafkaValueAvroSchemaHint": {
+                    "type": "record",
+                    "name": "recordValue",
+                    "fields": [
+                        {
+                            "name": "BOOKING_ID",
+                            "type": "string"
+                        },
+                        {
+                            "name": "CUSTOMER_EMAIL",
+                            "type": "string"
+                        },
+                        {
+                            "name": "HOTEL_ID",
+                            "type": "string"
+                        },
+                        {
+                            "name": "CHECK_IN",
+                            "type": "string"
+                        },
+                        {
+                            "name": "CHECK_OUT",
+                            "type": "string"
+                        },
+                        {
+                            "name": "OCCUPANTS",
+                            "type": "int"
+                        },
+                        {
+                            "name": "PRICE",
+                            "type": "int"
+                        },
+                        {
+                            "name": "CREATED_AT",
+                            "type": {
+                                "type": "long",
+                                "flink.precision": 3,
+                                "flink.version": "1",
+                                "logicalType": "local-timestamp-millis"
+                            }
+                        }
+                    ]
+                },
+                "throttleMs": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [
+                        28010,
+                        51341
+                    ]
+                }
+            },
+            "value": {
+                "BOOKING_ID": {
+                    "_gen": "sequentialString",
+                    "startingFrom": 600000100,
+                    "expr": "B~d"
+                },
+                "CUSTOMER_EMAIL": {
+                    "_gen": "lookup",
+                    "connection": "oracle",
+                    "table": "sample.customer",
+                    "path": [
+                        "row",
+                        "EMAIL"
+                    ],
+                    "histogram": {
+                        "_gen": "histogram",
+                        "bins": [
+                            {
+                                "bin": 0.8,
+                                "frequency": 2
+                            }
+                        ]
+                    }
+                },
+                "HOTEL_ID": {
+                    "_gen": "lookup",
+                    "connection": "oracle",
+                    "table": "sample.hotel",
+                    "path": [
+                        "row",
+                        "HOTEL_ID"
+                    ]
+                },
+                "CHECK_IN": {
+                    "_gen": "formatDateTime",
+                    "ms": {
+                        "_gen": "uniformDistribution",
+                        "bounds": [
+                            {
+                                "_gen": "math",
+                                "expr": "currentTime + 241920000"
+                            },
+                            {
+                                "_gen": "math",
+                                "expr": "currentTime + 441920000"
+                            }
+                        ]
+                    },
+                    "format": "yyyy-MM-dd"
+                },
+                "CHECK_OUT": {
+                    "_gen": "formatDateTime",
+                    "ms": {
+                        "_gen": "uniformDistribution",
+                        "bounds": [
+                            {
+                                "_gen": "math",
+                                "expr": "currentTime + 641920000"
+                            },
+                            {
+                                "_gen": "math",
+                                "expr": "currentTime + 1041920000"
+                            }
+                        ]
+                    },
+                    "format": "yyyy-MM-dd"
+                },
+                "OCCUPANTS": {
+                    "_gen": "normalDistribution",
+                    "mean": 3,
+                    "sd": 1,
+                    "decimals": 0,
+                    "clamp": [
+                        1,
+                        6
+                    ]
+                },
+                "PRICE": {
+                    "_gen": "normalDistribution",
+                    "mean": 200,
+                    "sd": 25,
+                    "decimals": 0,
+                    "clamp": [
+                        125,
+                        400
+                    ]
+                },
+                "CREATED_AT": {
+                    "_gen": "now"
+                }
+            }
+        },
+        {
+            "connection": "confluent",
+            "name": "review_generator",
+            "topic": "hotel_reviews",
+            "localConfigs": {
+                "kafkaValueAvroSchemaHint": {
+                    "type": "record",
+                    "name": "recordValue",
+                    "fields": [
+                        {
+                            "name": "REVIEW_ID",
+                            "type": "string"
+                        },
+                        {
+                            "name": "CUSTOMER_EMAIL",
+                            "type": "string"
+                        },
+                        {
+                            "name": "HOTEL_ID",
+                            "type": "string"
+                        },
+                        {
+                            "name": "BOOKING_ID",
+                            "type": "string"
+                        },
+                        {
+                            "name": "REVIEW_RATING",
+                            "type": "int"
+                        },
+                        {
+                            "name": "REVIEW_TEXT",
+                            "type": "string"
+                        },
+                        {
+                            "name": "CREATED_AT",
+                            "type": {
+                                "type": "long",
+                                "flink.precision": 3,
+                                "flink.version": "1",
+                                "logicalType": "local-timestamp-millis"
+                            }
+                        }
+                    ]
+                },
+                "throttleMs": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [
+                        6500,
+                        9999
+                    ]
+                }
+            },
+            "value": {
+                "REVIEW_ID": {
+                    "_gen": "sequentialString",
+                    "startingFrom": 500000100,
+                    "expr": "R~d"
+                },
+                "CUSTOMER_EMAIL": {
+                    "_gen": "lookup",
+                    "connection": "oracle",
+                    "table": "sample.customer",
+                    "path": [
+                        "row",
+                        "EMAIL"
+                    ],
+                    "histogram": {
+                        "_gen": "histogram",
+                        "bins": [
+                            {
+                                "bin": 0.8,
+                                "frequency": 2
+                            }
+                        ]
+                    }
+                },
+                "HOTEL_ID": {
+                    "_gen": "lookup",
+                    "connection": "oracle",
+                    "table": "sample.hotel",
+                    "path": [
+                        "row",
+                        "HOTEL_ID"
+                    ]
+                },
+                "BOOKING_ID": {
+                    "_gen": "lookup",
+                    "name": "booking_generator",
+                    "path": [
+                        "value",
+                        "BOOKING_ID"
+                    ]
+                },
+                "REVIEW_RATING": {
+                    "_gen": "oneOf",
+                    "choices": [
+                        3,
+                        4,
+                        5
+                    ]
+                },
+                "REVIEW_TEXT": {
+                    "_gen": "oneOf",
+                    "choices": [
+                        "My stay was nothing short of spectacular, thanks to the vast array of amenities offered by the hotel. From the state-of-the-art fitness center to the serene spa, every facility was tailored to provide an unparalleled guest experience. It's the attention to detail in these amenities that sets this hotel apart.",
+                        "The location of this hotel is unbeatable, nestled right in the heart of the city yet somehow serene and peaceful. It was incredibly convenient to explore the city's prime attractions, with most of them just a short walk away. The blend of accessibility and tranquility the hotel provides is perfect for travelers.",
+                        "Our room was a haven of luxury and comfort, offering breathtaking views of the skyline. The room's design married elegance with modernity, making every moment of our stay delightful. It's clear that the hotel prioritizes guest comfort through thoughtful room amenities and a welcoming atmosphere.",
+                        "The staff at the hotel was exceptional in every interaction, from the warm welcome at check-in to the attentive service throughout our stay. Their professionalism and genuine kindness were remarkable, making us feel truly valued. Such dedicated staff undoubtedly elevate the guest experience to new heights.",
+                        "Stepping into the hotel, we were immediately enveloped by its enchanting ambience, a perfect blend of sophistication and warmth. The lobby's grandeur and the subtle elegance in its decor set the tone for a memorable stay. It's this ambience that imbues every corner of the hotel with a sense of luxury and comfort.",
+                        "From the moment we entered the hotel, the unique style and decor captured our hearts. Each space was meticulously designed to offer both comfort and luxury, showcasing exquisite art pieces that added to the hotel's allure. This hotel stands out for its distinct charm and elegant atmosphere.",
+                        "Dining at the hotel's restaurants was a gastronomic delight. The variety of cuisines offered was impressive, each dish prepared to perfection with the freshest ingredients. The ambiance of the dining areas, combined with impeccable service, made each meal memorable.",
+                        "The hotel's pool area was an oasis of relaxation. With its breathtaking views and luxurious loungers, it offered a tranquil escape from the city's hustle and bustle. The attentive poolside service ensured a refreshing and pampering experience throughout our stay.",
+                        "Visiting the hotel's spa was a rejuvenating experience. The range of treatments, from massages to facials, was exceptional, administered by skilled therapists in a serene setting. It was the perfect way to unwind and indulge in a bit of self-care.",
+                        "The hotel's exercise room was well-equipped with the latest fitness technology, offering everything from cardio machines to free weights. It was clean, spacious, and provided an energizing environment for maintaining my workout routine while traveling.",
+                        "The hotel's proximity to major tourist attractions was incredibly convenient. Being able to walk to iconic landmarks and museums enriched our travel experience, saving us time and allowing for spontaneous explorations. This location is ideal for travelers eager to immerse themselves in the city's culture.",
+                        "Every aspect of our stay was flawless, from the luxuriously appointed rooms to the courteous staff who went above and beyond to ensure our comfort. The hotel's combination of elegance, premier location, and exceptional service made it an unforgettable part of our trip.",
+                        "The attention to detail in every service the hotel offered was remarkable. Personalized touches in room decor, bespoke concierge services, and thoughtful amenities like a turn-down service elevated our stay into a bespoke luxury experience.",
+                        "The culinary experience at the hotel was unparalleled. Each restaurant featured a distinct theme and cuisine, executed to perfection by expert chefs. The attention to quality and the dining ambiance made every meal an occasion.",
+                        "We were impressed by the hotel's commitment to sustainability. From eco-friendly amenities to responsible sourcing in their restaurants, it was clear that luxury and environmental consciousness can go hand in hand. Staying here felt good not just for the comfort but also for supporting sustainable practices.",
+                        "Our stay was elevated by the hotel's incredible amenities, from the rooftop terrace to the private cinema. Every luxury was at our fingertips, ensuring a pampered and memorable experience. The hotel truly knows how to cater to every desire.",
+                        "Positioned in the heart of the city, the hotel's location is unparalleled. Surrounded by bustling streets, yet a haven of peace inside, it provided easy access to shopping, dining, and cultural landmarks. The convenience it offered was beyond our expectations.",
+                        "Our room was a masterpiece of comfort and style, with panoramic views that took our breath away. The elegant furnishings and state-of-the-art technology blended seamlessly to create a sanctuary above the city. It was difficult to leave the room!",
+                        "The warmth and professionalism of the hotel staff made our stay exceptional. From the concierge who curated our city tours to the attentive room service, every interaction was marked by friendliness and efficiency. Their dedication to guest satisfaction was evident.",
+                        "From the moment we stepped into the lobby, the hotel's ambience was captivating. The sophisticated decor, tranquil music, and aromatic scents created an atmosphere of luxury and relaxation. It was an oasis of calm and beauty.",
+                        "The hotel's restaurants were a culinary journey, each offering a distinct and exquisite menu. The chefs' creativity impressed us, and the sommelier's recommendations were spot-on. Dining here was not just a meal, but a memorable highlight of our stay.",
+                        "The hotel's style and decor were a feast for the eyes, blending historical elegance with modern luxury. Each space was thoughtfully designed, telling its own story and creating a unique ambiance. The attention to detail was astounding.",
+                        "Lounging by the hotel's infinity pool was an experience in itself, with stunning cityscape views and impeccably designed surroundings. The poolside service was attentive, making our relaxation time truly rejuvenating. It was our favorite spot to unwind.",
+                        "The spa at the hotel was a haven of tranquility and pampering. The range of treatments offered was impressive, each delivered by expert therapists in a serene setting. Our spa day left us feeling revitalized and blissful.",
+                        "The hotel's exercise room was a delight for any fitness enthusiast, equipped with the latest machines and a variety of classes. The space was motivating and refreshing, ensuring that we didn't skip our wellness routine during our travels.",
+                        "The hotel's location is unbeatable, right at the heart of the city with breathtaking views. The staff was incredibly attentive, making our stay unforgettable.",
+                        "Our room's decor was a perfect blend of modern luxury and comfort, with plush bedding that made every night a dream. The cleanliness of the entire hotel was beyond reproach.",
+                        "The hotel's spa was a haven of relaxation, offering a serene escape with top-notch services. Coupled with the elegant ambiance, it was the highlight of our stay.",
+                        "Dining at the hotel's restaurant was a culinary delight, featuring a diverse menu with exquisite flavors. The elegant setting made every meal feel special.",
+                        "We loved the hotel's pool area—spacious, well-maintained, and with luxurious lounges. It was a perfect spot to unwind after exploring the city.",
+                        "The hotel's exercise room was equipped with state-of-the-art machinery and offered fitness classes. It made staying on top of my exercise routine a breeze.",
+                        "From the moment we arrived, the hotel staff treated us with unparalleled hospitality. Their recommendations for local tourist areas enhanced our experience significantly.",
+                        "The hotel's ambiance is something to behold, with stunning artwork and an architectural style that's both modern and inviting. Every corner was a delight.",
+                        "Located just minutes from major attractions, the hotel's proximity to tourist areas was incredibly convenient. It saved us a lot of travel time.",
+                        "Our suite was the epitome of luxury, with breathtaking décor and a mesmerizing city view. The attention to detail from the hotel staff made our stay even more comfortable.",
+                        "The hotel's music selection in the common areas created an uplifting and welcoming atmosphere. It was the perfect backdrop to our luxurious stay.",
+                        "Enjoying the hotel's activities, including the cooking class and the wine tasting event, added an extraordinary layer to our vacation. It was both fun and educational.",
+                        "The hotel's bedding was unlike anything I've ever experienced—so plush and comfortable, ensuring a good night's sleep after a day of adventures.",
+                        "Staying at this hotel felt like stepping into a high-fashion magazine, with its stylish decor and sophisticated elegance. It was a truly aesthetic experience.",
+                        "The cleanliness of the hotel was remarkable, from the rooms to the public areas. It made us feel safe and cared for during our entire stay.",
+                        "The hotel's ambiance provided a perfect blend of luxury and comfort, making it an ideal retreat from the bustling city life outside.",
+                        "Having access to a well-equipped exercise room made my stay even more enjoyable. It was great to have the option to unwind with some physical activity.",
+                        "The hotel's restaurant boasted a menu that was both innovative and delicious, with each dish presenting a feast for the senses. Highly recommended for food lovers.",
+                        "The staff's attention to detail and proactive service made our honeymoon stay extraordinary. They went above and beyond to ensure we felt special.",
+                        "The spa at the hotel was an oasis of tranquility, offering a range of treatments that left us feeling rejuvenated and relaxed. Definitely a must-visit.",
+                        "These reviews encapsulate a variety of positive experiences, showcasing the comprehensive luxury and exemplary service a global luxury hotel chain can offer.",
+                        "The hotel's refund policy was incredibly flexible, making our booking worry-free. Their understanding and accommodations went above and beyond, especially during uncertain travel times.",
+                        "We were so pleased with the pet accommodations. Our dog was treated like royalty, with custom beds and treats. It made our travel so much easier knowing our furry friend was welcome.",
+                        "Hotel parking was seamless, with valet service that was both efficient and courteous. It made coming and going from the hotel a breeze.",
+                        "Its proximity to the airport was a major plus, only a short drive away, yet no airport noise. The convenience added significantly to our stress-free vacation.",
+                        "The transportation to and from the hotel was top-notch. The complimentary shuttle service made our excursions into the city hassle-free.",
+                        "The hotel grounds were immaculate, with beautiful landscaping that created a peaceful oasis in the middle of a bustling city. Walking through the gardens was a highlight of our stay.",
+                        "Drinks at the hotel were exceptional; the mixologists at the bar crafted unique cocktails that were a delight to savor. Each drink was a masterpiece.",
+                        "Participating in the hotel activities, such as yoga sessions and cultural tours, enriched our stay. It was a perfect balance of relaxation and exploration.",
+                        "The hotel's style was a seamless blend of traditional elegance and modern luxury. Every design element was thoughtful and added to the overall experience.",
+                        "Decor in our room was absolutely stunning, offering both comfort and luxury which made our stay very special. It truly felt like a home away from home.",
+                        "The hotel pool was a serene escape, with pristine waters and plenty of comfortable loungers. It was the perfect place to relax and soak up the sun.",
+                        "Our visit to the hotel spa was a highlight of our trip. The variety of treatments offered and the skilled therapists made for an incredibly rejuvenating experience.",
+                        "The bedding in our room was beyond comfortable, with luxurious linens that promised a good night's sleep. It was hard to leave the bed in the morning!",
+                        "The music in the hotel's common areas created a wonderfully inviting atmosphere. It was sophisticated yet relaxing, perfectly complementing the hotel's ambiance.",
+                        "Having access to a well-equipped exercise room was a major plus during our stay. It was great to keep up with our fitness routine in such a welcoming space.",
+                        "The hotel's proximity to major tourist areas made sightseeing convenient. We appreciated the easy access to the city's attractions.",
+                        "We were thoroughly impressed by the hotel's travel and refund policy. Their commitment to accommodating unexpected changes was commendable and reduced our travel stress.",
+                        "Our pet felt right at home with the exceptional pet accommodations provided. It's rare to find a hotel that cares so much for its four-legged guests.",
+                        "Efficient hotel parking and the convenience of valet service made our stay worry-free. It was such a relief not to have to deal with parking hassles.",
+                        "Being close to the airport without the annoyance of air traffic noise was perfect. It simplified our arrival and departure, making the travel process so much smoother.",
+                        "The complimentary shuttle service was a game-changer, providing easy transportation to local attractions. It was incredibly convenient.",
+                        "Walking through the hotel grounds was like being in a beautifully curated garden — so tranquil and beautifully maintained.",
+                        "Every drink we tried at the hotel bar was a delight. The bartenders really know how to craft a perfect cocktail.",
+                        "The range of activities offered by the hotel, from water sports to cultural excursions, meant there was always something exciting to do.",
+                        "I loved the stylish elegance of the hotel; its design and decor made our stay feel truly luxurious.",
+                        "Our room décor was both sophisticated and inviting, blending luxury with comfort in the best possible way.",
+                        "Floating in the hotel's expansive pool was the relaxation we didn't know we needed. The serene setting made it all the more enjoyable.",
+                        "The spa services at the hotel were unparalleled. Each treatment was a blissful escape, and the staff was exemplary.",
+                        "Sleeping was a dream on the hotel's luxurious bedding — so soft and comforting after a day of adventures.",
+                        "The background music in the hotel struck the perfect chord, enhancing the atmosphere without being intrusive. It added to the sense of luxury.",
+                        "The hotel amenities left nothing to be desired, from the state-of-the-art fitness center to the tranquil spa. Every detail was curated to offer a premium experience.",
+                        "Its prime location in the heart of the city offered unparalleled access to landmarks and local culture. We could walk to many major attractions, which saved us a lot of time.",
+                        "Our room was a haven of luxury, with floor-to-ceiling windows offering city views like no other. The attention to detail in every aspect of the decor was impeccable.",
+                        "The staff's professionalism and warmth made our stay unforgettable. They anticipated every need, making us feel truly pampered.",
+                        "The ambience of the hotel struck a perfect balance between sophistication and relaxation. From the lobby to the lounge, every space was designed to soothe and impress.",
+                        "Dining at the hotel's signature restaurant was a culinary journey. The chef's creations were innovative, and the service was unmatched.",
+                        "Cleanliness throughout the hotel was impeccable. It felt safe and welcoming, a true testament to their high standards.",
+                        "The activities organized by the hotel, including the sunset yacht tour, added an extra layer of enjoyment to our vacation. It was well-planned and memorable.",
+                        "The hotel's contemporary style, combined with cultural elements, made it a visually stunning place to stay. It was like living in a work of art.",
+                        "Decor in our suite was tasteful and elegant, creating a serene and luxurious retreat after a day of exploring the city.",
+                        "The infinity pool was the highlight of the hotel, offering a refreshing escape with a breathtaking view of the skyline.",
+                        "The spa facilities were world-class, offering a range of treatments in a serene environment. It was the ultimate relaxation experience.",
+                        "The plush bedding in our room promised a good night's sleep every night. It was the epitome of comfort.",
+                        "The music curated for the hotel's public spaces enhanced the overall feel of luxury and calm. It was a thoughtful touch that did not go unnoticed.",
+                        "The exercise room had everything needed for a comprehensive workout, from modern equipment to personal training sessions. Keeping fit while on holiday was never easier.",
+                        "The hotel's flexible travel and refund policy provided peace of mind when booking, especially in uncertain times. Their understanding was greatly appreciated.",
+                        "Our furry companion was treated as a cherished guest with thoughtful pet accommodations, making our stay stress-free and enjoyable for the whole family.",
+                        "Hotel parking was convenient and secure, ensuring that our vehicle was well taken care of. This service was much appreciated.",
+                        "Its proximity to the airport made our late-night arrival and early departure seamless and worry-free. The location is ideal for travelers.",
+                        "The complimentary shuttle service to local attractions and shopping districts made exploring the area effortless and enjoyable.",
+                        "Walking through the hotel grounds felt like strolling through a meticulously designed botanical garden, enhancing our sense of tranquility.",
+                        "The hotel’s bespoke cocktails and premium drinks selection at the bar were impressive, each crafted to perfection.",
+                        "Being so close to iconic tourist areas meant we could easily immerse ourselves in the local culture and attractions without lengthy commutes.",
+                        "Courtesy of the hotel staff, we discovered hidden gems in the city. Their knowledge and recommendations enriched our experience.",
+                        "The hotel exudes an aura of tranquility and luxury, from the lobby's cascading waterfalls to the peaceful library nook. Every corner had its charm.",
+                        "The hotel's selection of international cuisine catered to all tastes, making every meal an adventure.",
+                        "Our children were delighted by the range of family-friendly activities and the kids’ club, making it an enjoyable stay for all ages.",
+                        "The hotel’s dedication to sustainability, evident in its operations and decor, added a meaningful layer to our stay.",
+                        "The custom-designed furniture and artwork throughout the hotel celebrated local craftsmanship, adding to the unique ambience.",
+                        "The privacy and exclusivity offered by the hotel made our stay feel like a sanctuary from the bustling city outside."
+                    ]
+                },
+                "CREATED_AT": {
+                    "_gen": "now"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "oracle": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/connections/oracle.json"
+        },
+        "confluent": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/connections/confluent.json"
+        }
+    }
+}
