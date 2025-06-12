@@ -1,6 +1,6 @@
-# -------------------------------
-# S3 Bucket for Tableflow
-# -------------------------------
+# ===============================
+# S3 Bucket for Tableflow and Databricks
+# ===============================
 
 resource "aws_s3_bucket" "tableflow_bucket" {
   bucket        = "${local.prefix}-${local.resource_suffix}"

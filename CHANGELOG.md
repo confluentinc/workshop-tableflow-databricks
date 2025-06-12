@@ -1,6 +1,6 @@
 # Change Log
 
-## v0.0.0 - YYYY-MM-DD
+## v0.1.0 - 2025-06-12
 
 ### Features and Fixes
 

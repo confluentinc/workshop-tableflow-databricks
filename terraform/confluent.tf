@@ -74,7 +74,6 @@ resource "confluent_provider_integration" "s3_tableflow_integration" {
     # Note: This is a workaround to avoid updating an existing role or creating a circular dependency.
     customer_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.iam_role_name}"
   }
-
 }
 
 output "s3_tableflow_integration_details" {

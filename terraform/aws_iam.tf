@@ -50,46 +50,6 @@ resource "aws_iam_role" "s3_access_role" {
           }
         }
       }
-      # {
-      #   Effect = "Allow",
-      #   Action = "sts:AssumeRole",
-      #   Principal = {
-      #     # Trust the Root user of the Databricks account
-      #     AWS = "arn:aws:iam::414351767826:root"
-      #   },
-      #   Condition = {
-      #     StringEquals = {
-      #       "sts:ExternalId" = var.databricks_account_id
-      #     }
-      #   }
-      # },
-      # Statement 4 (Databricks): Trust relationship for UC Master Role and root
-      # IMPORTANT: The role's OWN ARN is NOT included in the Principal here
-      # 1b08899a-1eae-4260-9eeb-0e59201be354
-      # {
-      #   Effect = "Allow",
-      #   Action = "sts:AssumeRole",
-      #   Principal = {
-      #     AWS = [
-      #       # Trust the Databricks Unity Catalog Master Role ARN
-      #       "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL",
-      #       "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.iam_role_name}"
-      #     ]
-      #   },
-      #   Condition = {
-      #     StringEquals = {
-      #       # FROM JEREMY's EXAMPLE - NOT WORKING
-      #       # "sts:ExternalId" = var.databricks_account_id
-
-      #       # FROM DOCS - https://docs.databricks.com/aws/en/connect/unity-catalog/cloud-storage/storage-credentials#step-3-update-the-iam-role-trust-relationship-policy
-      #       "sts:ExternalId" = databricks_external_location.s3_bucket.id
-      #     },
-      #     # Keep the ArnEquals condition from the trust policy
-      #     # ArnEquals = {
-      #     #   "aws:PrincipalArn" = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.iam_role_name}"
-      #     # }
-      #   }
-      # }
     ]
   })
 
@@ -103,26 +63,6 @@ resource "aws_iam_role" "s3_access_role" {
     Name = local.iam_role_name
   })
 }
-
-
-# resource "aws_iam_role_policy" "s3_access_role_self_assume_policy" {
-#   name = "${local.iam_role_name}-self-assume" # Policy name
-#   role = aws_iam_role.s3_access_role.id       # Attach this policy to the S3 Access Role
-
-#   policy = jsonencode({
-#     Version = "2012-10-17",
-#     Statement = [
-#       {
-#         Effect = "Allow",
-#         Action = "sts:AssumeRole",
-#         # The Resource here is the ARN of the role itself.
-#         # This grants the role the *permission* to assume its own identity.
-#         Resource = aws_iam_role.s3_access_role.arn
-#       }
-#     ]
-#   })
-#   depends_on = [aws_iam_role.s3_access_role]
-# }
 
 # ===============================
 # IAM Role Policy for S3 Access
@@ -141,11 +81,8 @@ resource "aws_iam_role_policy" "s3_access_policy" {
           "s3:*" # Full S3 access for the demo
         ],
         Resource = [
-          "arn:aws:s3:::${aws_s3_bucket.tableflow_bucket.bucket}",
-          "arn:aws:s3:::${aws_s3_bucket.tableflow_bucket.bucket}/*",
-          # TODO: consider the ones below
-          # aws_s3_bucket.tableflow_bucket.arn,
-          # "${aws_s3_bucket.tableflow_bucket.arn}/*"
+          aws_s3_bucket.tableflow_bucket.arn,
+          "${aws_s3_bucket.tableflow_bucket.arn}/*"
         ]
       }
     ]
@@ -268,6 +205,25 @@ resource "null_resource" "update_iam_role_trust_policy_final" {
           "Statement": [
             {
               "Effect": "Allow",
+              "Principal": {
+                "AWS": "${confluent_provider_integration.s3_tableflow_integration.aws[0].iam_role_arn}"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": "${confluent_provider_integration.s3_tableflow_integration.aws[0].external_id}"
+                }
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "${confluent_provider_integration.s3_tableflow_integration.aws[0].iam_role_arn}"
+              },
+              "Action": "sts:TagSession"
+            },
+            {
+              "Effect": "Allow",
               "Action": "sts:AssumeRole",
               "Principal": {
                 "AWS": "arn:aws:iam::414351767826:root"
@@ -291,7 +247,9 @@ resource "null_resource" "update_iam_role_trust_policy_final" {
   }
 
   depends_on = [
-    null_resource.wait_for_trust_policy_propagation
+    null_resource.wait_for_trust_policy_propagation,
+    confluent_provider_integration.s3_tableflow_integration,
+    databricks_storage_credential.external_credential
   ]
 
   triggers = {
@@ -324,14 +282,10 @@ resource "null_resource" "wait_for_final_trust_policy_propagation" {
 
 output "aws_iam" {
   value = {
-    role_arn  = aws_iam_role.s3_access_role.arn
-    role_name = aws_iam_role.s3_access_role.name
-    role_id   = aws_iam_role.s3_access_role.id
-    # role_policy_arn  = aws_iam_role_policy.s3_access_policy.arn
+    role_arn         = aws_iam_role.s3_access_role.arn
+    role_name        = aws_iam_role.s3_access_role.name
+    role_id          = aws_iam_role.s3_access_role.id
     role_policy_name = aws_iam_role_policy.s3_access_policy.name
     role_policy_id   = aws_iam_role_policy.s3_access_policy.id
-    # role_policy_attachment_arn = aws_iam_role_policy_attachment.s3_policy_attachment.arn
-    # role_policy_attachment_id   = aws_iam_role_policy_attachment.s3_policy_attachment.id
-    # role_policy_attachment_role = aws_iam_role_policy_attachment.s3_policy_attachment.role
   }
 }

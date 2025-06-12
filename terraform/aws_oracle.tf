@@ -1,5 +1,7 @@
-
+# ===============================
 # Optional: Define a variable for mapping AMIs to the correct SSH user
+# ===============================
+
 variable "ssh_user" {
   description = "SSH user based on AMI type"
   type        = map(string)
@@ -18,7 +20,11 @@ variable "ssh_user" {
     "ami-07af4f1c7eb1971ff" = "ec2-user"
   }
 }
+
+# ===============================
 # Security group for EC2 instance
+# ===============================
+
 resource "aws_security_group" "allow_ssh_oracle" {
   name        = "${local.prefix}_allow_ssh_oracle"
   description = "Allow SSH and Oracle inbound traffic"
@@ -71,11 +77,10 @@ data "aws_ami" "oracle_ami" {
   }
 }
 
+# ===============================
 # EC2 instance for Oracle
-# /var/log/cloud-init.log
-#/var/log/cloud-init-output.log
-# /var/lib/cloud/instances/i-0c42e1665ff8e11f2/user-data.txt
-# sudo cat /var/lib/cloud/instance/scripts/part-001
+# ===============================
+
 resource "aws_instance" "oracle_instance" {
   ami           = data.aws_ami.oracle_ami.id
   instance_type = "t3.large"
@@ -289,14 +294,15 @@ resource "aws_instance" "oracle_instance" {
   }
 }
 
-output "oracle_vm_db_details" {
+output "oracle_vm" {
   value = {
-    "private_ip" : aws_instance.oracle_instance.private_ip
-    "connection_string" : "sqlplus system/Welcome1@${aws_instance.oracle_instance.private_ip}:1521/XEPDB1"
-    "express_url" : "https://${aws_instance.oracle_instance.private_ip}:5500/em"
+    private_ip          = aws_instance.oracle_instance.private_ip
+    connection_string   = "sqlplus system/Welcome1@${aws_instance.oracle_instance.private_ip}:1521/XEPDB1"
+    express_url         = "https://${aws_instance.oracle_instance.private_ip}:5500/em"
+    ssh_command         = "ssh -i sshkey-${aws_key_pair.tf_key.key_name}.pem ec2-user@${aws_instance.oracle_instance.public_dns}"
+    docker_exec_command = "sudo docker exec -it oracle-xe sqlplus system/Welcome1@localhost:1521/XE"
   }
 }
-
 
 output "oracle_xstream_connector" {
   value = {

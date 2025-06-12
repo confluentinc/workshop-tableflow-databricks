@@ -31,3 +31,13 @@ resource "local_file" "kafka_connection_config" {
   })
   filename = "../data/connections/confluent.json"
 }
+
+# Download ShadowTraffic license from GitHub and create local file
+data "http" "shadow_traffic_license" {
+  url = "https://raw.githubusercontent.com/ShadowTraffic/shadowtraffic-examples/refs/heads/master/free-trial-license-docker.env"
+}
+
+resource "local_file" "shadow_traffic_license" {
+  content  = data.http.shadow_traffic_license.response_body
+  filename = "../data/shadow-traffic-license.env"
+}

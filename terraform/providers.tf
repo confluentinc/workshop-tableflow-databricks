@@ -17,6 +17,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.1"
     }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4.0"
+    }
   }
 }
 
@@ -27,8 +31,8 @@ provider "aws" {
   # Default tags to apply to all resources
   default_tags {
     tags = {
-      Created_by  = "River Hotels AI Agent Terraform script"
-      Project     = "Hospitality AI Agent"
+      Created_by  = "terraform"
+      Project     = "River Hotels Hospitality AI Insights"
       owner_email = var.email
       Environment = var.environment
     }

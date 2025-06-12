@@ -20,6 +20,10 @@ variable "cloud_region" {
   type        = string
 }
 
+# ---------------------
+# Confluent Cloud variables
+# ---------------------
+
 variable "confluent_cloud_api_key" {
   description = "Confluent Cloud API Key"
   type        = string
@@ -122,10 +126,10 @@ variable "databricks_service_principal_client_secret" {
   sensitive   = true
 }
 
-variable "databricks_metastore_id" {
-  description = "Databricks Unity Catalog metastore ID"
-  type        = string
-}
+# variable "databricks_metastore_id" {
+#   description = "Databricks Unity Catalog metastore ID"
+#   type        = string
+# }
 
 variable "databricks_host" {
   description = "The Databricks workspace URL (e.g., https://your-workspace.cloud.databricks.com)"
