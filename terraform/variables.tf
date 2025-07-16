@@ -3,6 +3,12 @@ variable "email" {
   type        = string
 }
 
+variable "call_sign" {
+  description = "Call sign to use in prefix for resource names, it could be your initials or your first name"
+  type        = string
+  default     = "neo"
+}
+
 variable "project_name" {
   description = "Name of this project to use in prefix for resource names"
   type        = string
@@ -18,6 +24,37 @@ variable "environment" {
 variable "cloud_region" {
   description = "AWS Cloud Region"
   type        = string
+}
+
+# ---------------------
+# AWS variables
+# ---------------------
+
+variable "aws_access_key_id" {
+  description = "AWS Access Key ID"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "aws_secret_access_key" {
+  description = "AWS Secret Access Key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "aws_session_token" {
+  description = "AWS Session Token"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "aws_bedrock_anthropic_model_id" {
+  description = "AWS Bedrock Anthropic Model ID for Claude 3.7 Sonnet"
+  type        = string
+  default     = ""
 }
 
 # ---------------------
@@ -125,11 +162,6 @@ variable "databricks_service_principal_client_secret" {
   type        = string
   sensitive   = true
 }
-
-# variable "databricks_metastore_id" {
-#   description = "Databricks Unity Catalog metastore ID"
-#   type        = string
-# }
 
 variable "databricks_host" {
   description = "The Databricks workspace URL (e.g., https://your-workspace.cloud.databricks.com)"

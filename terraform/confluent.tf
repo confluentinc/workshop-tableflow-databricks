@@ -2,6 +2,7 @@ data "confluent_organization" "current" {}
 
 locals {
   bootstrap_endpoint_url_only = split("SASL_SSL://", confluent_kafka_cluster.standard.bootstrap_endpoint)[1]
+  # bedrock_ai_connection_endpoint = "https://bedrock-runtime.${var.cloud_region}.amazonaws.com/model/${var.aws_bedrock_anthropic_model_id}/invoke"
 }
 
 # ------------------------------------------------------
@@ -130,9 +131,6 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
 resource "confluent_api_key" "app-manager-schema-registry-api-key" {
   display_name = "env-manager-schema-registry-api-key"
   description  = "Schema Registry API Key that is owned by 'env-manager' service account"
-
-  # https://app.glean.com/search?qe=https%3A%2F%2Fconfluent-be.glean.com&hcp=1&q=disable_wait_for_ready
-  # disable_wait_for_ready = true
 
   owner {
     id          = confluent_service_account.app-manager.id
@@ -311,3 +309,5 @@ output "confluent" {
 
   sensitive = true
 }
+
+# Flink Connection ID: ${confluent_flink_connection.bedrock_ai_connection.id}

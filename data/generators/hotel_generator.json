@@ -1,0 +1,329 @@
+{
+    "name": "hotel_generator",
+    "table": "sample.hotel",
+    "connection": "oracle",
+    "localConfigs": {
+        "maxEvents": 30
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        },
+        "economyDescriptions": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/hotel_descriptions_economy.json"
+        },
+        "extendedStayDescriptions": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/hotel_descriptions_extended_stay.json"
+        },
+        "luxuryDescriptions": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/hotel_descriptions_luxury.json"
+        },
+        "resortDescriptions": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/hotel_descriptions_resort.json"
+        },
+        "airportDescriptions": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/hotel_descriptions_airport.json"
+        }
+    },
+    "vars": {
+        "hotel_noun": {
+            "_gen": "oneOf",
+            "choices": [
+                "Hotel",
+                "Tower",
+                "Inn",
+                "Boutique",
+                "Lodge",
+                "Suites",
+                "Spa",
+                "Villa",
+                "Haven",
+                "Estate",
+                "Retreat"
+            ]
+        },
+        "location": {
+            "_gen": "oneOf",
+            "choices": [
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "Bengaluru",
+                            "Mumbai",
+                            "Delhi",
+                            "Chennai",
+                            "Kolkata",
+                            "Hyderabad",
+                            "Surat",
+                            "Pune",
+                            "Jaipur",
+                            "Ahmedabad"
+                        ]
+                    },
+                    "country": "India"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "New York",
+                            "Los Angeles",
+                            "Chicago",
+                            "Houston",
+                            "Phoenix",
+                            "Seattle",
+                            "Orlando",
+                            "Miami",
+                            "Denver",
+                            "San Francisco"
+                        ]
+                    },
+                    "country": "United States"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "London",
+                            "Manchester",
+                            "Birmingham",
+                            "Liverpool",
+                            "Leeds",
+                            "Newcastle",
+                            "Bristol",
+                            "Sheffield",
+                            "Nottingham",
+                            "Cardiff"
+                        ]
+                    },
+                    "country": "England"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "Paris",
+                            "Marseille",
+                            "Lyon",
+                            "Toulouse",
+                            "Nice",
+                            "Nantes",
+                            "Strasbourg",
+                            "Montpellier",
+                            "Bordeaux",
+                            "Lille"
+                        ]
+                    },
+                    "country": "France"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "Berlin",
+                            "Hamburg",
+                            "Munich",
+                            "Cologne",
+                            "Frankfurt",
+                            "Stuttgart",
+                            "Dusseldorf",
+                            "Dortmund",
+                            "Essen",
+                            "Leipzig"
+                        ]
+                    },
+                    "country": "Germany"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "Rome",
+                            "Milan",
+                            "Naples",
+                            "Turin",
+                            "Palermo",
+                            "Genoa",
+                            "Bologna",
+                            "Florence",
+                            "Bari",
+                            "Catania"
+                        ]
+                    },
+                    "country": "Italy"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "Tokyo",
+                            "Yokohama",
+                            "Osaka",
+                            "Nagoya",
+                            "Sapporo",
+                            "Fukuoka",
+                            "Kobe",
+                            "Kyoto",
+                            "Kawasaki",
+                            "Saitama"
+                        ]
+                    },
+                    "country": "Japan"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "Sydney",
+                            "Melbourne",
+                            "Brisbane",
+                            "Perth",
+                            "Adelaide",
+                            "Gold Coast",
+                            "Newcastle",
+                            "Canberra",
+                            "Wollongong",
+                            "Sunshine Coast"
+                        ]
+                    },
+                    "country": "Australia"
+                },
+                {
+                    "city": {
+                        "_gen": "oneOf",
+                        "choices": [
+                            "Cairo",
+                            "Alexandria",
+                            "Giza",
+                            "Shubra El-Kheima",
+                            "Port Said",
+                            "Suez",
+                            "Luxor",
+                            "Mansoura",
+                            "El-Mahalla El-Kubra",
+                            "Tanta"
+                        ]
+                    },
+                    "country": "Egypt"
+                }
+            ]
+        },
+        "city": {
+            "_gen": "var",
+            "var": "location",
+            "path": [
+                "city"
+            ]
+        },
+        "hotel_class_info": {
+            "_gen": "oneOf",
+            "choices": [
+                {
+                    "class": "Economy",
+                    "description": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "economyDescriptions"
+                        }
+                    }
+                },
+                {
+                    "class": "Extended Stay",
+                    "description": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "extendedStayDescriptions"
+                        }
+                    }
+                },
+                {
+                    "class": "Luxury",
+                    "description": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "luxuryDescriptions"
+                        }
+                    }
+                },
+                {
+                    "class": "Resort",
+                    "description": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "resortDescriptions"
+                        }
+                    }
+                },
+                {
+                    "class": "Airport",
+                    "description": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "airportDescriptions"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "row": {
+        "HOTEL_ID": {
+            "_gen": "sequentialString",
+            "startingFrom": 10000305,
+            "expr": "H~d"
+        },
+        "NAME": {
+            "_gen": "string",
+            "expr": "River #{city} #{hotel_noun}"
+        },
+        "CLASS": {
+            "_gen": "var",
+            "var": "hotel_class_info",
+            "path": [
+                "class"
+            ]
+        },
+        "DESCRIPTION": {
+            "_gen": "var",
+            "var": "hotel_class_info",
+            "path": [
+                "description"
+            ]
+        },
+        "CITY": {
+            "_gen": "var",
+            "var": "city"
+        },
+        "COUNTRY": {
+            "_gen": "var",
+            "var": "location",
+            "path": [
+                "country"
+            ]
+        },
+        "ROOM_CAPACITY": {
+            "_gen": "normalDistribution",
+            "mean": 250,
+            "sd": 50,
+            "clamp": [
+                150,
+                500
+            ]
+        },
+        "CREATED_AT": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 6048000000"
+        }
+    }
+}

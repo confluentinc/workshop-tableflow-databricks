@@ -1,0 +1,31 @@
+{
+    "type": "record",
+    "name": "HotelReviewEvent",
+    "fields": [
+        {
+            "name": "REVIEW_ID",
+            "type": "string"
+        },
+        {
+            "name": "BOOKING_ID",
+            "type": "string"
+        },
+        {
+            "name": "REVIEW_RATING",
+            "type": "int"
+        },
+        {
+            "name": "REVIEW_TEXT",
+            "type": "string"
+        },
+        {
+            "name": "CREATED_AT",
+            "type": {
+                "type": "long",
+                "flink.precision": 3,
+                "flink.version": 1,
+                "logicalType": "local-timestamp-millis"
+            }
+        }
+    ]
+}

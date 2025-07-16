@@ -3,8 +3,8 @@ storyboard.md
 shadow-traffic-license.env
 TODO.txt
 data/connections/*
-data/generators/*
-data/schemas/*
+tests
+agent
 
 ####
 # SSL/TLS

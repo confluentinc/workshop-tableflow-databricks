@@ -1,0 +1,43 @@
+{
+    "type": "record",
+    "name": "BookingEvent",
+    "fields": [
+        {
+            "name": "BOOKING_ID",
+            "type": "string"
+        },
+        {
+            "name": "CUSTOMER_EMAIL",
+            "type": "string"
+        },
+        {
+            "name": "HOTEL_ID",
+            "type": "string"
+        },
+        {
+            "name": "CHECK_IN",
+            "type": "long"
+        },
+        {
+            "name": "CHECK_OUT",
+            "type": "long"
+        },
+        {
+            "name": "OCCUPANTS",
+            "type": "int"
+        },
+        {
+            "name": "PRICE",
+            "type": "int"
+        },
+        {
+            "name": "CREATED_AT",
+            "type": {
+                "type": "long",
+                "flink.precision": 3,
+                "flink.version": 1,
+                "logicalType": "local-timestamp-millis"
+            }
+        }
+    ]
+}

@@ -1,0 +1,148 @@
+{
+    "name": "review_generator_streaming",
+    "topic": "hotel_reviews",
+    "connection": "confluent",
+    "localConfigs": {
+        "maxEvents": 10,
+        "avroSchemaHint": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/schemas/review_schema.avsc"
+        },
+        "throttleMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                100000,
+                150000
+            ]
+        }
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        },
+        "oneStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_1_star.json"
+        },
+        "twoStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_2_star.json"
+        },
+        "threeStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_3_star.json"
+        },
+        "fourStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_4_star.json"
+        },
+        "fiveStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_5_star.json"
+        }
+    },
+    "value": {
+        "REVIEW_ID": {
+            "_gen": "sequentialString",
+            "startingFrom": 550001000,
+            "expr": "R~d"
+        },
+        "BOOKING_ID": {
+            "_gen": "lookup",
+            "name": "booking_generator_historical",
+            "path": [
+                "value",
+                "BOOKING_ID"
+            ]
+        },
+        "REVIEW_RATING": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 10,
+                    "value": 1
+                },
+                {
+                    "weight": 20,
+                    "value": 2
+                },
+                {
+                    "weight": 30,
+                    "value": 3
+                },
+                {
+                    "weight": 25,
+                    "value": 4
+                },
+                {
+                    "weight": 15,
+                    "value": 5
+                }
+            ],
+            "avroHint": {
+                "type": "int"
+            }
+        },
+        "REVIEW_TEXT": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 10,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "oneStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 20,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "twoStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 30,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "threeStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 25,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "fourStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 15,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "fiveStarTexts"
+                        }
+                    }
+                }
+            ],
+            "avroHint": {
+                "type": "string"
+            }
+        },
+        "CREATED_AT": {
+            "_gen": "now"
+        }
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "name": "customer_generator",
+    "table": "sample.customer",
+    "connection": "oracle",
+    "localConfigs": {
+        "maxEvents": 1000
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        }
+    },
+    "row": {
+        "CUSTOMER_ID": {
+            "_gen": "sequentialString",
+            "startingFrom": 200000303,
+            "expr": "C~d"
+        },
+        "EMAIL": {
+            "_gen": "string",
+            "expr": "#{Internet.emailAddress}"
+        },
+        "FIRST_NAME": {
+            "_gen": "string",
+            "expr": "#{Name.firstName}"
+        },
+        "LAST_NAME": {
+            "_gen": "string",
+            "expr": "#{Name.lastName}"
+        },
+        "BIRTH_DATE": {
+            "_gen": "string",
+            "expr": "#{Date.birthday 'yyyy-MM-dd'}"
+        },
+        "CREATED_AT": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 6048000000"
+        }
+    }
+}

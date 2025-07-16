@@ -1,6 +1,6 @@
 # Workshop Clean Up
 
-## Overview
+## 🗺️ Overview
 
 Congratulations on completing your real-time AI-powered marketing pipeline! Now it's time to responsibly clean up your cloud resources to avoid unnecessary charges and maintain good cloud hygiene.
 
@@ -21,15 +21,6 @@ These resources were created through web interfaces and need to be manually remo
 
 #### Confluent
 
-##### Disable Tableflow Integrations
-
-1. Navigate to your Confluent Cloud environment and cluster
-2. Click on *Topics* in the left sidebar
-3. For each topic with Tableflow enabled (`HOTEL_BOOKINGS`, `HOTEL_REVIEWS`, `HOTEL_CATALOG`):
-   - Click on the topic name
-   - Click on the *Tableflow* tab
-   - Click *Disable Tableflow* and confirm
-
 ##### Remove Oracle XStream Connector
 
 1. Click on *Connectors* in the left sidebar
@@ -40,33 +31,26 @@ These resources were created through web interfaces and need to be manually remo
 
 #### Databricks
 
-##### Remove Workspace Resources:**
+##### Remove Workspace Resources
 
 1. Navigate to your Databricks workspace
 2. Delete any notebooks you created or imported
 3. In the *SQL Editor*, drop the external Delta tables:
 
-   ```sql
-   DROP TABLE IF EXISTS hotel_reviews;
-   DROP TABLE IF EXISTS hotel_bookings;
-   DROP TABLE IF EXISTS hotel_catalog;
-   ```
+```sql
+DROP TABLE IF EXISTS hotel_stats;
+DROP TABLE IF EXISTS clickstream;
+DROP TABLE IF EXISTS denormalized_hotel_bookings;
+```
 
 **Clean Up Service Principal (Optional):**
 
 1. Go to Settings → Identity and access → Service principals
 2. Find your workshop service principal
 3. Remove it from the admins group
-4. Delete the service principal (optional)
+4. Delete the service principal
 
-**Restore Network Policy:**
-
-1. Navigate to [Databricks Account Console](https://accounts.cloud.databricks.com/)
-2. Click *Cloud resources* → *Network* → *Network policies*
-3. Click on the *default policy*
-4. Restore your original network access settings if you modified them
-
-### Part #2: Automatic Cloud Resource Removal
+### Part 2: Automatic Cloud Resource Removal
 
 Now that manual resources are cleaned up, use Terraform to efficiently destroy the remaining cloud infrastructure:
 
@@ -74,27 +58,30 @@ Now that manual resources are cleaned up, use Terraform to efficiently destroy t
 2. Navigate to the workshop's *terraform* directory
 3. Remove the provider integration from Terraform state
 
-   ```sh
-   terraform state rm confluent_provider_integration.s3_tableflow_integration
-   ```
+```sh
+terraform state rm confluent_provider_integration.s3_tableflow_integration
+```
 
-   > **Note**: This removes the resource from Terraform's tracking but doesn't delete it from Confluent Cloud. It will be cleaned up when the environment is destroyed.
+> [!NOTE]
+> **State Removal Only**
+>
+> This removes the resource from Terraform's tracking but doesn't delete it from Confluent Cloud. It will be cleaned up when the environment is destroyed in the next step.
 
 4. Destroy all remaining infrastructure:
 
-   ```sh
-   terraform destroy -auto-approve
-   ```
+```sh
+terraform destroy -auto-approve
+```
 
 5. Verify cleanup completion by checking that resources are removed from:
    - AWS Console (EC2 instances, S3 buckets, IAM roles)
    - Confluent Cloud (environments, clusters)
    - Databricks (workspaces, storage credentials)
 
-## Conclusion
+## 🏁 Conclusion
 
-🎉 **Excellent work!** You've successfully completed the entire Confluent Tableflow + Databricks workshop and have very responsibly cleaned up all cloud resources - go ahead and give yourself a pat on the back, you deserve it!
+🎉 **Excellent work!** You've successfully completed this entire workshop and have responsibly cleaned up all cloud resources - go ahead and give yourself a pat on the back, you deserve it!
 
-## What's Next
+## ➡️ What's Next
 
-Now that you've completed all of the labs that comprise this workshop, return to the [end of the README](../../README.md#conclusion) and complete this workshop.
+Now that you've completed all of the labs that comprise this workshop, review [this recap](./recap.md) of what you've accomplished.

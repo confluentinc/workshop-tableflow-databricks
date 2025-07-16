@@ -1,0 +1,132 @@
+{
+    "name": "clickstream_generator_streaming",
+    "topic": "clickstream",
+    "connection": "confluent",
+    "localConfigs": {
+        "maxEvents": 125,
+        "avroSchemaHint": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/schemas/clickstream_schema.avsc"
+        },
+        "throttleMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                10000,
+                15000
+            ]
+        }
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        }
+    },
+    "vars": {
+        "hotel_id": {
+            "_gen": "lookup",
+            "connection": "oracle",
+            "table": "sample.hotel",
+            "path": [
+                "row",
+                "HOTEL_ID"
+            ]
+        },
+        "room_id": {
+            "_gen": "uniformDistribution",
+            "decimals": 0,
+            "bounds": [
+                1,
+                500
+            ]
+        }
+    },
+    "value": {
+        "ACTIVITY_ID": {
+            "_gen": "sequentialString",
+            "startingFrom": 350001000,
+            "expr": "A~d"
+        },
+        "CUSTOMER_EMAIL": {
+            "_gen": "lookup",
+            "connection": "oracle",
+            "table": "sample.customer",
+            "path": [
+                "row",
+                "EMAIL"
+            ],
+            "histogram": {
+                "_gen": "histogram",
+                "bins": [
+                    {
+                        "bin": 0.8,
+                        "frequency": 1
+                    },
+                    {
+                        "bin": 0.2,
+                        "frequency": 0
+                    }
+                ]
+            }
+        },
+        "HOTEL_ID": {
+            "_gen": "var",
+            "var": "hotel_id"
+        },
+        "ACTION": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 5,
+                    "value": "page-view"
+                },
+                {
+                    "weight": 3,
+                    "value": "page-click"
+                },
+                {
+                    "weight": 2,
+                    "value": "booking-click"
+                }
+            ],
+            "avroHint": {
+                "type": "string"
+            }
+        },
+        "EVENT_DURATION": {
+            "_gen": "normalDistribution",
+            "mean": 180,
+            "sd": 30,
+            "decimals": 0,
+            "clamp": [
+                53,
+                592
+            ]
+        },
+        "URL": {
+            "_gen": "oneOf",
+            "choices": [
+                {
+                    "_gen": "string",
+                    "expr": "/hotels/#{hotel_id}"
+                },
+                {
+                    "_gen": "string",
+                    "expr": "/hotels/#{hotel_id}/rooms/#{room_id}"
+                }
+            ]
+        },
+        "CREATED_AT": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                {
+                    "_gen": "math",
+                    "expr": "currentTimeInMs - 4838400000"
+                },
+                {
+                    "_gen": "now"
+                }
+            ],
+            "decimals": 0
+        }
+    }
+}

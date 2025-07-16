@@ -1,15 +1,6 @@
 
 # ===============================
-# Databricks Provider
-# ===============================
-
-# data "databricks_current_user" "current_principal_from_workspace_provider" {
-#   # Explicitly link this data source to the provider instance with alias "workspace"
-#   provider = databricks.workspace
-# }
-
-# ===============================
-# Unity Catalog Storage Credential
+# Storage Credential
 # ===============================
 
 resource "databricks_storage_credential" "external_credential" {
@@ -29,7 +20,7 @@ resource "databricks_storage_credential" "external_credential" {
 }
 
 # ===============================
-# Unity Catalog External Location
+# External Location
 # ===============================
 
 resource "databricks_external_location" "s3_bucket" {
@@ -47,7 +38,7 @@ resource "databricks_external_location" "s3_bucket" {
 }
 
 # ===============================
-# Unity Catalog Grants
+# Grants
 # ===============================
 
 resource "databricks_grants" "storage_credential_grants" {

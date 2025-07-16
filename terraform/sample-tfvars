@@ -3,6 +3,7 @@
 # ===============================
 email        = ""
 cloud_region = ""
+call_sign    = ""
 
 # ===============================
 # Confluent Cloud Overrides

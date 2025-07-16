@@ -1,0 +1,118 @@
+{
+    "name": "booking_generator_historical",
+    "topic": "bookings",
+    "connection": "confluent",
+    "localConfigs": {
+        "maxEvents": 400,
+        "avroSchemaHint": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/schemas/booking_schema.avsc"
+        }
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        }
+    },
+    "vars": {
+        "check_in_time": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                {
+                    "_gen": "math",
+                    "expr": "currentTimeInMs - 4438400000"
+                },
+                {
+                    "_gen": "math",
+                    "expr": "currentTimeInMs - 500000000"
+                }
+            ],
+            "decimals": 0
+        },
+        "stay_duration": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                172800000,
+                432000000
+            ],
+            "decimals": 0
+        }
+    },
+    "value": {
+        "BOOKING_ID": {
+            "_gen": "sequentialString",
+            "startingFrom": 600000100,
+            "expr": "B~d"
+        },
+        "CUSTOMER_EMAIL": {
+            "_gen": "lookup",
+            "connection": "oracle",
+            "table": "sample.customer",
+            "path": [
+                "row",
+                "EMAIL"
+            ],
+            "histogram": {
+                "_gen": "histogram",
+                "bins": [
+                    {
+                        "bin": 0.8,
+                        "frequency": 2
+                    }
+                ]
+            }
+        },
+        "HOTEL_ID": {
+            "_gen": "lookup",
+            "connection": "oracle",
+            "table": "sample.hotel",
+            "path": [
+                "row",
+                "HOTEL_ID"
+            ]
+        },
+        "CHECK_IN": {
+            "_gen": "var",
+            "var": "check_in_time"
+        },
+        "CHECK_OUT": {
+            "_gen": "math",
+            "expr": "check_in_time + stay_duration",
+            "decimals": 0
+        },
+        "OCCUPANTS": {
+            "_gen": "normalDistribution",
+            "mean": 3,
+            "sd": 1,
+            "decimals": 0,
+            "clamp": [
+                1,
+                6
+            ]
+        },
+        "PRICE": {
+            "_gen": "normalDistribution",
+            "mean": 200,
+            "sd": 25,
+            "decimals": 0,
+            "clamp": [
+                125,
+                400
+            ]
+        },
+        "CREATED_AT": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                {
+                    "_gen": "math",
+                    "expr": "check_in_time - 1814400000"
+                },
+                {
+                    "_gen": "math",
+                    "expr": "check_in_time - 172800000"
+                }
+            ],
+            "decimals": 0
+        }
+    }
+}
