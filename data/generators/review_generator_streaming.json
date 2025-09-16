@@ -48,12 +48,9 @@
             "expr": "R~d"
         },
         "BOOKING_ID": {
-            "_gen": "lookup",
-            "name": "booking_generator_historical",
-            "path": [
-                "value",
-                "BOOKING_ID"
-            ]
+            "_gen": "sequentialString",
+            "startingFrom": 600000300,
+            "expr": "B~d"
         },
         "REVIEW_RATING": {
             "_gen": "weightedOneOf",
