@@ -18,7 +18,8 @@
         },
         "EMAIL": {
             "_gen": "string",
-            "expr": "#{Internet.emailAddress}"
+            "expr": "#{Internet.emailAddress}",
+            "sqlHint": "VARCHAR2(255) NOT NULL PRIMARY KEY"
         },
         "FIRST_NAME": {
             "_gen": "string",

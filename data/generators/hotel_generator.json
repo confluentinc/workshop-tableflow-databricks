@@ -281,7 +281,8 @@
         "HOTEL_ID": {
             "_gen": "sequentialString",
             "startingFrom": 10000305,
-            "expr": "H~d"
+            "expr": "H~d",
+            "sqlHint": "VARCHAR2(255) NOT NULL PRIMARY KEY"
         },
         "NAME": {
             "_gen": "string",

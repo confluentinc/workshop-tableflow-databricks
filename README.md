@@ -6,6 +6,8 @@
 
 **Technical Requirements**: Working knowledge of cloud platforms (AWS), SQL, and basic command-line operations
 
+**Workshop Type**: This workshop is designed to work for both *self-service* and *instructor-led* scenarios.
+
 ## 📖 Overview
 
 This hands-on workshop demonstrates how to build a complete **real-time AI-powered marketing pipeline** for the hospitality industry. You will play the role of a data engineer at *River Hotels*, a fictitious hospitality company, to create an end-to-end data architecture proof-of-concept that transforms raw customer interactions into personalized marketing campaigns using cutting-edge streaming technologies.
@@ -28,7 +30,10 @@ If you have any issues or feedback for this workshop, Please let us know in this
 > - Amazon Bedrock (OPTIONAL - for AI model access)
 > - Amazon VPC (for networking)
 >
-> **Recommended AWS regions**: us-west-2, us-east-1, us-east-2
+> **Recommended AWS regions**:
+>
+> 1. `us-west-2` or `us-east-2`
+> 2. `us-east-1`
 >
 > If you are going through this workshop with a presenter from Confluent, they should provide additional guidance/limitations for cloud regions as needed.
 
@@ -37,10 +42,10 @@ You must complete each of these in order to successfully go through this worksho
 ### Required Accounts
 
 - **Confluent Cloud account** with admin privileges - [sign up for a free trial](https://www.confluent.io/confluent-cloud/tryfree?utm_campaign=tm.fm-ams_cd.Build-an-A[…]ne_id.701Uz00000fEQeEIAW&utm_source=zoom&utm_medium=workshop)
-- **Databricks account** and existing workspace - can be a [free trial account](https://docs.databricks.com/aws/en/getting-started/express-setup) OR a [free edition account](https://login.databricks.com/?intent=SIGN_UP&provider=DB_FREE_TIER)
-- **AWS account** with permissions to create cloud resources (EC2, S3, VPC, IAM, Bedrock)
+- **Databricks account** and existing workspace - paid or [free edition account](https://login.databricks.com/?intent=SIGN_UP&provider=DB_FREE_TIER) are strongly recommended. [Free trial account](https://docs.databricks.com/aws/en/getting-started/express-setup) sometimes experience data syncing issues with this workshop, so we recommend that you use **paid** or **free edition** accounts.
+- **AWS account** with permissions to create cloud resources (EC2, S3, VPC, IAM, Bedrock (optional))
 
-> [!WARNING]
+> [!IMPORTANT]
 > **Payment Method or Promo Code Required for Confluent Cloud**
 >
 > You must either add a [payment method](https://docs.confluent.io/cloud/current/billing/overview.html#manage-your-payment-method) or [redeem a coupon code](https://docs.confluent.io/cloud/current/billing/overview.html#redeem-a-promo-code-or-view-balance) to be able to run this workshop.
@@ -53,6 +58,8 @@ You must complete each of these in order to successfully go through this worksho
 - **[Git](https://git-scm.com/downloads)** installed
 
 ### Additional Setup Required
+
+Instructions for these steps appear further into the workshop:
 
 - **Databricks service principal** with appropriate permissions
 - **AWS Bedrock access** enabled for Claude models in your chosen region
@@ -153,7 +160,7 @@ There are five normalized interrelated datasets that you will be streaming to Co
 
 ### 🔗 Data Entity Relationship
 
-This diagram depicts how these datasets connect to each other:
+This diagram depicts how these datasets relate to each other:
 
 ```mermaid
 erDiagram
@@ -217,16 +224,17 @@ erDiagram
 ### 🧩 Key Components
 
 1. **Data Sources**
-   - **Oracle Database**: Customer and Hotel master data with XStream CDC
-   - **ShadowTraffic**: Realistic synthetic data generation for Bookings, Reviews, and Clickstream events
+   - **ShadowTraffic**: Realistic synthetic data generation of:
+     - Customer and Hotel data, which is sent to an Oracle database
+     - Bookings, Reviews, and Clickstream events, which are all produced to Kafka topics
 
 2. **Ingestion Layer**
    - **Oracle XStream CDC Connector**: Real-time change data capture from Oracle
-   - **Kafka Producers**: Stream synthetic data from ShadowTraffic to Confluent Cloud topics
+   - **Kafka Producers**: Stream synthetic data directly from ShadowTraffic to Confluent Cloud topics
 
 3. **Processing Layer**
    - **Apache Flink SQL**: Real-time stream processing and data enrichment
-   - **AWS Bedrock Integration**: AI-powered review summarization using Claude models
+   - **(Optional) AWS Bedrock Integration**: AI-powered review summarization using Claude models
    - **Stream Analytics**: Identification of high-value prospects and customer behavior analysis
 
 4. **Integration Layer**
@@ -238,56 +246,76 @@ erDiagram
    - **Databricks Genie**: Natural language interface for business intelligence
    - **AI Agents**: Intelligent hotel selection, review analysis, and customer targeting for automated marketing campaigns
 
-### 🗂️ Data Flow
-
-1. **Customer and Hotel data** streams from Oracle via XStream CDC
-2. **Behavioral data** (clickstream, bookings, reviews) generated by ShadowTraffic
-3. **Stream processing** with Flink SQL enriches data and applies AI models
-4. **Enriched streams** automatically sync to Delta Lake via Tableflow
-5. **Business users** query data and generate AI-powered insights in Databricks
-
 ## 🔬 Workshop Labs
 
-This workshop is organized into four sequential labs listed below.
+This workshop is organized into seven sequential labs listed below.
 
 Each lab builds upon the previous one, so start with LAB 1 and continue sequentially until completion.
 
-### [LAB 1: Infrastructure Deployment and Data Generation](./assets/labs/LAB1_terraform_datagen.md)
+### [LAB 1: Account Setup](./labs/LAB1_account_setup/LAB1.md)
 
-**Duration**: ~35 minutes
+**Duration**: ~10 minutes
 
-Deploy complete multi-cloud infrastructure using Terraform and establish realistic data generation:
+Configure cloud platform accounts and credentials:
 
-- **Multi-Cloud Infrastructure**: AWS (EC2, S3, VPC), Confluent Cloud, Databricks
-- **Oracle Database Setup**: Oracle XE with XStream CDC configuration
-- **Data Generation**: ShadowTraffic deployment for realistic hospitality data
-- **Security Configuration**: IAM roles, service principals, and network setup
+- **Repository Setup**: Clone workshop repository and prepare workspace
+- **Confluent Cloud Configuration**: Set up environment and API keys
+- **Databricks Account Setup**: Configure service principal and workspace access
+- **AWS CLI Authentication**: Establish AWS credentials and permissions
 
-### [LAB 2: Stream Processing and Data Enrichment](./assets/labs/LAB2_confluent.md)
+### [LAB 2: Cloud Infrastructure Deployment](./labs/LAB2_cloud_deployment/LAB2.md)
 
-**Duration**: ~20 minutes
+**Duration**: ~10 minutes
+
+Deploy the infrastructure foundation using Terraform:
+
+- **Multi-Cloud Infrastructure Deployment**: Provision AWS, Confluent Cloud, and Databricks resources
+- **Infrastructure Validation**: Verify resource creation and connectivity
+- **Platform Integration**: Establish secure connections between cloud platforms
+
+### [LAB 3: Tableflow and Connector Setup](./labs/LAB3_tableflow_and_connector/LAB3.md)
+
+**Duration**: ~15 minutes
+
+Connect systems and enable data streaming:
+
+- **Unity Catalog Integration**: Configure Confluent Tableflow with Databricks Unity Catalog
+- **Oracle Data Streaming**: Set up Oracle XStream CDC connector for real-time database changes
+
+### [LAB 4: Data Generation](./labs/LAB4_data_generation/LAB4.md)
+
+**Duration**: ~10 minutes
+
+Generate realistic customer behavior data:
+
+- **Realistic Data Generation**: Deploy ShadowTraffic for authentic hospitality industry data patterns
+- **Topic Validation**: Verify Oracle CDC and ShadowTraffic data streaming to Kafka topics
+- **Tableflow Integration**: Enable automated Delta Lake synchronization for clickstream data
+
+### [LAB 5: Stream Processing](./labs/LAB5_stream_processing/LAB5.md)
+
+**Duration**: ~15 minutes
 
 Transform raw data streams into intelligent, enriched data products:
 
-- **CDC Integration**: Oracle XStream connector for real-time database changes
-- **Stream Processing**: Flink SQL queries for customer behavior analysis
-<!-- - **AI Integration**: AWS Bedrock Claude models for review summarization -->
-- **Delta Lake Sync**: Tableflow configuration for automated data streaming to S3
+- **Stream Processing**: Build Flink SQL queries for real-time data enrichment and denormalization
+- **Data Product Creation**: Create snapshot tables and interval joins for reliable CDC processing
+- **Delta Lake Sync**: Configure Tableflow for automated streaming to Delta Lake tables
 
-### [LAB 3: Analytics and AI-Powered Marketing Automation](./assets/labs/LAB3_databricks.md)
+### [LAB 6: Analytics and AI-Powered Marketing Automation](./labs/LAB6_databricks/LAB6.md)
 
 **Duration**: ~25 minutes
 
 Generate actionable insights and AI-powered marketing campaigns:
 
-- **Delta Lake Analytics**: External table creation and querying
-- **Business Intelligence**: Databricks Genie for natural language insights
-- **Marketing Automation**: AI agent that identifies underperforming hotels, generates social media content based on customer reviews, and creates targeted customer lists
-- **End-to-End Validation**: Complete pipeline testing and validation
+- **Delta Lake Analytics Integration**: Connect streaming Delta tables from Tableflow to Databricks
+- **AI-Powered Business Intelligence**: Use Databricks Genie for natural language insights
+- **Intelligent Marketing Automation**: Deploy AI agents for hotel promotion and customer targeting
+- **End-to-End Pipeline Validation**: Complete real-time journey from customer behavior to AI-generated marketing content
 
-### [LAB 4: Resource Cleanup](./assets/labs/LAB4_tear_down.md)
+### [LAB 7: Resource Cleanup](./labs/LAB7_clean_up/LAB7.md)
 
-**Duration**: ~10 minutes
+**Duration**: ~5 minutes
 
 Responsible cleanup of all provisioned cloud resources:
 
@@ -297,23 +325,25 @@ Responsible cleanup of all provisioned cloud resources:
 
 ### Additional Resources
 
-- **[Recap](./assets/labs/recap.md)**: Summary of accomplishments and business value delivered
-- **[Troubleshooting](./assets/labs/troubleshooting.md)**: Common issues and solutions
+- **[Recap](./labs/recap.md)**: Summary of accomplishments and business value delivered
+- **[Troubleshooting](./labs/troubleshooting.md)**: Common issues and solutions
+- **[Advanced Flink SQL Patterns](./labs/flink-joins.md)**: Detailed guide for streaming join patterns and schema management
+- **[Optional: Bedrock LLM Integration](./labs/optional_bedrock_llm.md)**: AWS Bedrock integration for AI-powered review summarization
 
 ## 🛠️ Technical Stack
 
 ### Core Technologies
 
 - **[Terraform](https://terraform.io/)**: Infrastructure as Code for multi-cloud deployment
+- **[Oracle XStream](https://docs.oracle.com/en/database/oracle/oracle-database/21/xstrm/)**: Change data capture for real-time data streaming
 - **[Apache Kafka](https://kafka.apache.org/)**: Distributed streaming platform via Confluent Cloud
 - **[Apache Flink](https://flink.apache.org/)**: Stream processing and real-time analytics
 - **[Delta Lake](https://delta.io/)**: Open-source storage framework for data lakes
-- **[Oracle XStream](https://docs.oracle.com/en/database/oracle/oracle-database/21/xstrm/)**: Change data capture for real-time data streaming
 
 ### Cloud Platforms
 
-- **[AWS](https://aws.amazon.com/)**: Primary cloud provider (EC2, S3, VPC, Bedrock)
 - **[Confluent Cloud](https://confluent.io/)**: Fully managed Apache Kafka service
+- **[AWS](https://aws.amazon.com/)**: Primary cloud provider (EC2, S3, VPC, Bedrock)
 - **[Databricks](https://databricks.com/)**: Unified analytics platform for big data and ML
 
 ### AI/ML Services
@@ -322,7 +352,7 @@ Responsible cleanup of all provisioned cloud resources:
 - **[Databricks Genie](https://docs.databricks.com/en/genie/index.html)**: Natural language interface for analytics
 - **[Databricks Mosaic AI Models](https://docs.databricks.com/aws/en/machine-learning/model-serving/foundation-model-overview)**: Large, powerful LLMs that can be utilized in custom agents
 
-### Development Tools
+### Tools
 
 - **[Docker](https://docker.com/)**: Containerization for Oracle database and ShadowTraffic
 - **[Git](https://git-scm.com/)**: Version control
@@ -331,6 +361,11 @@ Responsible cleanup of all provisioned cloud resources:
 
 ## 🏁 Conclusion
 
-Please help us improve this workshop by leaving your feedback in this [quick 2-minute survey](https://docs.google.com/forms/d/e/1FAIpQLSfoVUqUFTAxHKJop7t8TvfZ4gItQxJ1RaM4oy72DjtK-HWoJg/viewform?usp=pp_url&entry.179681974=Tableflow+and+Databricks)!
+Congratulations, you have completed this hands-on workshop to Streamline Agentic AI with Confluent and Databricks!
 
-Thanks!
+> [!IMPORTANT]
+> **Your Feedback Helps!**
+>
+> Please help us improve this workshop by leaving your feedback in this [quick 2-minute survey](https://docs.google.com/forms/d/e/1FAIpQLSfoVUqUFTAxHKJop7t8TvfZ4gItQxJ1RaM4oy72DjtK-HWoJg/viewform?usp=pp_url&entry.179681974=Tableflow+and+Databricks)!
+>
+> Thanks!

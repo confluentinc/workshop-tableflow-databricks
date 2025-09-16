@@ -245,8 +245,35 @@ resource "aws_instance" "oracle_instance" {
     GRANT CREATE SESSION TO c##cfltuser CONTAINER=ALL;
     GRANT SET CONTAINER TO c##cfltuser CONTAINER=ALL;
     GRANT SELECT_CATALOG_ROLE TO c##cfltuser CONTAINER=ALL;
-    GRANT CREATE TABLE, CREATE SEQUENCE, CREATE TRIGGER TO c##cfltuser CONTAINER=ALL;
+        GRANT CREATE TABLE, CREATE SEQUENCE, CREATE TRIGGER TO c##cfltuser CONTAINER=ALL;
     GRANT FLASHBACK ANY TABLE, SELECT ANY TABLE, LOCK ANY TABLE TO c##cfltuser CONTAINER=ALL;
+    EXIT;
+    SQL_EOF
+
+    log "Create tables with proper primary keys"
+    sudo docker exec -i oracle-xe sqlplus c\#\#cfltuser/password@//localhost:1521/XEPDB1 <<'SQL_EOF'
+    -- Create CUSTOMER table with primary key
+    CREATE TABLE sample.customer (
+      CUSTOMER_ID VARCHAR2(50),
+      EMAIL VARCHAR2(255) CONSTRAINT customer_email_pk PRIMARY KEY,
+      FIRST_NAME VARCHAR2(100),
+      LAST_NAME VARCHAR2(100),
+      BIRTH_DATE VARCHAR2(10),
+      CREATED_AT NUMBER
+    );
+
+        -- Create HOTEL table with primary key
+    CREATE TABLE sample.hotel (
+      HOTEL_ID VARCHAR2(50) CONSTRAINT hotel_id_pk PRIMARY KEY,
+      NAME VARCHAR2(255),
+      CLASS VARCHAR2(50),
+      DESCRIPTION CLOB,
+      CITY VARCHAR2(100),
+      COUNTRY VARCHAR2(100),
+      ROOM_CAPACITY NUMBER,
+      CREATED_AT NUMBER
+    );
+
     EXIT;
     SQL_EOF
 
@@ -267,7 +294,6 @@ resource "aws_instance" "oracle_instance" {
     /
     EXIT;
     SQL_EOF
-
     sudo docker exec -i oracle-xe bash -c "ORACLE_SID=XE; export ORACLE_SID; sqlplus /nolog" <<'SQL_EOF'
     CONNECT sys/Welcome1 AS SYSDBA
     BEGIN

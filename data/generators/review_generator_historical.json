@@ -41,12 +41,9 @@
             "expr": "R~d"
         },
         "BOOKING_ID": {
-            "_gen": "lookup",
-            "name": "booking_generator_historical",
-            "path": [
-                "value",
-                "BOOKING_ID"
-            ]
+            "_gen": "sequentialString",
+            "startingFrom": 600000100,
+            "expr": "B~d"
         },
         "REVIEW_RATING": {
             "_gen": "weightedOneOf",
@@ -138,15 +135,12 @@
             "_gen": "uniformDistribution",
             "bounds": [
                 {
-                    "_gen": "lookup",
-                    "name": "booking_generator_historical",
-                    "path": [
-                        "value",
-                        "CHECK_OUT"
-                    ]
+                    "_gen": "math",
+                    "expr": "currentTimeInMs - 4838400000"
                 },
                 {
-                    "_gen": "now"
+                    "_gen": "math",
+                    "expr": "currentTimeInMs - 172800000"
                 }
             ],
             "decimals": 0,

@@ -85,6 +85,21 @@ output "s3_tableflow_integration_details" {
   sensitive = false
 }
 
+# Service Account API Keys for Connector Configuration
+output "confluent_service_account_credentials" {
+  description = "Service account API keys for Oracle XStream connector and other integrations"
+  value = {
+    service_account_id         = confluent_service_account.app-manager.id
+    kafka_api_key              = confluent_api_key.app-manager-kafka-api-key.id
+    kafka_api_secret           = confluent_api_key.app-manager-kafka-api-key.secret
+    schema_registry_api_key    = confluent_api_key.app-manager-schema-registry-api-key.id
+    schema_registry_api_secret = confluent_api_key.app-manager-schema-registry-api-key.secret
+    flink_api_key              = confluent_api_key.app-manager-flink-api-key.id
+    flink_api_secret           = confluent_api_key.app-manager-flink-api-key.secret
+  }
+  sensitive = true
+}
+
 # ------------------------------------------------------
 # Flink Compute Pool
 # ------------------------------------------------------

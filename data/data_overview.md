@@ -71,8 +71,8 @@ This approach eliminates manual configuration errors and ensures the ShadowTraff
 - **`clickstream_generator_streaming.json`** - Produces real-time clickstream events every 10-15 seconds
 - **`booking_generator_historical.json`** - Generates 400 historical booking records with realistic date relationships
 - **`booking_generator_streaming.json`** - Produces streaming booking events every 45-60 seconds
-- **`review_generator_historical.json`** - Generates 200 historical hotel reviews with rating-based text selection
-- **`review_generator_streaming.json`** - Produces streaming reviews every 100-150 seconds with intelligent review text matching
+- **`review_generator_historical.json`** - Generates 200 historical hotel reviews with unique booking references (B600000100-B600000299)
+- **`review_generator_streaming.json`** - Produces streaming reviews every 100-150 seconds with unique booking references (B600000300-B600000309)
 
 ### Review Text Resources
 
@@ -153,9 +153,81 @@ resource "local_file" "oracle_connection_config" {
 
 - **Variable-based Date Logic**: Booking generators ensure `CHECK_OUT` is 2-5 days after `CHECK_IN`
 - **Realistic Booking Patterns**: Historical bookings created 2-21 days before `CHECK_IN`
-- **Cross-Generator References**: Reviews reference actual booking IDs through lookups
+- **Unique Booking References**: Reviews use sequential booking ID references to ensure no duplicate reviews per booking
 - **Customer Behavior Modeling**: 80% of activities/bookings from repeat customers
 - **Timestamp Formatting**: All date fields use proper formatting with `decimals: 0`
+- **Master Data Timing**: Customer and hotel data generated in memory but delayed 15 minutes before Oracle insertion, simulating master data propagation timing
+
+### Unique Booking ID Constraint in Hotel Reviews
+
+To ensure data integrity, the review generators implement a unique constraint on `BOOKING_ID` references by using sequential generation instead of random lookups.
+
+#### The Challenge with Random Lookups
+
+ShadowTraffic's `lookup` function performs **random sampling with replacement**, meaning:
+
+```json
+// This approach allows duplicates!
+"BOOKING_ID": {
+    "_gen": "lookup",
+    "name": "booking_generator_historical",
+    "path": ["value", "BOOKING_ID"]
+}
+```
+
+**Example Scenario**:
+- Review 1: randomly selects `B600000150` ✅
+- Review 2: randomly selects `B600000200` ✅
+- Review 3: randomly selects `B600000150` ❌ **DUPLICATE!**
+- Review 4: randomly selects `B600000105` ✅
+
+This violates the business constraint that each booking should have **at most one review**.
+
+#### Workaround Solution: Sequential Non-Overlapping References
+
+**Implementation**:
+
+- **Historical Reviews** (200 reviews): Reference `B600000100` - `B600000299`
+- **Streaming Reviews** (10 reviews): Reference `B600000300` - `B600000309`
+
+```json
+// Historical reviews
+"BOOKING_ID": {
+    "_gen": "sequentialString",
+    "startingFrom": 600000100,
+    "expr": "B~d"
+}
+
+// Streaming reviews
+"BOOKING_ID": {
+    "_gen": "sequentialString",
+    "startingFrom": 600000300,
+    "expr": "B~d"
+}
+```
+
+> [!NOTE]
+> **Temporary Workaround**
+>
+> This solution is only meant to be temporary until a viable feature, like lookups that are constrained to find unique values, becomes available in ShadowTraffic.
+
+#### Benefits of This Approach
+
+- ✅ **Guaranteed Uniqueness**: Each booking ID appears in exactly one review
+- ✅ **Data Integrity**: Eliminates downstream processing issues from duplicate reviews
+- ✅ **Realistic Business Logic**: Mirrors real-world constraint where bookings have 0 or 1 review
+- ✅ **Workshop Focus**: Keeps complexity on core streaming concepts rather than data generation edge cases
+- ✅ **Clear Data Lineage**: Easy to understand which bookings have reviews (first 210 of 420 total)
+
+#### Business Impact
+
+**Review Distribution**:
+
+- **Total Bookings**: 420 (400 historical + 20 streaming)
+- **Bookings with Reviews**: 210 (200 historical + 10 streaming)
+- **Review Rate**: 50% (realistic for hospitality industry)
+
+This creates a authentic dataset for testing stream processing, analytics, and AI workflows without data quality issues interfering with learning objectives.
 
 ### Rating-Based Review System
 
@@ -219,22 +291,35 @@ The review generators implement a sophisticated rating-based text selection syst
    1. The `shadow-traffic-configuration.json` file contains a three-sequential-stage approach to generate both a batch of historical data and periodic ongoing streaming data
    2. Connections to Oracle and Confluent Cloud are prebuilt
 2. **Stage 1: Seed Data (Oracle Database)**
-   1. The `customer_generator` creates 10,000 customer records with timestamps of 10 weeks ago
+   1. The `customer_generator` creates 1,000 customer records with timestamps of 10 weeks ago
+      - **15-Minute Delay**: Records are generated in memory immediately but delayed 15 minutes before Oracle insertion
    2. The `hotel_generator` creates 30 hotel records across 9 countries with timestamps of 10 weeks ago
+      - **15-Minute Delay**: Records are generated in memory immediately but delayed 15 minutes before Oracle insertion
 3. **Stage 2: Historical Data (Kafka Topics)**
-   1. **Clickstream Generator (Historical)** - Generates 5,000 clickstream events with random timestamps over the past 8 weeks
-   2. **Booking Generator (Historical)** - Generates 500 booking records with random timestamps over the past 8 weeks
-   3. **Review Generator (Historical)** - Generates 200 hotel reviews with random timestamps over the past 8 weeks
+   1. **Clickstream Generator (Historical)** - Generates 3,000 clickstream events with random timestamps over the past 8 weeks
+   2. **Booking Generator (Historical)** - Generates 400 booking records with random timestamps over the past 8 weeks
+   3. **Review Generator (Historical)** - Generates 200 hotel reviews with unique booking references (B600000100-B600000299) and timestamps over the past 8 weeks
 4. **Stage 3: Streaming Data (Kafka Topics)**
-   1. **Clickstream Generator (Streaming)** - Produces messages every 9-14 seconds to the `clickstream` topic with a maximum of 100 events
+   1. **Clickstream Generator (Streaming)** - Produces messages every 10-15 seconds to the `clickstream` topic with a maximum of 125 events
       - References customer emails and hotel IDs from Oracle data
       - 80% of clickstream activity come from existing customers, 20% from anonymous users
-   2. **Booking Generator (Streaming)** - Produces messages every 42-59 seconds to the `bookings` topic with a maximum of 30 events
+   2. **Booking Generator (Streaming)** - Produces messages every 45-60 seconds to the `bookings` topic with a maximum of 20 events
       - Ensures that 20% of customers never appear in bookings
       - References customer emails and hotel IDs from Oracle data
-   3. **Review Generator (Streaming)** - Produces messages every 10-15 seconds to the `hotel_reviews` topic up to a max of 15 events
-      - Ensures all reviews have ratings between 3-5
-      - References booking IDs from historical bookings data
+   3. **Review Generator (Streaming)** - Produces messages every 100-150 seconds to the `hotel_reviews` topic up to a max of 10 events
+      - Includes all review ratings from 1-5 stars with weighted distribution
+      - References unique booking IDs (B600000300-B600000309) to ensure no duplicate reviews
+
+### Timing Strategy
+
+The practical reason for the 15-minute delay for customers and hotels data is to allow for the dockerized Oracle database to fully spin up and start accepting connections.
+
+However, The 15-minute delay for master data (customers and hotels) can simulate a realistic data pipeline simulation where:
+
+- **Kafka Streams** begin immediately with clickstream, booking, and review events
+- **Master Data** appears in Oracle after 15 minutes, simulating typical enterprise data propagation delays
+- **Lookup Operations** in Kafka consumers can demonstrate handling of missing reference data scenarios
+- **Data Dependencies** mirror real-world timing where transactional events may arrive before their related master data
 
 ## Usage
 
