@@ -91,7 +91,6 @@ resource "aws_iam_role_policy" "s3_access_policy" {
 
 # ===============================
 # S3 Bucket Policy for Additional Security
-# TODO IS THIS NECESSARY?
 # ===============================
 
 resource "aws_s3_bucket_policy" "tableflow_bucket_policy" {

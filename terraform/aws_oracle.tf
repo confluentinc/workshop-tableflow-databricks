@@ -83,7 +83,7 @@ data "aws_ami" "oracle_ami" {
 
 resource "aws_instance" "oracle_instance" {
   ami           = data.aws_ami.oracle_ami.id
-  instance_type = "t3.large"
+  instance_type = var.oracle_instance_type
   key_name      = aws_key_pair.tf_key.key_name
   subnet_id     = aws_subnet.public_subnet.id
 

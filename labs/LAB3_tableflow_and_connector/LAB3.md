@@ -105,7 +105,7 @@ graph LR
 
 **🔧 Committer Job:**
 
-- **Transactional Commits**: Commits snapshots to the Iceberg catalog with exactly-once semantics guaranteed
+- **Transactional Commits**: Commits snapshots to catalogs with exactly-once semantics guaranteed
 - **Catalog Sync**: Propagates changes to external catalogs like Unity Catalog and AWS Glue
 - **Metadata Management**: Maintains table metadata and ensures data consistency
 
@@ -158,6 +158,15 @@ After enabling Tableflow, you can monitor the pipeline through:
 
 In this section you will configure the Oracle XStream connector to capture real-time changes from your Oracle database and stream them to Confluent Cloud.
 
+> [!WARNING]
+> **15-20 minute Oracle Spin-up Time**
+>
+> It takes between 15-20 minutes for the Oracle database instance to fully spin up.
+>
+> If you try to establish the connector before the database is ready, then it will respond with various errors.
+>
+> **While you wait, we recommend you try out this optional [Data Governance ~7-minute lab](../LAB_data_governance/LAB_data_governance.md) to get hands on with Confluent features that can help you organize and ensure high quality data.**
+
 #### Navigate to the Oracle XStream Connector
 
 1. Click on *Connectors* in the left sidebar menu
@@ -169,8 +178,6 @@ In this section you will configure the Oracle XStream connector to capture real-
 #### Use Service Account API Key
 
 Instead of creating new API keys manually, you'll use the service account credentials that Terraform automatically created for you.
-
-<!-- TODO: Update these steps to use service account in the UI -->
 
 1. Select the **Service account** tile
 2. Select **Existing account** under the *Choose service account* section

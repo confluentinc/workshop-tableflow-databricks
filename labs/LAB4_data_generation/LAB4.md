@@ -80,11 +80,6 @@ You should see this output showing that it was successful in connecting to the d
 
 ![Shadow Traffic running successfully](images/shadow_traffic_success.png)
 
-> [!WARNING]
-> **Resource Startup Duration**
->
-> It may take **5-10 minutes** for some cloud resources, like the Oracle database on EC2, to finish initializing and start running. If you get any errors where the cloud resource isn't available or listening, wait a few minutes and try again.
-
 ### Step 2: Review Topics
 
 After successfully starting the data generating process, follow these steps to see the data streaming into Confluent Cloud:

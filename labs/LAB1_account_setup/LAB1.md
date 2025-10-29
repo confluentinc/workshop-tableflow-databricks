@@ -94,6 +94,15 @@ databricks_service_principal_client_id     = ""
 databricks_service_principal_client_secret = ""
 databricks_host                            = ""
 databricks_user_email                      = ""
+
+# ===============================
+# AWS Overrides
+# ===============================
+# Uncomment the line below if you are using an AWS free tier account:
+# oracle_instance_type = "m7i-flex.large"
+
+# AWS Free Tier now allows for c7i-flex.large and m7i-flex.large for accounts created after July 15, 2025
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/LaunchingAndUsingInstances.html
 ```
 
 > [!NOTE]
@@ -101,7 +110,7 @@ databricks_user_email                      = ""
 >
 >You are going to prefix all cloud resources you create through terraform with the `call_sign` variable, so enter a short value for it.
 >
->For example, it could be something like `neo` or `maverick`.  Pick something memorable, short, and fun.
+>For example, it could be something like `neo` or `maverick`.  Pick something memorable, short, and fun!
 
 Terraform requires API keys and configuration values to create resources across multiple cloud platforms. You'll configure these values in a `terraform.tfvars` file in the following steps.
 
@@ -257,7 +266,7 @@ With the AWS CLI already installed, follow [these instructions](https://docs.aws
 >
 > If you are using an AWS Workshop Studio account, click on the **Get AWS CLI credentials** link on your event home screen and follow the instructions for your operating system.
 >
-> Ensure that you set/export the variables in the same shell window that you will be running your terraform commands in.
+> **Ensure that you set/export the variables in the same shell window that you will be running your terraform commands in.**
 >
 > ![Menu for AWS CLI](images/aws_cli_credentials.png)
 
@@ -313,4 +322,4 @@ Your journey continues in **[LAB 2: Cloud Infrastructure Deployment](../LAB2_clo
 
 ## 🔧 Troubleshooting
 
-You can find potentially common issues and solutions or workarounds in the [Troubleshooting](./troubleshooting.md) guide.
+You can find potentially common issues and solutions or workarounds in the [Troubleshooting](../troubleshooting.md) guide.

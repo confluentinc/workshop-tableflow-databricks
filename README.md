@@ -16,7 +16,7 @@ This hands-on workshop demonstrates how to build a complete **real-time AI-power
 
 Watch this ~13 minute [demo video](https://youtu.be/yVLfYe39SKg) to see the solution to a similar use case.
 
-If you have any issues or feedback for this workshop, Please let us know in this [quick 2-minute survey](https://docs.google.com/forms/d/e/1FAIpQLSfoVUqUFTAxHKJop7t8TvfZ4gItQxJ1RaM4oy72DjtK-HWoJg/viewform?usp=pp_url&entry.179681974=Tableflow+and+Databricks)!
+If you have any issues with or feedback for this workshop, Please let us know in this [quick 2-minute survey](https://docs.google.com/forms/d/e/1FAIpQLSfoVUqUFTAxHKJop7t8TvfZ4gItQxJ1RaM4oy72DjtK-HWoJg/viewform?usp=pp_url&entry.179681974=Tableflow+and+Databricks)!
 
 ## ✅ Prerequisites
 
@@ -27,7 +27,7 @@ If you have any issues or feedback for this workshop, Please let us know in this
 >
 > - Amazon EC2 (for Oracle database hosting)
 > - Amazon S3 (for Delta Lake storage)
-> - Amazon Bedrock (OPTIONAL - for AI model access)
+
 > - Amazon VPC (for networking)
 >
 > **Recommended AWS regions**:
@@ -43,7 +43,7 @@ You must complete each of these in order to successfully go through this worksho
 
 - **Confluent Cloud account** with admin privileges - [sign up for a free trial](https://www.confluent.io/confluent-cloud/tryfree?utm_campaign=tm.fm-ams_cd.Build-an-A[…]ne_id.701Uz00000fEQeEIAW&utm_source=zoom&utm_medium=workshop)
 - **Databricks account** and existing workspace - paid or [free edition account](https://login.databricks.com/?intent=SIGN_UP&provider=DB_FREE_TIER) are strongly recommended. [Free trial account](https://docs.databricks.com/aws/en/getting-started/express-setup) sometimes experience data syncing issues with this workshop, so we recommend that you use **paid** or **free edition** accounts.
-- **AWS account** with permissions to create cloud resources (EC2, S3, VPC, IAM, Bedrock (optional))
+- **AWS account** with permissions to create cloud resources (EC2, S3, VPC, IAM)
 
 > [!IMPORTANT]
 > **Payment Method or Promo Code Required for Confluent Cloud**
@@ -62,7 +62,7 @@ You must complete each of these in order to successfully go through this worksho
 Instructions for these steps appear further into the workshop:
 
 - **Databricks service principal** with appropriate permissions
-- **AWS Bedrock access** enabled for Claude models in your chosen region
+- **Confluent Cloud Resource** API key and secret
 
 ## 🏨 Use Case
 
@@ -254,7 +254,7 @@ Each lab builds upon the previous one, so start with LAB 1 and continue sequenti
 
 ### [LAB 1: Account Setup](./labs/LAB1_account_setup/LAB1.md)
 
-**Duration**: ~10 minutes
+**Duration**: ~15 minutes
 
 Configure cloud platform accounts and credentials:
 
@@ -308,9 +308,8 @@ Transform raw data streams into intelligent, enriched data products:
 
 Generate actionable insights and AI-powered marketing campaigns:
 
-- **Delta Lake Analytics Integration**: Connect streaming Delta tables from Tableflow to Databricks
 - **AI-Powered Business Intelligence**: Use Databricks Genie for natural language insights
-- **Intelligent Marketing Automation**: Deploy AI agents for hotel promotion and customer targeting
+- **Intelligent Marketing Automation**: Craft and deploy a personalized AI agent for hotel promotion and customer targeting
 - **End-to-End Pipeline Validation**: Complete real-time journey from customer behavior to AI-generated marketing content
 
 ### [LAB 7: Resource Cleanup](./labs/LAB7_clean_up/LAB7.md)
@@ -328,7 +327,7 @@ Responsible cleanup of all provisioned cloud resources:
 - **[Recap](./labs/recap.md)**: Summary of accomplishments and business value delivered
 - **[Troubleshooting](./labs/troubleshooting.md)**: Common issues and solutions
 - **[Advanced Flink SQL Patterns](./labs/flink-joins.md)**: Detailed guide for streaming join patterns and schema management
-- **[Optional: Bedrock LLM Integration](./labs/optional_bedrock_llm.md)**: AWS Bedrock integration for AI-powered review summarization
+- **[Optional: Bedrock LLM Integration](./labs/optional_bedrock_llm/optional_bedrock_llm.md)**: AWS Bedrock integration for AI-powered review summarization
 
 ## 🛠️ Technical Stack
 

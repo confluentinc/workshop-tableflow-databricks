@@ -6,6 +6,10 @@ However, due to Tabeflow not yet supporting retract/upsert `changelog.mode`, thi
 
 Then we decided to leverage AWS Workshop Studio accounts for presenter-led hands-on workshops, and Workshop Studio accounts do not have Bedrock access in `us-east-2`, which is a cloud region we need to support.
 
+## Prerequisites
+
+- Amazon Bedrock available in your cloud region
+
 ## Terraform
 
 These snippet should be added back to the `confluent.tf` file
@@ -14,10 +18,6 @@ These snippet should be added back to the `confluent.tf` file
 locals {
   bedrock_ai_connection_endpoint = "https://bedrock-runtime.${var.cloud_region}.amazonaws.com/model/${var.aws_bedrock_anthropic_model_id}/invoke"
 }
-
-# Due to resource limits with AWS Workshop Studio accounts in that Bedrock is only available
-# in us-east-1 and us-west-2, we'll omit using this for the hands-on workkshop and add it back in later
-# TODO: Add back in later
 
 # Due to resource limits with AWS Workshop Studio accounts in that Bedrock is only available
 # in us-east-1 and us-west-2, we'll omit using this for the hands-on workkshop and add it back in later
@@ -72,7 +72,8 @@ aws_bedrock_anthropic_model_id = ""
 
 ## LAB 1
 
-Add this content below the [AWS account configuration section](./LAB1_terraform_datagen.md#configure-aws-account)
+<!-- Note: Update this reference to point to the correct LAB file -->
+Add this content to the AWS account configuration section:
 
 ##### Enable Claude Sonnet 3.7 on Your AWS Account
 
@@ -90,7 +91,7 @@ Follow these steps to enable **Claude 3.7 Sonnet** in your AWS account via Amazo
 4. Click **Available to request**, then select **Request model access**.
 5. In the request wizard, click **Next** and follow the prompts to complete the request.
 
-![Model Access in Bedrock Console](../assets/images/aws_bedrock_ai.png)
+![Model Access in Bedrock Console](./images/aws_bedrock_ai.png)
 
 > [!NOTE]
 > **⏱️ Provisioning May Take 5–10 Minutes**
@@ -104,7 +105,7 @@ Once enabled, you'll need to retrieve the **model ID** for use in your applicati
 2. Click on the **Anthropic** tile
 3. then select the **Claude Sonnet 3.7** model
 
-   ![Tile showing Claude 3.7 Sonnet AI model](../assets/images/aws_bedrock_claude_3-7.png)
+   ![Tile showing Claude 3.7 Sonnet AI model](./images/aws_bedrock_claude_3-7.png)
 
 4. Copy the **Model ID** located within the *Details* section
   The *Model ID* should look something like `anthropic.claude-3-7-sonnet-20250219-v1:0`
@@ -144,22 +145,24 @@ Save your `terraform.tfvars` file. It should look somewhat like this (these are 
 
 <!-- Todo: NEED TO change this -->
 
-![Example tfvars file](../assets/images/terraform_tfvars_example.png)
+![Example tfvars file](./images/terraform_tfvars_example.png)
 
 Save the file and continue to the next step.
 
 ### Verification Steps
 
-Add these bullet points after step 4 in [LAB 1: Verify Confluent Resources heading](./LAB1_terraform_datagen.md#verify-confluent-resources):
+<!-- Note: Update this reference to point to the correct LAB file -->
+Add these bullet points when verifying Confluent Resources:
 
 5. Click on the *Connections* tab
 6. Notice a row named *bedrock-claude-connection*
 
-   ![AWS integration details](../assets/images/confluent_integrations_bedrock.png)
+   ![AWS integration details](./images/confluent_integrations_bedrock.png)
 
 ## LAB 2
 
-Add this content below the [Aggregate Hotel Reviews section](./LAB2_confluent.md#combine-reviews-by-hotel):
+<!-- Note: Update this reference to point to the correct LAB file (likely LAB5: Stream Processing) -->
+Add this content after the hotel reviews aggregation section:
 
 #### Generate Review Summarizer
 
@@ -210,7 +213,7 @@ CREATE MODEL HOTEL_REVIEW_SUMMARIZER
 
 Now review the details of the model in the left panel:
 
-![Details about the AI Model that summarizes hotel reviews](../assets/images/confluent_flink_review_model.png)
+![Details about the AI Model that summarizes hotel reviews](./images/confluent_flink_review_model.png)
 
 This is a necessary step as the `ML_PREDICT` function is non-deterministic and may experience issues with update or delete operations in streaming mode.
 
