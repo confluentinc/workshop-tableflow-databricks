@@ -220,7 +220,7 @@ resource "databricks_grants" "external_location_grants" {
 resource "databricks_catalog" "tableflow_catalog" {
   provider = databricks.workspace
 
-  name          = "${local.prefix}-catalog-${random_id.env_display_id.hex}"
+  name          = "${local.prefix}-${random_id.env_display_id.hex}" # Removed "-catalog-" to shorten name for 64-char limit
   comment       = "Dedicated catalog for Confluent Tableflow integration"
   storage_root  = "s3://${aws_s3_bucket.tableflow_bucket.bucket}/catalog/"
   force_destroy = true # Allows terraform destroy to remove catalog

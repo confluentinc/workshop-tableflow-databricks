@@ -112,6 +112,10 @@ resource "confluent_flink_compute_pool" "flink-compute-pool" {
   environment {
     id = confluent_environment.staging.id
   }
+
+  timeouts {
+    create = "10m" # Fail after 10 minutes if stuck
+  }
 }
 
 # ------------------------------------------------------

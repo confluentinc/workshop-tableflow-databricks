@@ -12,7 +12,7 @@ variable "call_sign" {
 variable "project_name" {
   description = "Name of this project to use in prefix for resource names"
   type        = string
-  default     = "tableflow-databricks"
+  default     = "tf-db" # Shortened to avoid Databricks 64-char function name limit
 }
 
 variable "environment" {
@@ -29,6 +29,12 @@ variable "cloud_region" {
 # ---------------------
 # AWS variables
 # ---------------------
+
+variable "oracle_instance_type" {
+  description = "Oracle DB instance type"
+  type        = string
+  default     = "t3.large"
+}
 
 variable "aws_access_key_id" {
   description = "AWS Access Key ID"

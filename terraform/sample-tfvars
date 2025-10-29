@@ -19,3 +19,12 @@ databricks_service_principal_client_id     = ""
 databricks_service_principal_client_secret = ""
 databricks_host                            = ""
 databricks_user_email                      = ""
+
+# ===============================
+# AWS Overrides
+# ===============================
+# Uncomment the line below if you are using an AWS free tier account:
+# oracle_instance_type = "m7i-flex.large"
+
+# AWS Free Tier now allows for c7i-flex.large and m7i-flex.large for accounts created after July 15, 2025
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/LaunchingAndUsingInstances.html

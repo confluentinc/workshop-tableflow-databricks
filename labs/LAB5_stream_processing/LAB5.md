@@ -8,8 +8,8 @@ This lab transforms your raw data streams into intelligent, enriched data produc
 
 ```mermaid
 graph LR
-   A[1\. Explore Streaming Data] --> B[2\. Enrich Hotel Bookings]
-   B --> C[3\. Create Hotel Stats]
+   A[1\. Explore Streaming Data] --> B[2\. Denormalize Hotel Bookings]
+   B --> C[3\. Enrich Hotel Stats]
    C --> D[4\. Enable Tableflow]
    D --> E[5\. Validate Integration]
 ```
@@ -45,7 +45,7 @@ Apache Flink on Confluent.
 Follow these steps to navigate to the *Flink Compute Pool* that you spun up
 earlier with Terraform:
 
-1. Click on your workshop environment link
+1. Click on your workshop environment link in the navigation breadcrumbs
 2. Click on the `Flink` menu item in the left-side navigation
 
    ![Flink Compute Pools](images/confluent_environment_flink.png)

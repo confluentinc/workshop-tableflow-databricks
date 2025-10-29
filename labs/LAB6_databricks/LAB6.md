@@ -58,17 +58,20 @@ First, follow these steps to verify that the data is flowing in as expected:
 10. In the SQL editor, run this query to see if data is available
 
 ```sql
-SELECT * FROM denormalized_hotel_bookings LIMIT 20;
+SELECT * FROM clickstream LIMIT 20;
 ```
 
+You should see 20 records of clickstream data.
+
+<!-- TODO: Add screenshot here of clickstream -->
+
 > [!IMPORTANT]
-> **Data Sync Delay**
+> **10-15 Minute Data Sync**
 >
-> It may take 5-10 minutes for the above `SELECT` queries to return data in the results.
+> It may take 5-10 minutes for the `SELECT` queries to return data for the `denormalized_hotel_bookings` and
+> `hotel_stats` tables, as you may have only recently enabled them with TableFlow.
 >
 > ![Empty result set](images/databricks_sql_editor_query_no_rows.png)
->
-> You can review the [notebook](../../assets/resources/river_hotel_targeted_marketing_ai_agent.ipynb) containing the Agentic workflow you will implement while you wait for the data to arrive.
 
 ### Step 2: Derive Data Product Insights with Genie
 
@@ -136,7 +139,7 @@ Executing this final prompt will provide the *class* of hotel that you will use 
 
 Identify the *Hotel Class* with the lowest customer interest, you will use this in the next section to create an intelligent marketing agent.
 
-### Step 4: Create Marketing Campaign Agent
+### Step 3: Create and Deploy Marketing Campaign Agent
 
 In this section you will use a provided Jupyter Notebook to generate an AI agent that will identify hotels that need promotion and create targeted marketing campaigns for them!
 
@@ -187,16 +190,6 @@ flowchart TD
     style O fill:#aa2bce
 ```
 
-#### Get SQL Warehouse ID
-
-Your *SQL Warehouse ID* is needed for the Notebook. Follow these steps to retrieve it:
-
-1. Click on **SQL Warehouses** in the left panel
-2. Click on the warehouse where you want to execute this Notebook. If you are on a *trial* or *free edition* account, then click on the default *Serverless Starter Warehouse*
-3. Copy the ID next to the *Name* field
-
-    ![Databricks serverless warehouse configuration screen](images/databricks_warehouse_id.png)
-
 #### Import and Configure Notebook
 
 Follow these steps to import and use a pre-built Notebook to generate your AI Agent:
@@ -204,56 +197,39 @@ Follow these steps to import and use a pre-built Notebook to generate your AI Ag
 1. Click on the light-red **+ New** button in the top left of the screen
 2. Select **Notebook**
 3. Select **File**
-4. Browse for [this file](../../assets/resources/river_hotel_targeted_marketing_ai_agent.ipynb)
+4. Browse for [this file](./river_hotel_marketing_agent.ipynb)
 5. Click **Import**
 
    ![Import dialog with Notebook selected](images/databricks_import_notebook.png)
 
 6. Click on the Notebook name in the success modal to navigate to it, or find it using the *Search* bar at the top of the page
 
-#### Execute AI Agent
+7. Follow the instructions in the Notebook to create and deploy the marketing campaign agent.
 
-Now that you have successfully imported the Notebook, Fill out these widget fields at the top of the notebook with appropriate values for your Databricks account.
+#### Use Agent in AI Playground
 
-Here is an example:
+Now you can interact with your agent through AI Playground:
 
-- **catalog:** `****-tableflow-databricks-******`
-  - You can find this in the *Catalog explorer*
-- **database:** `lkc-******`
-  - You can find this in the *Catalog explorer*
-- **warehouse_id:** `77ad79eadc0d123`
-  - You copied this in a previous step
-- **hotel_class:** `Extended Stay`
-  - You derived this in the previous step with *Genie*
-- **hotel_to_promote**: ` `
-  - Leave this one blank until later in the notebook
+1. Click on **Playground** in the left sidebar (under the *AI* section)
+2. In the model dropdown, you should now see your `river-hotel-agent-playground` endpoint
+3. Select it and start chatting with your agent!
 
-It should look like this:
+4. Try these example prompts:
+   - "Which hotel should we create a marketing campaign for in the Airport class?"
+   - "Find the best hotel to promote in the Luxury class"
+   - "Create a targeted campaign for Extended Stay hotels"
 
-![Notebook parameter fields](./images/databricks_notebook_parameters.png)
+5. Your agent will automatically:
+   - Identify an underperforming hotel with good reviews
+   - Generate a positive marketing post based on customer reviews
+   - Provide a list of target customers
 
-Start with the first cell and execute each one in succession, reading through the comments and executing the code. The notebook will guide you through:
+**Congratulations!** Your AI marketing agent is now deployed and accessible through multiple interfaces:
 
-1. **Creating SQL Functions**: Three user-defined functions that serve as tools for the AI agent
-2. **Building the AI Agent**: Using LangChain and Databricks LLM endpoints to create an intelligent agent
-3. **Executing the Marketing Campaign**: Running the agent to automatically identify a hotel, create marketing content, and generate a prospective customer list
+- ✅ AI Playground for interactive testin
+- ✅ Unity Catalog for governance and versioning
 
-> [!IMPORTANT]
-> **Follow Notebook Comments**
->
-> Follow the instructions in the Notebook that appear as commented out text, as they help guide you through it.
-
-At the end you should get an output that includes:
-
-- The name and location of the selected hotel to promote
-- A positive social media marketing post highlighting the hotel's best features
-- A list of 10 customer email addresses who are prime targets for the campaign
-
-Here is an example output:
-
-![Successful notebook output](images/databricks_notebook_result.png)
-
-The AI agent intelligently combines customer review analysis, booking performance data, and customer behavior patterns to create data-driven marketing campaigns!
+The agent is ready to help River Hotels create data-driven marketing campaigns in real-time!
 
 ## 🏁 Conclusion
 
