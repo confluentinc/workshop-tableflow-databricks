@@ -25,9 +25,8 @@ If you have any issues with or feedback for this workshop, Please let us know in
 >
 > This workshop is currently only compatible with **AWS** and requires the following services to be available in your chosen region:
 >
-> - Amazon EC2 (for Oracle database hosting)
+> - Amazon EC2 (for database hosting)
 > - Amazon S3 (for Delta Lake storage)
-
 > - Amazon VPC (for networking)
 >
 > **Recommended AWS regions**:
@@ -52,17 +51,74 @@ You must complete each of these in order to successfully go through this worksho
 
 ### Required Tools
 
-- **[AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)** installed and authenticated
-- **[Terraform](https://developer.hashicorp.com/terraform/install)** (version >= 1.1.5) installed
-- **[Docker Desktop](https://docs.docker.com/get-started/get-docker/)** installed and running
+You only need to have these two tools installed on your local machine:
+
 - **[Git](https://git-scm.com/downloads)** installed
+- **[Docker Desktop](https://docs.docker.com/get-started/get-docker/)** installed and running
 
-### Additional Setup Required
+### Initial Setup Steps
 
-Instructions for these steps appear further into the workshop:
+Once you have the required tools installed and configured, then perform these steps:
 
-- **Databricks service principal** with appropriate permissions
-- **Confluent Cloud Resource** API key and secret
+#### Step 1: Clone this Repository
+
+Get started by cloning the workshop repository
+
+1. Open your preferred command-line interface, like *zsh* or *Powershell*
+2. Clone this repository with git:
+
+   **HTTP:**
+
+   ```sh
+   git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
+   ```
+
+   **SSH:**
+
+   ```sh
+   git clone git@github.com:confluentinc/workshop-tableflow-databricks.git
+   ```
+
+#### Step 2: Pull and Build Docker Images
+
+You will use a Docker container to run Terraform, ensuring consistent behavior across all operating systems (macOS, Linux, Windows). This container includes Terraform, AWS CLI, and SSH tools needed for infrastructure provisioning.
+
+First, open your terminal and navigate to the terraform directory:
+
+```sh
+cd terraform
+```
+
+Build the Terraform container (this is a one-time setup):
+
+```sh
+docker-compose build
+```
+
+You should see output showing the container being built:
+
+```sh
+[+] Building 45.2s (7/7) FINISHED
+ => [terraform internal] load build definition from Dockerfile
+ => ...
+ => => naming to docker.io/library/workshop-terraform:latest
+```
+
+Next, you need to pull down the data generator (ShadowTraffic) docker image by following these steps:
+
+1. Open a new shell window/tab in the workshop root directory
+2. Pull down the ShadowTraffic docker image
+
+   ```sh
+   docker pull shadowtraffic/shadowtraffic:1.11.13
+   ```
+
+> [!NOTE]
+> **First-Time Build**
+>
+> The initial build takes 1-2 minutes as it downloads the base Terraform image and installs additional tools. Subsequent builds use cached layers and complete in seconds.
+
+You can continue while the docker images are pulled down. [Skip to the lab section](#-workshop-labs) to bypass the background and use case content so you can more quickly get started with the next workshop steps.
 
 ## 🏨 Use Case
 

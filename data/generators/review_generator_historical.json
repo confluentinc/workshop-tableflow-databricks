@@ -35,17 +35,17 @@
         }
     },
     "value": {
-        "REVIEW_ID": {
+        "review_id": {
             "_gen": "sequentialString",
             "startingFrom": 500000100,
             "expr": "R~d"
         },
-        "BOOKING_ID": {
+        "booking_id": {
             "_gen": "sequentialString",
             "startingFrom": 600000100,
             "expr": "B~d"
         },
-        "REVIEW_RATING": {
+        "review_rating": {
             "_gen": "weightedOneOf",
             "choices": [
                 {
@@ -68,12 +68,9 @@
                     "weight": 15,
                     "value": 5
                 }
-            ],
-            "avroHint": {
-                "type": "int"
-            }
+            ]
         },
-        "REVIEW_TEXT": {
+        "review_text": {
             "_gen": "weightedOneOf",
             "choices": [
                 {
@@ -126,12 +123,9 @@
                         }
                     }
                 }
-            ],
-            "avroHint": {
-                "type": "string"
-            }
+            ]
         },
-        "CREATED_AT": {
+        "created_at": {
             "_gen": "uniformDistribution",
             "bounds": [
                 {
@@ -143,10 +137,7 @@
                     "expr": "currentTimeInMs - 172800000"
                 }
             ],
-            "decimals": 0,
-            "avroHint": {
-                "type": "long"
-            }
+            "decimals": 0
         }
     }
 }

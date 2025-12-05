@@ -35,10 +35,10 @@ These resources and connections were created through web interfaces and need to 
 
 ### Confluent
 
-#### Remove Oracle XStream Connector
+#### Remove PostgreSQL CDC Connector
 
 1. Click on *Connectors* in the left sidebar
-2. Find your Oracle XStream CDC Source connector
+2. Find your PostgreSQL CDC Source connector
 3. Click on the connector name
 4. Click *Settings* → *Delete connector*
 5. Type the connector name to confirm deletion
@@ -77,10 +77,10 @@ Now that manual resources are cleaned up, use Terraform to efficiently destroy t
 
 1. Open your preferred command-line interface
 2. Navigate to the workshop's *terraform* directory
-3. Remove all remaining infrastructure:
+3. Remove all remaining infrastructure using the Docker container:
 
    ```sh
-   terraform destroy -auto-approve
+   docker-compose run --rm terraform -c "terraform destroy -auto-approve"
    ```
 
 4. Verify cleanup completion by checking that resources are removed from:
@@ -96,7 +96,7 @@ Now that manual resources are cleaned up, use Terraform to efficiently destroy t
 
 In this lab, you have:
 
-✅ **Manual Resource Cleanup**: Removed Oracle XStream connectors, disabled Tableflow on all topics, and cleaned up notebooks created through web interfaces
+✅ **Manual Resource Cleanup**: Removed PostgreSQL CDC connectors, disabled Tableflow on all topics, and cleaned up notebooks created through web interfaces
 
 ✅ **Automated Infrastructure Cleanup**: Used Terraform to efficiently destroy all cloud infrastructure across AWS, Confluent Cloud, and Databricks
 

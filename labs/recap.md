@@ -8,7 +8,7 @@ Through this workshop, you have:
 
 ✅ **Deployed Production-Ready Infrastructure**: Used Terraform to provision and configure resources across AWS, Confluent Cloud, and Databricks with proper security and networking
 
-✅ **Implemented Real-Time Data Capture**: Set up Oracle XStream CDC and Shadow Traffic to generate realistic customer interaction data streams
+✅ **Implemented Real-Time Data Capture**: Set up PostgreSQL CDC and Shadow Traffic to generate realistic customer interaction data streams
 
 ✅ **Built Intelligent Stream Processing**: Created sophisticated Flink SQL queries that identify high-value prospects and enrich customer profiles using AI-powered review summarization
 

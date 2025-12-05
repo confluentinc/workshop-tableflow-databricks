@@ -22,15 +22,19 @@ By the end of this lab, you will have:
 
 ### Key Technologies You'll Deploy
 
+- **Docker**: Containerized Terraform environment for cross-platform consistency
 - **Terraform**: Infrastructure as Code for automated multi-cloud resource provisioning and management
-- **AWS Services**: EC2 for Oracle hosting, S3 for Delta Lake storage, VPC for networking, IAM for security
+- **AWS Services**: EC2 for PostgreSQL hosting, S3 for Delta Lake storage, VPC for networking, IAM for security
 - **Confluent Cloud**: Environment, Kafka cluster, Flink compute pool, and AWS provider integration
 - **Databricks**: External locations, storage credentials, and Unity Catalog integration
 - **Multi-Cloud Networking**: Secure connections and access policies between all platforms
 
 ### Prerequisites
 
-Complete **[LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)** with all cloud platform credentials configured in your `terraform.tfvars` file
+- **Docker Desktop** installed and running on your machine
+  - [Download Docker Desktop](https://www.docker.com/products/docker-desktop/) for macOS, Windows, or Linux
+- Built [Terraform Docker container](../../README.md#step-2-pull-and-build-docker-images)
+- Complete **[LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)** with all cloud platform credentials configured in your `terraform.tfvars` file
 
 ## 👣 Steps
 
@@ -38,42 +42,69 @@ Complete **[LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)** with all clou
 
 Now it's time for you to perform some deployment magic! 🪄🎩
 
-The `terraform` commands below will set up, validate, and create the cloud resources for this workshop.
+The following commands will initialize, validate, and apply the Terraform configuration to create your cloud resources.
 
-First, switch to your shell window and navigate to the terraform directory.
+#### Initialize Terraform
 
-Next, initialize Terraform by running this command:
+Run Terraform init inside the container:
 
 ```sh
-terraform init
+docker-compose run --rm terraform -c "terraform init"
 ```
 
-You should see this success message in your shell:
-> Terraform has been successfully initialized!
-
-Next, verify that your Terraform configuration is valid by executing this command:
+You should see this success message:
 
 ```sh
-terraform validate
+Terraform has been successfully initialized!
 ```
 
-You should see this success message in your shell:
-> Success! The configuration is valid.
+#### Validate Configuration
 
-Finally, initiate cloud resource creation by invoking this command:
+Verify that your Terraform configuration is valid:
 
 ```sh
-terraform apply -auto-approve
+docker-compose run --rm terraform -c "terraform validate"
+```
+
+You should see this success message:
+
+```sh
+Success! The configuration is valid.
+```
+
+#### Deploy Infrastructure
+
+Initiate cloud resource creation:
+
+```sh
+docker-compose run --rm terraform -c "terraform apply -auto-approve"
 ```
 
 > [!NOTE]
-> **Duration: 5-10 Minutes**
+> **Duration: 7-10 Minutes**
 >
-> It should take between 5-10 minutes for terraform to completely generate all of the needed cloud resources, so hang tight!
+> It should take between 7-10 minutes for Terraform to completely generate all of the needed cloud resources, so hang tight!
 >
-> While you wait, you should see an extensive log output in your shell showing the progress of generating the  cloud resources.  When finished, you should see a message like this:
+> While you wait, you should see an extensive log output in your shell showing the progress of generating the cloud resources. When finished, you should see a message like this:
 >
 > *Apply complete! Resources: XX added, 0 changed, 0 destroyed.*
+
+> [!TIP]
+> **If Terraform Fails with a Transient Error**
+>
+> If you encounter a `500 Internal Server Error` when creating the Databricks external location, this is a transient error due to IAM propagation delays. Simply re-run the apply command - Terraform will only create the remaining resources:
+>
+> ```sh
+> docker-compose run --rm terraform -c "terraform apply -auto-approve"
+> ```
+>
+> Alternatively, use the retry wrapper script that automatically handles retries:
+>
+> ```sh
+> docker-compose run --rm terraform -c "./terraform-apply-wrapper-with-retry.sh"
+> ```
+>
+> See the [Troubleshooting Guide](../troubleshooting.md#transient-500-error-during-external-location-creation) for more details.
 
 Here is a summary of the main cloud resources you created through Terraform:
 
@@ -81,7 +112,7 @@ Here is a summary of the main cloud resources you created through Terraform:
 
 - VPC with proper networking components
 - Security groups with minimal required access
-- EC2 instance running Oracle XE database with XStream enabled
+- EC2 instance running PostgreSQL database with logical replication enabled
 - S3 general-purpose bucket to store Delta table data
 - IAM roles and policies for secure access
 
@@ -99,18 +130,23 @@ Here is a summary of the main cloud resources you created through Terraform:
 
 **Terraform Output:**
 
-When the deployment completes, Terraform will output helpful cloud resource values to your shell. You can view these values at any time by running this command within your root Terraform directory:
+When the deployment completes, Terraform outputs helpful cloud resource values. You can view these values at any time by running:
 
 ```sh
-terraform output
+docker-compose run --rm terraform -c "terraform output"
 ```
+
+> [!TIP]
+> **Interactive Shell**
+>
+> If you prefer to work in an interactive shell inside the container, run `docker-compose run --rm terraform` to drop into a bash shell where you can run `terraform` commands directly without the `-c` wrapper.
 
 > [!IMPORTANT]
 > **Troubleshoot Terraform Issues**
 >
 > If your terraform execution fails, you can [review these common issues](../troubleshooting.md#terraform).
 
-### Step 2: Verify Infrastructure Deployment
+### Step 3: Verify Infrastructure Deployment
 
 Now is a good time to verify that the cloud resources we created via Terraform are accessible to us and working as expected.
 
@@ -121,7 +157,7 @@ Now is a good time to verify that the cloud resources we created via Terraform a
 3. **Ensure EC2 Instance is running**
    1. Navigate to the EC2 home page
    2. Click on *Instances* in the left navigation
-   3. Search for the name of your instance (it should contain your AWS username)
+   3. Search for the name of your instance (it should contain your call sign)
    4. Click on the link for it
    5. Check that it is running
 
@@ -199,7 +235,7 @@ You now have a robust multi-cloud platform consisting of:
 
 **AWS Resources:**
 
-- **EC2 instance** running Oracle XE database with XStream enabled
+- **EC2 instance** running PostgreSQL database with logical replication enabled
 - **S3 bucket** for Delta Lake table storage
 - **VPC and security groups** for secure networking
 - **IAM roles and policies** for cross-platform access
@@ -220,7 +256,7 @@ You now have a robust multi-cloud platform consisting of:
 
 Your journey continues in **[LAB 3: Tableflow and Connector Setup](../LAB3_tableflow_and_connector/LAB3.md)** where you will:
 
-1. **Configure Oracle XStream Connector**: Set up real-time change data capture from Oracle to Confluent Cloud
+1. **Configure PostgreSQL CDC Connector**: Set up real-time change data capture from PostgreSQL to Confluent Cloud
 2. **Enable Tableflow Integration**: Connect Confluent Cloud with Databricks Unity Catalog for automated Delta Lake sync
 3. **Generate Realistic Data**: Deploy Shadow Traffic to create authentic customer behavior patterns
 

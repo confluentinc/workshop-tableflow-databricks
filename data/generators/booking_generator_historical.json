@@ -39,18 +39,18 @@
         }
     },
     "value": {
-        "BOOKING_ID": {
+        "booking_id": {
             "_gen": "sequentialString",
             "startingFrom": 600000100,
             "expr": "B~d"
         },
-        "CUSTOMER_EMAIL": {
+        "customer_email": {
             "_gen": "lookup",
-            "connection": "oracle",
-            "table": "sample.customer",
+            "connection": "postgres",
+            "table": "cdc.customer",
             "path": [
                 "row",
-                "EMAIL"
+                "email"
             ],
             "histogram": {
                 "_gen": "histogram",
@@ -62,25 +62,25 @@
                 ]
             }
         },
-        "HOTEL_ID": {
+        "hotel_id": {
             "_gen": "lookup",
-            "connection": "oracle",
-            "table": "sample.hotel",
+            "connection": "postgres",
+            "table": "cdc.hotel",
             "path": [
                 "row",
-                "HOTEL_ID"
+                "hotel_id"
             ]
         },
-        "CHECK_IN": {
+        "check_in": {
             "_gen": "var",
             "var": "check_in_time"
         },
-        "CHECK_OUT": {
+        "check_out": {
             "_gen": "math",
             "expr": "check_in_time + stay_duration",
             "decimals": 0
         },
-        "OCCUPANTS": {
+        "occupants": {
             "_gen": "normalDistribution",
             "mean": 3,
             "sd": 1,
@@ -90,7 +90,7 @@
                 6
             ]
         },
-        "PRICE": {
+        "price": {
             "_gen": "normalDistribution",
             "mean": 200,
             "sd": 25,
@@ -100,7 +100,7 @@
                 400
             ]
         },
-        "CREATED_AT": {
+        "created_at": {
             "_gen": "uniformDistribution",
             "bounds": [
                 {

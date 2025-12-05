@@ -84,7 +84,7 @@ SELECT * FROM `bookings` LIMIT 10;
 
    Some observations about this data stream:
 
-   - The date fields of `CHECK_IN`, `CHECK_OUT`, and `CREATED_AT` all have
+   - The date fields of `check_in`, `check_out`, and `created_at` all have
      timestamp values that are not human friendly
    - While you can see the Hotel IDs, it would be more informative to have most
      of the other hotel fields displayed as well
@@ -131,13 +131,13 @@ SET 'client.statement-name' = 'customer-snapshot';
 
 CREATE TABLE CUSTOMER_SNAPSHOT AS (
 SELECT
-  CUSTOMER_ID,
-  EMAIL,
-  FIRST_NAME,
-  LAST_NAME,
-  BIRTH_DATE,
-  CREATED_AT
-FROM `riverhotel.SAMPLE.CUSTOMER`
+  customer_id,
+  email,
+  first_name,
+  last_name,
+  birth_date,
+  created_at
+FROM `riverhotel.CDC.customer`
 );
 ```
 
@@ -152,15 +152,15 @@ SET 'client.statement-name' = 'hotel-snapshot';
 
 CREATE TABLE HOTEL_SNAPSHOT AS (
 SELECT
-  HOTEL_ID,
-  NAME,
-  CLASS,
-  DESCRIPTION,
-  CITY,
-  COUNTRY,
-  ROOM_CAPACITY,
-  CREATED_AT
-FROM `riverhotel.SAMPLE.HOTEL`
+  hotel_id,
+  name,
+  category,
+  description,
+  city,
+  country,
+  room_capacity,
+  created_at
+FROM `riverhotel.CDC.hotel`
 );
 ```
 
@@ -179,35 +179,35 @@ SET 'client.statement-name' = 'denormalized-hotel-bookings';
 CREATE TABLE DENORMALIZED_HOTEL_BOOKINGS AS (
 
 SELECT
-  h.`NAME` AS `HOTEL_NAME`,
-  h.`DESCRIPTION` AS `HOTEL_DESCRIPTION`,
-  h.`CLASS` AS `HOTEL_CLASS`,
-  h.`CITY` AS `HOTEL_CITY`,
-  h.`COUNTRY` AS `HOTEL_COUNTRY`,
-  b.`PRICE` AS `BOOKING_AMOUNT`,
-  b.`OCCUPANTS` AS `GUEST_COUNT`,
-  to_timestamp_ltz(b.`CREATED_AT`, 3) AS `BOOKING_DATE`,
-  to_timestamp_ltz(b.`CHECK_IN`, 3) AS `CHECK_IN`,
-  to_timestamp_ltz(b.`CHECK_OUT`, 3) AS `CHECK_OUT`,
-  c.`EMAIL` AS `CUSTOMER_EMAIL`,
-  c.`FIRST_NAME` AS `CUSTOMER_FIRST_NAME`,
-  hr.`REVIEW_RATING`,
-  hr.`REVIEW_TEXT`,
-  to_timestamp_ltz(hr.`CREATED_AT`, 3) AS `REVIEW_DATE`,
-  b.`BOOKING_ID`,
-  h.`HOTEL_ID`
+  h.`name` AS `HOTEL_NAME`,
+  h.`description` AS `HOTEL_DESCRIPTION`,
+  h.`category` AS `HOTEL_CATEGORY`,
+  h.`city` AS `HOTEL_CITY`,
+  h.`country` AS `HOTEL_COUNTRY`,
+  b.`price` AS `BOOKING_AMOUNT`,
+  b.`occupants` AS `GUEST_COUNT`,
+  to_timestamp_ltz(b.`created_at`, 3) AS `BOOKING_DATE`,
+  to_timestamp_ltz(b.`check_in`, 3) AS `CHECK_IN`,
+  to_timestamp_ltz(b.`check_out`, 3) AS `CHECK_OUT`,
+  c.`email` AS `CUSTOMER_EMAIL`,
+  c.`first_name` AS `CUSTOMER_FIRST_NAME`,
+  hr.`review_rating` AS `REVIEW_RATING`,
+  hr.`review_text` AS `REVIEW_TEXT`,
+  to_timestamp_ltz(hr.`created_at`, 3) AS `REVIEW_DATE`,
+  b.`booking_id` AS `BOOKING_ID`,
+  h.`hotel_id` AS `HOTEL_ID`
 FROM `bookings` b
    JOIN `CUSTOMER_SNAPSHOT` c
-     ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+     ON c.`email` = b.`customer_email`
      AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
    JOIN `HOTEL_SNAPSHOT` h
-     ON h.`HOTEL_ID` = b.`HOTEL_ID`
+     ON h.`hotel_id` = b.`hotel_id`
      AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
   LEFT JOIN `hotel_reviews` hr
-    ON hr.`BOOKING_ID` = b.`BOOKING_ID`
-    AND to_timestamp_ltz(hr.`CREATED_AT`, 3) BETWEEN
-        to_timestamp_ltz(b.`CREATED_AT`, 3) AND
-        to_timestamp_ltz(b.`CREATED_AT`, 3) + INTERVAL '90' DAY
+    ON hr.`booking_id` = b.`booking_id`
+    AND to_timestamp_ltz(hr.`created_at`, 3) BETWEEN
+        to_timestamp_ltz(b.`created_at`, 3) AND
+        to_timestamp_ltz(b.`created_at`, 3) + INTERVAL '90' DAY
 );
 ```
 
@@ -245,13 +245,13 @@ This section walks you through the different parts of the Flink SQL statement an
 
 - The primary [fact table](https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/fact-table-core-concepts/)
   containing booking events
-- Provides core booking data: `PRICE`, `OCCUPANTS`, timestamps, and `BOOKING_ID`
+- Provides core booking data: `price`, `occupants`, timestamps, and `booking_id`
 
 **Interval Join with CUSTOMER Snapshot:**
 
 ```sql
 JOIN `CUSTOMER_SNAPSHOT` c
-  ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+  ON c.`email` = b.`customer_email`
   AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
 ```
 
@@ -264,7 +264,7 @@ JOIN `CUSTOMER_SNAPSHOT` c
 
 ```sql
 JOIN `HOTEL_SNAPSHOT` h
-  ON h.`HOTEL_ID` = b.`HOTEL_ID`
+  ON h.`hotel_id` = b.`hotel_id`
   AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
 ```
 
@@ -276,10 +276,10 @@ JOIN `HOTEL_SNAPSHOT` h
 
 ```sql
 LEFT JOIN `hotel_reviews` hr
-  ON hr.`BOOKING_ID` = b.`BOOKING_ID`
-  AND to_timestamp_ltz(hr.`CREATED_AT`, 3) BETWEEN
-      to_timestamp_ltz(b.`CREATED_AT`, 3) AND
-      to_timestamp_ltz(b.`CREATED_AT`, 3) + INTERVAL '90' DAY
+  ON hr.`booking_id` = b.`booking_id`
+  AND to_timestamp_ltz(hr.`created_at`, 3) BETWEEN
+      to_timestamp_ltz(b.`created_at`, 3) AND
+      to_timestamp_ltz(b.`created_at`, 3) + INTERVAL '90' DAY
 ```
 
 - **Left join** includes bookings even without reviews
@@ -291,16 +291,16 @@ LEFT JOIN `hotel_reviews` hr
 
 ##### Key Transformations
 
-- **Timestamp conversions**: `to_timestamp_ltz(b.CREATED_AT, 3)` converts epoch
+- **Timestamp conversions**: `to_timestamp_ltz(b.created_at, 3)` converts epoch
   milliseconds to timestamps
-- **Field renaming**: Creates business-friendly names (`h.NAME` → `HOTEL_NAME`)
+- **Field renaming**: Creates business-friendly names (`h.name` → `HOTEL_NAME`)
 - **Real-time denormalization**: All related data combined into one
   analytics-ready table
 
 > [!IMPORTANT]
 > **CDC Sources and Streaming Joins**
 >
-> Oracle CDC sources produce changelog streams (`INSERT`, `UPDATE`, `DELETE`) which have
+> PostgreSQL CDC sources produce changelog streams (`INSERT`, `UPDATE`, `DELETE`) which have
 > compatibility challenges with Flink's streaming joins.
 >
 > **Snapshot tables + interval joins** provide a reliable approach for
@@ -312,9 +312,9 @@ LEFT JOIN `hotel_reviews` hr
 This query uses a **sophisticated hybrid timestamp approach** that combines the best of processing-time and business-time semantics:
 
 - **`$rowtime` for dimension joins** - Uses processing time windows (7-day) to ensure customer/hotel data was available when bookings were processed
-- **`CREATED_AT` for business logic joins** - Uses business timestamps (90-day) for realistic review timing relationships
+- **`created_at` for business logic joins** - Uses business timestamps (90-day) for realistic review timing relationships
 - **Snapshot tables** convert CDC changelog streams to append-only format for reliable processing
-- **CDC compatibility** - handles Oracle CDC timing variations and state management issues
+- **CDC compatibility** - handles PostgreSQL CDC timing variations and state management issues
 - **All bookings returned** - Ensures 420 bookings are returned with reviews attached where business timing makes sense
 - **Performance optimization** - maintains bounded state through time windows for optimal memory usage
 
@@ -348,7 +348,7 @@ LIMIT 20;
 Some observations from the data:
 
 - Because of the `LEFT JOIN` on `hotel_reviews`, there are some hotels that have bookings but no customer reviews
-- The `CHECK_IN`, `CHECK_OUT`, and `BOOKING_DATE`, and `REVIEW_DATE` are now human readable and immediately useful
+- The `check_in`, `check_out`, and `BOOKING_DATE`, and `REVIEW_DATE` are now human readable and immediately useful
 
 #### Review Table Schema and Details
 
@@ -395,7 +395,7 @@ SELECT
   COALESCE(HOTEL_CITY, 'UNKNOWN_HOTEL_CITY') AS HOTEL_CITY,
   COALESCE(HOTEL_COUNTRY, 'UNKNOWN_HOTEL_COUNTRY') AS HOTEL_COUNTRY,
   COALESCE(HOTEL_DESCRIPTION, 'UNKNOWN_HOTEL_DESCRIPTION') AS HOTEL_DESCRIPTION,
-  COALESCE(HOTEL_CLASS, 'UNKNOWN_HOTEL_CLASS') AS HOTEL_CLASS,
+  COALESCE(HOTEL_CATEGORY, 'UNKNOWN_HOTEL_CATEGORY') AS HOTEL_CATEGORY,
   SUM(1) AS TOTAL_BOOKINGS_COUNT,
   SUM(GUEST_COUNT) AS TOTAL_GUEST_COUNT,
   SUM(BOOKING_AMOUNT) AS TOTAL_BOOKING_AMOUNT,
@@ -409,7 +409,7 @@ GROUP BY
    COALESCE(HOTEL_CITY, 'UNKNOWN_HOTEL_CITY'),
    COALESCE(HOTEL_COUNTRY, 'UNKNOWN_HOTEL_COUNTRY'),
    COALESCE(HOTEL_DESCRIPTION, 'UNKNOWN_HOTEL_DESCRIPTION'),
-   COALESCE(HOTEL_CLASS, 'UNKNOWN_HOTEL_CLASS')
+   COALESCE(HOTEL_CATEGORY, 'UNKNOWN_HOTEL_CATEGORY')
 );
 ```
 
@@ -431,7 +431,7 @@ LIMIT 20;
 Some observations from the data:
 
 - Fields like `AVERAGE_REVIEW_RATING` and `REVIEW_COUNT` provide more context and analytical insight into individual hotels
-- `TOTAL_BOOKINGS_COUNT` and `TOTAL_BOOKINGS_AMOUNT` provide a way to easily benchmark hotels performance and determine how an individual hotel, city of hotels, country of hotels, or class of hotels is performing relative to its peers.
+- `TOTAL_BOOKINGS_COUNT` and `TOTAL_BOOKINGS_AMOUNT` provide a way to easily benchmark hotels performance and determine how an individual hotel, city of hotels, country of hotels, or category of hotels is performing relative to its peers.
 
 **Time for Analytics:**
 
@@ -464,7 +464,7 @@ These steps guide you through enabling Tableflow for the `DENORMALIZED_HOTEL_BOO
 12. In your command-line interface in the *terraform* directory run
 
     ```sh
-    terraform output aws_s3
+    docker-compose run --rm terraform -c "terraform output aws_s3"
     ```
 
 13. Copy the value from the `name` property and paste it into the *AWS S3 Bucket

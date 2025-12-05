@@ -3,7 +3,7 @@
 # ===============================
 email        = ""
 cloud_region = ""
-call_sign    = ""
+prefix       = ""
 
 # ===============================
 # Confluent Cloud Overrides
@@ -14,17 +14,24 @@ confluent_cloud_api_secret = ""
 # ===============================
 # Databricks Overrides
 # ===============================
-databricks_account_id                      = ""
-databricks_service_principal_client_id     = ""
-databricks_service_principal_client_secret = ""
-databricks_host                            = ""
-databricks_user_email                      = ""
+databricks_host                            = ""  # e.g., https://your-workspace.cloud.databricks.com
+databricks_account_id                      = ""  # Required for IAM trust policy (external ID)
+databricks_user_email                      = ""  # Your Databricks user email for granting permissions
+databricks_service_principal_client_id     = ""  # Service Principal Application ID (created manually - see LAB1.md)
+databricks_service_principal_client_secret = ""  # Service Principal OAuth Secret (created manually - see LAB1.md)
 
 # ===============================
 # AWS Overrides
 # ===============================
-# Uncomment the line below if you are using an AWS free tier account:
-# oracle_instance_type = "m7i-flex.large"
+# Uncomment the lines below if you are using an AWS free tier account:
+# oracle_instance_type   = "m7i-flex.large"
+# postgres_instance_type = "m7i-flex.large"
 
 # AWS Free Tier now allows for c7i-flex.large and m7i-flex.large for accounts created after July 15, 2025
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/LaunchingAndUsingInstances.html
+
+# ===============================
+# Optional: Connector Automation
+# ===============================
+# Set to false if you want to manually create the PostgreSQL CDC connector as a learning exercise
+# create_postgres_cdc_connector = false

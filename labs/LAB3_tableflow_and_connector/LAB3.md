@@ -2,13 +2,13 @@
 
 ## 🗺️ Overview
 
-Now that your infrastructure is deployed, it's time to connect your systems and enable data streaming! In this lab, you'll configure the Oracle XStream connector to capture real-time database changes and set up Tableflow integration with Databricks Unity Catalog.
+Now that your infrastructure is deployed, it's time to connect your systems and enable data streaming! In this lab, you'll configure the PostgreSQL CDC connector to capture real-time database changes and set up Tableflow integration with Databricks Unity Catalog.
 
 ### What You'll Accomplish
 
 ```mermaid
 graph LR
-   A[1\. Setup Unity Catalog Integration] --> B[2\. Configure Oracle XStream Connector]
+   A[1\. Setup Unity Catalog Integration] --> B[2\. Configure PostgreSQL CDC Connector]
    B --> C[3\. Establish Data Streaming]
    C --> D[4\. Validate Integration]
    D --> E[5\. Ready for Data Generation]
@@ -17,13 +17,13 @@ graph LR
 By the end of this lab, you will have:
 
 1. **Unity Catalog Integration**: Connect Confluent Cloud with Databricks Unity Catalog through Tableflow for automated Delta Lake synchronization
-2. **Oracle Data Streaming**: Configure Oracle XStream CDC connector to capture real-time changes from customer and hotel tables
+2. **PostgreSQL Data Streaming**: Configure PostgreSQL CDC connector to capture real-time changes from customer and hotel tables
 3. **Service Account Authentication**: Use Terraform-managed service accounts for secure, automated credential management
 
 ### Key Technologies You'll Configure
 
 - **Confluent Tableflow**: Automated streaming pipeline for synchronizing Kafka topics to Delta Lake tables
-- **Oracle XStream CDC Connector**: Real-time change data capture from Oracle database to Kafka topics
+- **PostgreSQL CDC Source Connector**: Real-time change data capture from PostgreSQL database to Kafka topics using Debezium
 - **Databricks Unity Catalog**: Data governance platform for managing Delta Lake metadata and permissions
 - **Service Accounts**: Terraform-managed authentication for secure, automated access control
 - **AVRO Schema**: Message serialization format for structured data streaming
@@ -58,7 +58,7 @@ Follow these steps to setup the Tableflow-to-Unity Catalog integration:
 10. Copy and paste the name of your databricks catalog into the *Unity catalog name* - look for the *name* attribute from the result of running this terraform command:
 
    ```sh
-   terraform output databricks_tableflow_catalog
+   docker-compose run --rm terraform -c "terraform output databricks_tableflow_catalog"
    ```
 
    ![Form with fields to input connection details for Unity Catalog](./images/tableflow_unity_catalog_integration2.png)
@@ -154,26 +154,26 @@ After enabling Tableflow, you can monitor the pipeline through:
 > - **Monitoring**: Regularly check sync status, especially for critical business data
 > - **Partitioning**: Consider your query patterns when designing topic key strategies
 
-### Step 2: Configure Oracle XStream Connector
+### Step 2: Configure PostgreSQL CDC Connector
 
-In this section you will configure the Oracle XStream connector to capture real-time changes from your Oracle database and stream them to Confluent Cloud.
+In this section you will configure the PostgreSQL CDC connector to capture real-time changes from your PostgreSQL database and stream them to Confluent Cloud.
 
-> [!WARNING]
-> **15-20 minute Oracle Spin-up Time**
+> [!NOTE]
+> **5-10 minute PostgreSQL Spin-up Time**
 >
-> It takes between 15-20 minutes for the Oracle database instance to fully spin up.
+> It takes about 5-10 minutes for the PostgreSQL database instance to fully spin up after Terraform completes.
 >
-> If you try to establish the connector before the database is ready, then it will respond with various errors.
+> If the connector creation was automated via Terraform (`create_postgres_cdc_connector = true`), you can skip this step and proceed to verify the connector is running.
 >
 > **While you wait, we recommend you try out this optional [Data Governance ~7-minute lab](../LAB_data_governance/LAB_data_governance.md) to get hands on with Confluent features that can help you organize and ensure high quality data.**
 
-#### Navigate to the Oracle XStream Connector
+#### Navigate to the PostgreSQL CDC Connector
 
 1. Click on *Connectors* in the left sidebar menu
-2. Type `XStream` in the *search* text field
-3. Select the `Oracle XStream CDC Source Premium` tile (it has the Oracle logo on it)
+2. Type `PostgreSQL` in the *search* text field
+3. Select the `PostgreSQL CDC Source` tile (it has the PostgreSQL elephant logo on it)
 
-![A search interface showing the Oracle connector tile](images/oracle_connector_search.png)
+![A search interface showing the PostgreSQL connector tile](images/postgres_connector_search.png)
 
 #### Use Service Account API Key
 
@@ -183,7 +183,7 @@ Instead of creating new API keys manually, you'll use the service account creden
 2. Select **Existing account** under the *Choose service account* section
 3. Search for your workshop service account, it should start with the `prefix` value from your *terraform.tfvars* file
 
-   ![Configuration form for Oracle authentication](./images/oracle_connector_service_account.png)
+   ![Configuration form for PostgreSQL authentication](./images/postgres_connector_service_account.png)
 
 4. Check the *Add all required ACLs* checkbox
 5. Click the `Continue` button
@@ -195,39 +195,36 @@ Instead of creating new API keys manually, you'll use the service account creden
 
 #### Configure Connection and Authentication
 
-Run this Terraform command in your shell to show the values needed to connect and authenticate the Oracle XStream Connector.
+Run this Terraform command in your shell (from the `terraform/` directory) to show the values needed to connect and authenticate the PostgreSQL CDC Connector.
 
 ```sh
-terraform output oracle_xstream_connector
+docker-compose run --rm terraform -c "terraform output postgres_cdc_connector"
 ```
 
 Now copy and paste the corresponding values into the text boxes:
 
 1. Enter the `database_hostname` Terraform output into the `Database hostname` textbox
-2. Enter the `database_port` Terraform output into the `Database port` textbox
+2. Enter the `database_port` Terraform output into the `Database port` textbox (default: 5432)
 3. Enter the `database_username` Terraform output into the `Database username` textbox
 4. Enter the `database_password` Terraform output into the `Database password` textbox
 5. Enter the `database_name` Terraform output into the `Database name` textbox
-6. Enter the `database_service_name` Terraform output into the `Database service name` textbox
-7. Enter the `pluggable_database_name` Terraform output into the `Pluggable database (PDB) name` textbox
-8. Enter the `xstream_outbound_server` Terraform output into the `XStream outbound server name` textbox
-9. Enter the `1` into the `Total number of Oracle processors to license` textbox
+6. Select `pgoutput` from the `Output plugin name` dropdown
 
    Your screen should look similar to this:
-   ![Oracle XStream Auth Connection Form](images/oracle_connector_auth.png)
+   ![PostgreSQL CDC Auth Connection Form](images/postgres_connector_auth.png)
 
-10. Click the `Continue` button on the bottom right
+7. Click the `Continue` button on the bottom right
 
 #### Configure Message Formatting and Tables
 
 1. Select `AVRO` on the *Output Kafka record key format* dropdown
 2. Select `AVRO` from the *Output Kafka record value format* options
 3. Enter `riverhotel` into the *Topic prefix* textbox
-4. Enter `SAMPLE[.](HOTEL|CUSTOMER)` into the *Table include list* textbox
+4. Enter `public.hotel, public.customer` into the *Table include list* textbox
 
     Your screen should look like this:
 
-    ![oracle_connector_configs.png](images/oracle_connector_message_formatting.png)
+    ![postgres_connector_configs.png](images/postgres_connector_message_formatting.png)
 
 5. Click the `Continue` button
 
@@ -237,18 +234,18 @@ Now copy and paste the corresponding values into the text boxes:
 2. Click the `Continue` button
 3. Configure Connector Name - enter any name you like in the *Connector name* textbox
 4. Click the `Continue` button
-5. Now this connector could take ~5 minutes to initialize; The connector tile will show **Running** status when it is ready
+5. Now this connector could take ~2-3 minutes to initialize; The connector tile will show **Running** status when it is ready
 
-![Oracle running successfully](images/oracle_connector_success.png)
+![PostgreSQL running successfully](images/postgres_connector_success.png)
 
-Well done! You have successfully configured change data capture for all events on the database tables `CUSTOMER` & `HOTEL`, which will automatically be recorded to the corresponding Kafka topics `riverhotel.SAMPLE.CUSTOMER` & `riverhotel.SAMPLE.HOTEL`
+Well done! You have successfully configured change data capture for all events on the database tables `customer` & `hotel`, which will automatically be recorded to the corresponding Kafka topics `riverhotel.CDC.customer` & `riverhotel.CDC.hotel`
 
 #### ✅ Solution Requirements Fulfilled
 
-- **🔌 Seamless Integration** - Oracle XStream CDC now streams database changes in real-time to Confluent Cloud
-- **📡 Capture** - Customer and hotel data changes are now captured in real-time from Oracle database
+- **🔌 Seamless Integration** - PostgreSQL CDC now streams database changes in real-time to Confluent Cloud
+- **📡 Capture** - Customer and hotel data changes are now captured in real-time from PostgreSQL database
 
-Now that we have data generating to our Oracle database and Kafka topics, let's move on to the next step!
+Now that we have data generating to our PostgreSQL database and Kafka topics, let's move on to the next step!
 
 ## 🏁 Conclusion
 
@@ -260,16 +257,16 @@ In this lab, you have:
 
 - ✅ **Established Unity Catalog Integration**: Connected Confluent Cloud with Databricks Unity Catalog through Tableflow for automated Delta Lake synchronization
 - ✅ **Learned Tableflow Architecture**: Gained a deeper understanding of materializer jobs, committer jobs, schema evolution, and exactly-once processing guarantees
-- ✅ **Configured Real-Time Data Capture**: Set up Oracle XStream CDC connector to stream database changes from customer and hotel tables
+- ✅ **Configured Real-Time Data Capture**: Set up PostgreSQL CDC connector to stream database changes from customer and hotel tables
 - ✅ **Implemented Automated Authentication**: Used Terraform-managed service accounts for secure, credential-less integration
 
 ### Your Data Integration Foundation
 
 You now have a robust streaming data pipeline consisting of:
 
-**Oracle CDC Streaming:**
+**PostgreSQL CDC Streaming:**
 
-- **Real-time customer data** streaming from Oracle database to Kafka topics
+- **Real-time customer data** streaming from PostgreSQL database to Kafka topics
 - **Real-time hotel data** streaming with AVRO schema serialization
 - **Automated change capture** for INSERT, UPDATE, and DELETE operations
 
@@ -284,7 +281,7 @@ You now have a robust streaming data pipeline consisting of:
 Your journey continues in **[LAB 4: Data Generation](../LAB4_data_generation/LAB4.md)** where you will:
 
 1. **Deploy Shadow Traffic**: Generate realistic customer behavior data including clickstreams, bookings, and reviews
-2. **Validate Data Streaming**: Confirm that Oracle CDC is capturing and streaming database changes
+2. **Validate Data Streaming**: Confirm that PostgreSQL CDC is capturing and streaming database changes
 3. **Monitor Topic Creation**: Watch as Kafka topics populate with structured data streams
 
 ## 🔧 Troubleshooting

@@ -58,3 +58,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Local AWS credentials directory (used by Docker container)
+terraform/aws-config/

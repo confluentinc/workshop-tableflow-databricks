@@ -258,6 +258,12 @@ The review generators implement a sophisticated rating-based text selection syst
 ### Technical Implementation
 
 ```json
+"localConfigs": {
+    "avroSchemaHint": {
+        "_gen": "loadJsonFile",
+        "file": "/home/data/schemas/review_schema.avsc"
+    }
+},
 "varsOnce": {
     "oneStarTexts": { "_gen": "loadJsonFile", "file": "review_text_choices_1_star.json" },
     "twoStarTexts": { "_gen": "loadJsonFile", "file": "review_text_choices_2_star.json" }
@@ -270,8 +276,7 @@ The review generators implement a sophisticated rating-based text selection syst
             { "weight": 10, "value": 1 },
             { "weight": 20, "value": 2 }
             // ... (weights 30, 25, 15 for ratings 3, 4, 5)
-        ],
-        "avroHint": { "type": "int" }
+        ]
     },
     "REVIEW_TEXT": {
         "_gen": "weightedOneOf",
@@ -279,8 +284,7 @@ The review generators implement a sophisticated rating-based text selection syst
             { "weight": 10, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "oneStarTexts" }}},
             { "weight": 20, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "twoStarTexts" }}}
             // ... (matching weights for 3-5 star texts)
-        ],
-        "avroHint": { "type": "string" }
+        ]
     }
 }
 ```
@@ -328,7 +332,7 @@ However, The 15-minute delay for master data (customers and hotels) can simulate
 Execute the data generation with this Docker command:
 
 ```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.1.1 --config /home/data/shadow-traffic-configuration.json --watch
+docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json --watch
 ```
 
 ### Docker Command Breakdown
@@ -338,7 +342,7 @@ docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/d
 | `docker run` | Starts a new Docker container |
 | `--env-file ./data/shadow-traffic-license.env` | Loads ShadowTraffic license environment variables |
 | `-v "$(pwd)/data/:/home/data"` | Mounts local `data/` directory to container for file access |
-| `shadowtraffic/shadowtraffic:1.1.1` | Specifies ShadowTraffic Docker image version |
+| `shadowtraffic/shadowtraffic:1.11.13` | Specifies ShadowTraffic Docker image version |
 | `--config /home/data/shadow-traffic-configuration.json` | Points to main configuration file |
 | `--watch` | Auto-restarts generation when config files change |
 

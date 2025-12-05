@@ -17,7 +17,7 @@ graph LR
 By the end of this lab, you will have:
 
 1. **Realistic Data Generation**: Deploy Shadow Traffic to create authentic customer behavior data including clickstreams, bookings, reviews, and customer profiles
-2. **Topic Validation**: Verify that Oracle CDC and Shadow Traffic are successfully streaming data to Kafka topics
+2. **Topic Validation**: Verify that PostgreSQL CDC and Shadow Traffic are successfully streaming data to Kafka topics
 3. **Tableflow Integration**: Enable automated Delta Lake synchronization for the clickstream topic and verify sync status
 
 ### Key Technologies You'll Deploy
@@ -28,7 +28,7 @@ By the end of this lab, you will have:
 
 ### Prerequisites
 
-Complete **[LAB 3: Tableflow and Connector Setup](../LAB3_tableflow_and_connector/LAB3.md)** with Oracle XStream connector configured and Unity Catalog integration established
+Complete **[LAB 3: Tableflow and Connector Setup](../LAB3_tableflow_and_connector/LAB3.md)** with PostgreSQL CDC connector configured and Unity Catalog integration established
 
 ## 👣 Steps
 
@@ -41,7 +41,7 @@ You will use a flexible data-generator tool called [Shadow Traffic](https://shad
 As depicted in [this ERD diagram](../../README.md#-data-entity-relationship) from the README, There are 5 streams of data that will be produced to Confluent Cloud. These data streams have these key features:
 
 - **Sequential execution**: Seed data → Historical data → Streaming data
-- **Historical timestamps**: Random distribution over past 8 weeks (Kafka) or fixed 10 weeks ago (Oracle)
+- **Historical timestamps**: Random distribution over past 8 weeks (Kafka) or fixed 10 weeks ago (PostgreSQL)
 - **Customer behavior modeling**: 80% of activities/bookings come from repeat customers
 - **Data relationships**: Reviews reference bookings, activities reference hotels and customers
 - **Realistic throttling**: Variable delays simulate real-world user behavior patterns
@@ -56,25 +56,25 @@ To generate this data, open a new shell window/tab at the workshop repository ro
 #### Linux/Mac
 
 ```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.1.1 --config /home/data/shadow-traffic-configuration.json
+docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
 ```
 
 #### Windows cmd
 
 ```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "%cd%/data/:/home/data" shadowtraffic/shadowtraffic:1.1.1 --config /home/data/shadow-traffic-configuration.json
+docker run --env-file ./data/shadow-traffic-license.env -v "%cd%/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
 ```
 
 #### Windows Powershell
 
 ```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "${PWD}/data/:/home/data" shadowtraffic/shadowtraffic:1.1.1 --config /home/data/shadow-traffic-configuration.json
+docker run --env-file ./data/shadow-traffic-license.env -v "${PWD}/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
 ```
 
 > [!NOTE]
-> **Run ShadowTraffic Image v1.1.1**
+> **Run ShadowTraffic Image v1.11.13**
 >
-> The above commands will run [v1.1.1](https://hub.docker.com/layers/shadowtraffic/shadowtraffic/1.1.1/images/sha256-5ae65285f9935a7e0a994fb451443060252bf82e0f7f1566d77c91a1117566ce) of the data generator in the foreground of your shell, which has been tested and validated as compatible with this workshop
+> The above commands will run [v1.11.13](https://hub.docker.com/layers/shadowtraffic/shadowtraffic/1.11.13/images/sha256:082fc44c6c7454ec26c961708a585eb2338d39ef5b472bf9111fe302611c1677) of the data generator in the foreground of your shell, which has been tested and validated as compatible with this workshop
 
 You should see this output showing that it was successful in connecting to the data ingestion layer and pushing data to it:
 
@@ -109,7 +109,7 @@ After successfully starting the data generating process, follow these steps to s
 9. Run this command
 
     ```sh
-    terraform output aws_s3
+    docker-compose run --rm terraform -c "terraform output aws_s3"
     ```
 
 10. Copy the value from the `name` property and paste it into the *AWS S3 Bucket name* textbox
@@ -152,7 +152,7 @@ In this lab, you have:
 
 ✅ **Generated Realistic Data**: Deployed Shadow Traffic to create authentic customer behavior data that mirrors real hospitality industry patterns
 
-✅ **Validated Data Streaming**: Confirmed that Oracle CDC and Shadow Traffic are successfully streaming data to Kafka topics
+✅ **Validated Data Streaming**: Confirmed that PostgreSQL CDC and Shadow Traffic are successfully streaming data to Kafka topics
 
 ✅ **Enabled Tableflow Integration**: Set up automated Delta Lake synchronization and verified sync status for clickstream data
 

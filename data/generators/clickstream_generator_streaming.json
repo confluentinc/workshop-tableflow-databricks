@@ -24,11 +24,11 @@
     "vars": {
         "hotel_id": {
             "_gen": "lookup",
-            "connection": "oracle",
-            "table": "sample.hotel",
+            "connection": "postgres",
+            "table": "cdc.hotel",
             "path": [
                 "row",
-                "HOTEL_ID"
+                "hotel_id"
             ]
         },
         "room_id": {
@@ -41,18 +41,18 @@
         }
     },
     "value": {
-        "ACTIVITY_ID": {
+        "activity_id": {
             "_gen": "sequentialString",
             "startingFrom": 350001000,
             "expr": "A~d"
         },
-        "CUSTOMER_EMAIL": {
+        "customer_email": {
             "_gen": "lookup",
-            "connection": "oracle",
-            "table": "sample.customer",
+            "connection": "postgres",
+            "table": "cdc.customer",
             "path": [
                 "row",
-                "EMAIL"
+                "email"
             ],
             "histogram": {
                 "_gen": "histogram",
@@ -68,11 +68,11 @@
                 ]
             }
         },
-        "HOTEL_ID": {
+        "hotel_id": {
             "_gen": "var",
             "var": "hotel_id"
         },
-        "ACTION": {
+        "action": {
             "_gen": "weightedOneOf",
             "choices": [
                 {
@@ -87,12 +87,9 @@
                     "weight": 2,
                     "value": "booking-click"
                 }
-            ],
-            "avroHint": {
-                "type": "string"
-            }
+            ]
         },
-        "EVENT_DURATION": {
+        "event_duration": {
             "_gen": "normalDistribution",
             "mean": 180,
             "sd": 30,
@@ -102,7 +99,7 @@
                 592
             ]
         },
-        "URL": {
+        "url": {
             "_gen": "oneOf",
             "choices": [
                 {
@@ -115,7 +112,7 @@
                 }
             ]
         },
-        "CREATED_AT": {
+        "created_at": {
             "_gen": "uniformDistribution",
             "bounds": [
                 {
