@@ -3,23 +3,23 @@
     "name": "HotelReviewEvent",
     "fields": [
         {
-            "name": "REVIEW_ID",
+            "name": "review_id",
             "type": "string"
         },
         {
-            "name": "BOOKING_ID",
+            "name": "booking_id",
             "type": "string"
         },
         {
-            "name": "REVIEW_RATING",
+            "name": "review_rating",
             "type": "int"
         },
         {
-            "name": "REVIEW_TEXT",
+            "name": "review_text",
             "type": "string"
         },
         {
-            "name": "CREATED_AT",
+            "name": "created_at",
             "type": {
                 "type": "long",
                 "flink.precision": 3,

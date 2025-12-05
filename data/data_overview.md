@@ -92,25 +92,25 @@ Avro schema files define the structure for Kafka topics and ensure type safety:
 
 Defines the booking event structure with fields:
 
-- `BOOKING_ID`, `CUSTOMER_EMAIL`, `HOTEL_ID`
-- `CHECK_IN`, `CHECK_OUT`, `OCCUPANTS`, `PRICE`
-- `CREATED_AT` (with Flink timestamp precision)
+- `booking_id`, `customer_email`, `hotel_id`
+- `check_in`, `check_out`, `occupants`, `price`
+- `created_at` (with Flink timestamp precision)
 
 ### `clickstream_schema.avsc`
 
 Defines website interaction events with fields:
 
-- `ACTIVITY_ID`, `CUSTOMER_EMAIL`, `HOTEL_ID`
-- `ACTION`, `EVENT_DURATION`, `URL`
-- `CREATED_AT` (with Flink timestamp precision)
+- `activity_id`, `customer_email`, `hotel_id`
+- `action`, `event_duration`, `url`
+- `created_at` (with Flink timestamp precision)
 
 ### `review_schema.avsc`
 
 Defines hotel review events with fields:
 
-- `REVIEW_ID`, `BOOKING_ID`
-- `REVIEW_RATING`, `REVIEW_TEXT`
-- `CREATED_AT` (with Flink timestamp precision)
+- `review_id`, `booking_id`
+- `review_rating`, `review_text`
+- `created_at` (with Flink timestamp precision)
 
 ## Connections
 
@@ -260,8 +260,14 @@ The review generators implement a sophisticated rating-based text selection syst
 ```json
 "localConfigs": {
     "avroSchemaHint": {
-        "_gen": "loadJsonFile",
-        "file": "/home/data/schemas/review_schema.avsc"
+        "value": {
+            "type": "record",
+            "name": "HotelReviewEvent",
+            "fields": [
+                {"name": "review_id", "type": "string"},
+                {"name": "review_text", "type": "string"}
+            ]
+        }
     }
 },
 "varsOnce": {

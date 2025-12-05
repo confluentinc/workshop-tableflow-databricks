@@ -5,8 +5,19 @@
     "localConfigs": {
         "maxEvents": 125,
         "avroSchemaHint": {
-            "_gen": "loadJsonFile",
-            "file": "/home/data/schemas/clickstream_schema.avsc"
+            "value": {
+                "type": "record",
+                "name": "ClickstreamEvent",
+                "fields": [
+                    {"name": "activity_id", "type": "string"},
+                    {"name": "customer_email", "type": "string"},
+                    {"name": "hotel_id", "type": "string"},
+                    {"name": "action", "type": "string"},
+                    {"name": "event_duration", "type": "int"},
+                    {"name": "url", "type": "string"},
+                    {"name": "created_at", "type": "long"}
+                ]
+            }
         },
         "throttleMs": {
             "_gen": "uniformDistribution",

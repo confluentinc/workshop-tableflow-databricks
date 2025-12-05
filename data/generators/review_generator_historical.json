@@ -5,8 +5,17 @@
     "localConfigs": {
         "maxEvents": 200,
         "avroSchemaHint": {
-            "_gen": "loadJsonFile",
-            "file": "/home/data/schemas/review_schema.avsc"
+            "value": {
+                "type": "record",
+                "name": "HotelReviewEvent",
+                "fields": [
+                    {"name": "review_id", "type": "string"},
+                    {"name": "booking_id", "type": "string"},
+                    {"name": "review_rating", "type": "int"},
+                    {"name": "review_text", "type": "string"},
+                    {"name": "created_at", "type": "long"}
+                ]
+            }
         }
     },
     "varsOnce": {

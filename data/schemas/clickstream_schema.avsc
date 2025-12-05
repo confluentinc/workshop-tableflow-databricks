@@ -3,31 +3,31 @@
     "name": "ClickstreamEvent",
     "fields": [
         {
-            "name": "ACTIVITY_ID",
+            "name": "activity_id",
             "type": "string"
         },
         {
-            "name": "CUSTOMER_EMAIL",
+            "name": "customer_email",
             "type": "string"
         },
         {
-            "name": "HOTEL_ID",
+            "name": "hotel_id",
             "type": "string"
         },
         {
-            "name": "ACTION",
+            "name": "action",
             "type": "string"
         },
         {
-            "name": "EVENT_DURATION",
+            "name": "event_duration",
             "type": "int"
         },
         {
-            "name": "URL",
+            "name": "url",
             "type": "string"
         },
         {
-            "name": "CREATED_AT",
+            "name": "created_at",
             "type": {
                 "type": "long",
                 "flink.precision": 3,

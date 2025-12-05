@@ -5,8 +5,20 @@
     "localConfigs": {
         "maxEvents": 400,
         "avroSchemaHint": {
-            "_gen": "loadJsonFile",
-            "file": "/home/data/schemas/booking_schema.avsc"
+            "value": {
+                "type": "record",
+                "name": "BookingEvent",
+                "fields": [
+                    {"name": "booking_id", "type": "string"},
+                    {"name": "customer_email", "type": "string"},
+                    {"name": "hotel_id", "type": "string"},
+                    {"name": "check_in", "type": "long"},
+                    {"name": "check_out", "type": "long"},
+                    {"name": "occupants", "type": "int"},
+                    {"name": "price", "type": "int"},
+                    {"name": "created_at", "type": "long"}
+                ]
+            }
         }
     },
     "varsOnce": {
