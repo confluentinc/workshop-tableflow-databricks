@@ -172,79 +172,20 @@ Follow these steps to import and use a pre-built Notebook to generate your AI Ag
 
 9. Follow the instructions in the Notebook to create and deploy the marketing campaign agent.
 
-#### Use Agent in AI Playground
-
-Once you have completed creating and deploying your marketing agent, you can interact with it through the Databricks AI Playground:
-
-1. Click on **Playground** in the left sidebar (under the *AI* section)
-2. In the model dropdown, you should now see your `river-hotel-agent-playground` endpoint
-3. Select it and start chatting with your agent!
-
-4. Try these example prompts:
-   - "Which hotel should we create a marketing campaign for in the Airport category?"
-   - "Find the best hotel to promote in the Luxury category"
-   - "Create a targeted campaign for Extended Stay hotels"
-
-5. Your agent will automatically:
-   - Identify an underperforming hotel with good reviews
-   - Generate a positive marketing post based on customer reviews
-   - Provide a list of target customers
-
-**Congratulations!** Your AI marketing agent is now deployed and accessible through multiple interfaces:
-
-- ✅ AI Playground for interactive testin
-- ✅ Unity Catalog for governance and versioning
-
-The agent is ready to help River Hotels create data-driven marketing campaigns in real-time!
-
 ## 🏁 Conclusion
 
-🎉 **Phenomenal achievement!** You've successfully completed the entire real-time AI-powered marketing pipeline and demonstrated the full potential of modern streaming analytics!
+**Congratulations!** Your AI marketing agent is now deployed and accessible through multiple interfaces, and is ready to help River Hotels create data-driven marketing campaigns in real-time!
 
 ### Your Achievements
 
-✅ **Delta Lake Analytics Integration**: Successfully connected streaming Delta tables from Confluent Tableflow to Databricks for advanced analytics and real-time querying
+In this lab, you:
 
-✅ **AI-Powered Business Intelligence**: Used Databricks Genie to generate natural language insights about customer behavior, booking patterns, and hotel performance metrics
-
-✅ **Intelligent Marketing Automation**: Deployed an AI agent that automatically identifies underperforming hotels with good customer satisfaction, creates personalized social media campaigns based on customer review analysis, and generates targeted customer lists
-
-✅ **End-to-End Pipeline Validation**: Demonstrated a complete real-time journey from customer behavior to AI-generated marketing content
-
-### Your AI-Powered Analytics Foundation
-
-Your complete AI-powered marketing pipeline now provides:
-
-**Real-Time Business Intelligence:**
-
-- **Natural language queries** through Databricks Genie for instant insights
-- **Advanced analytics** on streaming Delta Lake tables
-- **Customer behavior analysis** with immediate actionable insights
-
-**Intelligent Marketing Automation:**
-
-- **AI-powered hotel selection** identifying promotion candidates automatically
-- **Review-based content generation** creating targeted social media campaigns
-- **Behavioral customer targeting** reaching high-engagement prospects
-
-### ✅ Solution Requirements Fulfilled
-
-- **💫 Data Freshness** - Reduced from week-old batch data to real-time insights (seconds to minutes)
-- **⏱️ Operational Efficiency** - Eliminated manual data analysis through automation and AI-powered processing
-- **🏆 Competitive Advantage** - River Hotels can now respond to market opportunities in real-time with AI-generated marketing campaigns
-- **🔍 Prospect Intelligence** - Genie enables natural language queries to identify high-value prospects and conversion opportunities from real-time data
-- **📈 Real-time Insights** - Natural language business intelligence provides immediate access to booking trends and customer satisfaction metrics
-- **🏝️ Smart Hotel Selection** - AI agents automatically identify underperforming hotels with positive reviews for strategic promotion
-
-**🏨 River Hotels is now equipped to compete effectively in the digital hospitality landscape with real-time, AI-powered marketing capabilities!**
+- ✅ **AI-Powered Business Intelligence**: Used Databricks Genie to generate natural language insights about customer behavior, booking patterns, and hotel performance metrics
+- ✅ **Intelligent Marketing Automation**: Deployed an AI agent that automatically identifies underperforming hotels with good customer satisfaction, creates personalized social media campaigns based on customer review analysis, and generates targeted customer lists
 
 ## ➡️ What's Next
 
-Your journey concludes by cleaning up the resources you created in **[LAB 7: Resource Cleanup](../LAB7_clean_up/LAB7.md)** where you will:
-
-1. **Destroy Infrastructure**: Use Terraform to safely remove all cloud resources
-2. **Validate Cleanup**: Confirm all services and storage have been properly terminated
-3. **Cost Management**: Ensure no unexpected charges continue after the workshop
+Your journey concludes by cleaning up the resources you created in **[LAB 7: Resource Cleanup](../LAB7_clean_up/LAB7.md)**!
 
 ## 🔧 Troubleshooting
 
