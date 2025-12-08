@@ -166,7 +166,13 @@ Get started by cloning the workshop repository
 
 You will use a Docker container to run Terraform, ensuring consistent behavior across all operating systems (macOS, Linux, Windows). This container includes Terraform, AWS CLI, and SSH tools needed for infrastructure provisioning.
 
-First, open your terminal and navigate to the terraform directory:
+First, open your terminal and navigate into the workshop directory:
+
+```sh
+cd workshop-tableflow-databricks
+```
+
+Next, navigate into the *terraform* directory
 
 ```sh
 cd terraform

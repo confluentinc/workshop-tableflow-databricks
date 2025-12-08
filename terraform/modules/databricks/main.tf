@@ -72,5 +72,5 @@ resource "databricks_grants" "storage_credential" {
 
 data "databricks_sql_warehouse" "main" {
   provider = databricks.workspace
-  name     = "Starter Warehouse"
+  name     = "Serverless Starter Warehouse"
 }
