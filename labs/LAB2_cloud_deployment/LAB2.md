@@ -71,6 +71,8 @@ docker-compose run --rm terraform -c "./terraform-apply-wrapper-with-retry.sh"
 > *Apply complete! Resources: XX added, 0 changed, 0 destroyed.*
 >
 > You may continue on with this lab while Terraform provisions.
+>
+> Alternatively, you may also spend *~10 minutes* going through this [optional data contracts and governance lab](../LAB_data_governance/LAB_data_governance.md) while you wait.
 
 Expand the section below for a summary of the main cloud resources created through Terraform:
 

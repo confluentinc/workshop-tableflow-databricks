@@ -297,6 +297,6 @@ In production environments, these concepts scale to hundreds or thousands of dat
 
 This is an optional lab, so you can return to wherever you came from in the main workshop flow, most likely one of these:
 
-- [LAB 3: Tableflow and PostgreSQL CDC Connector](../LAB3_tableflow_and_connector/LAB3.md)
+- [LAB 2: Cloud Resource Deployment](../LAB2_cloud_deployment/LAB2.md)
 - [LAB 5: Stream Processing](../LAB5_stream_processing/LAB5.md)
 - [LAB 6: Data Analysis in Databricks](../LAB6_databricks/LAB6.md)

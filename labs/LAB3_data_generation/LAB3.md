@@ -63,7 +63,7 @@ You should see an output like this showing successful connection to the data ing
 
 ### Step 2: Review Topics
 
-After successfully starting the data generating process, follow these steps to see data streaming into Confluent Cloud:
+After successfully starting the data generation process, follow these steps to see data streaming into Confluent Cloud:
 
 1. Navigate your web browser back to your workshop cluster in Confluent Cloud
 2. Click on *Topics* in the left sidebar menu
@@ -89,13 +89,6 @@ In this section you will configure the PostgreSQL CDC connector to capture real-
 > **CDC Events**
 >
 > This change data capture connector will automatically record all *INSERT*, *UPDATE*, and *DELETE* events on the `customer` and `hotel` database tables to the corresponding Kafka topics `riverhotel.cdc.customer` and `riverhotel.cdc.hotel`.
-
-#### ✅ Solution Requirements Fulfilled
-
-- **🔌 Seamless Integration** - PostgreSQL CDC now streams database changes in real-time to Confluent Cloud
-- **📡 Capture** - Customer and hotel data changes are now captured in real-time from PostgreSQL database
-
-Now that we have data generating to our PostgreSQL database and Kafka topics, let's move on to the next step!
 
 ## 🏁 Conclusion
 
