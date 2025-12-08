@@ -23,39 +23,36 @@ Completed **[LAB 2: Cloud Infrastructure Deployment](../LAB2_cloud_deployment/LA
 
 You will use a flexible data-generator tool called [Shadow Traffic](https://shadowtraffic.io/) to create *River Hotel* data streams using a three-stage approach that creates both historical and streaming data.
 
-#### Data Generation Overview
+1. Open a new shell tab
+2. Navigate to the workshop repository's root folder
+3. Execute the appropriate command for your OS
 
-As depicted in [this ERD diagram](../../README.md#-data-entity-relationship) from the README, There are 5 streams of data that will be produced to Confluent Cloud.
+   <details>
+   <summary>Linux/Mac</summary>
 
-> [!TIP]
-> **Dive Deeper into Data Generation (Optional)**
->
-> Peruse the details of this workshop's data generation by reviewing [this guide](../../data/data_overview.md)
+   ```sh
+   docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
+   ```
 
-To generate this data, open a shell window/tab and navigate to the workshop repository's root folder and then execute this command:
+   </details>
 
-#### Linux/Mac
+   <details>
+   <summary>Windows cmd</summary>
 
-```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
-```
+   ```sh
+   docker run --env-file ./data/shadow-traffic-license.env -v "%cd%/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
+   ```
 
-#### Windows cmd
+   </details>
 
-```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "%cd%/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
-```
+   <details>
+   <summary>Windows Powershell</summary>
 
-#### Windows Powershell
+   ```sh
+   docker run --env-file ./data/shadow-traffic-license.env -v "${PWD}/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
+   ```
 
-```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "${PWD}/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json
-```
-
-> [!NOTE]
-> **ShadowTraffic Image v1.11.13**
->
-> The above commands will run [v1.11.13](https://hub.docker.com/layers/shadowtraffic/shadowtraffic/1.11.13/images/sha256:082fc44c6c7454ec26c961708a585eb2338d39ef5b472bf9111fe302611c1677) of the data generator in the foreground of your shell, which has been tested and validated as compatible with this workshop
+   </details>
 
 You should see an output like this showing successful connection to the data ingestion layer:
 
@@ -65,15 +62,18 @@ You should see an output like this showing successful connection to the data ing
 
 After successfully starting the data generation process, follow these steps to see data streaming into Confluent Cloud:
 
-1. Navigate your web browser back to your workshop cluster in Confluent Cloud
-2. Click on *Topics* in the left sidebar menu
+1. Navigate to the [topics UI](https://confluent.cloud/go/topics) in Confluent Cloud
+2. Select your environment and cluster
+
+   ![environment and cluster dropdowns](./images/navigate_to_topics.png)
+
 3. Verify that you see these topics:
 
    ![table of topics](images/confluent_cluster_topics_streaming.png)
 
 ### Step 3: Review PostgreSQL CDC Connector
 
-In this section you will configure the PostgreSQL CDC connector to capture real-time changes from your PostgreSQL database and stream them to Confluent Cloud.
+In this section you will verify that the PostgreSQL CDC connector is capturing real-time changes from your PostgreSQL database.
 
 1. Click on *Connectors* in the left sidebar menu
 2. You should see a tile like this
@@ -92,14 +92,7 @@ In this section you will configure the PostgreSQL CDC connector to capture real-
 
 ## 🏁 Conclusion
 
-🎉 **Congratulations!** You've successfully generated realistic data and established automated streaming to Delta Lake for River Hotels' AI-powered marketing pipeline!
-
-### What You've Achieved
-
-In this lab, you have:
-
-- ✅ **Generated Realistic Data**: Deployed Shadow Traffic to create authentic customer behavior data that mirrors real hospitality industry patterns
-- ✅ **Validated Data Streaming**: Confirmed that PostgreSQL CDC and Shadow Traffic are successfully streaming data to Kafka topics
+🎉 **Congratulations!** You've successfully generated realistic data and streamed it into Confluent Cloud!
 
 <details>
 <summary>More details about your data pipeline</summary>
@@ -114,13 +107,6 @@ You now have a live, streaming data pipeline consisting of:
 - **400+ booking transactions** with realistic customer-hotel relationships
 - **200+ hotel reviews** with ratings and feedback that reflect actual guest experiences
 - **Continuous streaming data** with realistic throttling patterns that simulate real-world usage
-
-**Tableflow Pipeline:**
-
-- **Automated Delta Lake sync** for clickstream data with exactly-once processing guarantees
-- **Schema evolution support** allowing for future data structure changes
-- **Optimized performance** through tiered storage integration and intelligent fallback mechanisms
-- **Unity Catalog integration** providing enterprise-grade data governance and discoverability
 
 </details>
 

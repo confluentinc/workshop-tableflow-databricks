@@ -3,7 +3,7 @@
     "topic": "hotel_reviews",
     "connection": "confluent",
     "localConfigs": {
-        "maxEvents": 10,
+        "maxEvents": 40,
         "avroSchemaHint": {
             "value": {
                 "type": "record",

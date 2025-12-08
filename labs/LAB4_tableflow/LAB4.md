@@ -23,22 +23,26 @@ Make sure to have completed [LAB 3: Data Generation](../LAB3_data_generation/LAB
 
 Follow these steps to setup the Tableflow-to-Unity Catalog integration:
 
-1. Navigate to your cluster in Confluent Cloud
-2. Click on **Tableflow** in the left menu
-3. Click on the **+ Add integration** button next to the *External Catalog Integrations* section
+1. Navigate to your cluster in Confluent Cloud by clicking [this link](https://confluent.cloud/go/cluster)
+2. Select your workshop environment and cluster in the dropdowns
+
+   ![Environment and cluster dropdowns](./images/navigate_to_cluster.png)
+
+3. Click on **Tableflow** in the left menu
+4. Click on the **+ Add integration** button next to the *External Catalog Integrations* section
 
    ![Tableflow landing page](./images/tableflow_landing_page.png)
 
-4. Select **Databricks Unity**
-5. Enter a relevant and memorable title in the *Name* field, something like `tableflow-databricks-workshop`
+5. Select **Databricks Unity**
+6. Enter a relevant and memorable title in the *Name* field, something like `tableflow-databricks-workshop`
 
    ![Form with multi-select and a name and supported format field](./images/tableflow_unity_catalog_integration1.png)
 
-6. Click **Continue**
-7. Copy and paste the value from the `databricks_host` variable in your *terraform.tfvars* file into the *Databricks workspace URL* field
-8. Copy and paste the value from the `databricks_service_principal_client_id` variable in your *terraform.tfvars* file into the *Client ID* field
-9. Copy and paste the value from the `databricks_service_principal_client_secret` variable in your *terraform.tfvars* file into the *Client secret* field
-10. Copy and paste the name of your databricks catalog into the *Unity catalog name* - look for the `catalog_name` attribute from the result of running this terraform command:
+7. Click **Continue**
+8. Copy and paste the value from the `databricks_host` variable in your *terraform.tfvars* file into the *Databricks workspace URL* field
+9.  Copy and paste the value from the `databricks_service_principal_client_id` variable in your *terraform.tfvars* file into the *Client ID* field
+10. Copy and paste the value from the `databricks_service_principal_client_secret` variable in your *terraform.tfvars* file into the *Client secret* field
+11. Copy and paste the name of your databricks catalog into the *Unity catalog name* - look for the `catalog_name` attribute from the result of running this terraform command:
 
    ```sh
    docker-compose run --rm terraform -c "terraform output databricks_integration"
@@ -46,8 +50,8 @@ Follow these steps to setup the Tableflow-to-Unity Catalog integration:
 
    ![Form with fields to input connection details for Unity Catalog](./images/tableflow_unity_catalog_integration2.png)
 
-11. Click **Continue**
-12. Launch your Unity Catalog integration, you should see something like this on your screen:
+12. Click **Continue**
+13. Launch your Unity Catalog integration, you should see something like this on your screen:
 
    ![Table with row showing tableflow + databricks unity catalog integration is pending](./images/tableflow_unity_catalog_integration_pending.png)
 

@@ -148,13 +148,10 @@ output "confluent_credentials" {
 output "databricks_integration" {
   description = "Databricks Unity Catalog integration details"
   value = {
-    storage_credential_name = module.databricks.storage_credential_name
-    external_location_name  = databricks_external_location.main.name
-    external_location_url   = databricks_external_location.main.url
-    catalog_name            = databricks_catalog.main.name
-    catalog_storage_root    = databricks_catalog.main.storage_root
-    expected_schema_name    = module.databricks.expected_schema_name
-    sql_warehouse_id        = module.databricks.sql_warehouse_id
+    s3_bucket_name         = module.s3.bucket_name
+    catalog_name           = databricks_catalog.main.name
+    databricks_schema_name = module.databricks.databricks_schema_name
+    sql_warehouse_id       = module.databricks.sql_warehouse_id
   }
 }
 

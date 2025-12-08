@@ -3,20 +3,44 @@
     "topic": "bookings",
     "connection": "confluent",
     "localConfigs": {
-        "maxEvents": 20,
+        "maxEvents": 100,
         "avroSchemaHint": {
             "value": {
                 "type": "record",
                 "name": "BookingEvent",
                 "fields": [
-                    {"name": "booking_id", "type": "string"},
-                    {"name": "customer_email", "type": "string"},
-                    {"name": "hotel_id", "type": "string"},
-                    {"name": "check_in", "type": "long"},
-                    {"name": "check_out", "type": "long"},
-                    {"name": "occupants", "type": "int"},
-                    {"name": "price", "type": "int"},
-                    {"name": "created_at", "type": "long"}
+                    {
+                        "name": "booking_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "customer_email",
+                        "type": "string"
+                    },
+                    {
+                        "name": "hotel_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "check_in",
+                        "type": "long"
+                    },
+                    {
+                        "name": "check_out",
+                        "type": "long"
+                    },
+                    {
+                        "name": "occupants",
+                        "type": "int"
+                    },
+                    {
+                        "name": "price",
+                        "type": "int"
+                    },
+                    {
+                        "name": "created_at",
+                        "type": "long"
+                    }
                 ]
             }
         },

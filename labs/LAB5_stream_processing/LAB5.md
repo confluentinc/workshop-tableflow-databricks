@@ -112,50 +112,6 @@ At this time, your data has normalized topics as tables in Flink. Normalization 
 
 First, run these statements to create snapshot tables from the CDC sources, then you can execute the main denormalization query:
 
-```sql
--- Create append-only customer snapshot from CDC source
-SET 'client.statement-name' = 'customer-snapshot';
-
-CREATE TABLE customer_snapshot AS (
-SELECT
-  customer_id,
-  email,
-  first_name,
-  last_name,
-  birth_date,
-  created_at
-FROM `riverhotel.cdc.customer`
-);
-```
-
-```sql
--- Ensure append-only mode for interval join compatibility
-ALTER TABLE customer_snapshot SET ('changelog.mode' = 'append');
-```
-
-```sql
--- Create append-only hotel snapshot from CDC source
-SET 'client.statement-name' = 'hotel-snapshot';
-
-CREATE TABLE hotel_snapshot AS (
-SELECT
-  hotel_id,
-  name,
-  category,
-  description,
-  city,
-  country,
-  room_capacity,
-  created_at
-FROM `riverhotel.cdc.hotel`
-);
-```
-
-```sql
--- Ensure append-only mode for interval join compatibility
-ALTER TABLE hotel_snapshot SET ('changelog.mode' = 'append');
-```
-
 #### Create Denormalized Table
 
 The query below creates a denormalized topic/table that combines booking data with customer information, hotel details, and any existing hotel reviews.:
@@ -184,10 +140,10 @@ SELECT
   b.`booking_id` AS `booking_id`,
   h.`hotel_id` AS `hotel_id`
 FROM `bookings` b
-   JOIN `customer_snapshot` c
+   JOIN `riverhotel.cdc.customer` c
      ON c.`email` = b.`customer_email`
      AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
-   JOIN `hotel_snapshot` h
+   JOIN `riverhotel.cdc.hotel` h
      ON h.`hotel_id` = b.`hotel_id`
      AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
   LEFT JOIN `hotel_reviews` hr

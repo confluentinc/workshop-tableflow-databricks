@@ -44,10 +44,10 @@ First, follow these steps to verify that the data is flowing in as expected:
 
    ![Two dropdown selectors for catalog and schema](./images/databricks_query_dropdowns.png)
 
-1.  In the SQL editor, run this query to see if data is available
+11. Run the query that appears in the cell - it should look like this:
 
 ```sql
-SELECT * FROM clickstream LIMIT 20;
+select * from `<catalog>`.`<schema>`.`clickstream` limit 100;
 ```
 
 > [!TIP]
@@ -59,9 +59,7 @@ SELECT * FROM clickstream LIMIT 20;
 >
 > If you do, select the **Automatically launch and attach without prompting** and click the **Start, attach and run** button
 
-You should see 20 records of clickstream data.
-
-<!-- TODO: Add screenshot here of clickstream -->
+You should see 100 records of clickstream data.
 
 > [!IMPORTANT]
 > **10-15 Minute Data Sync**
