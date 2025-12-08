@@ -268,23 +268,23 @@ ALTER TABLE HOTEL_SNAPSHOT SET ('changelog.mode' = 'append');
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
 CREATE TABLE DENORMALIZED_HOTEL_BOOKINGS AS (
 SELECT
-  h.`name` AS `HOTEL_NAME`,
-  h.`description` AS `HOTEL_DESCRIPTION`,
-  h.`category` AS `HOTEL_CATEGORY`,
-  h.`city` AS `HOTEL_CITY`,
-  h.`country` AS `HOTEL_COUNTRY`,
-  b.`price` AS `BOOKING_AMOUNT`,
-  b.`occupants` AS `GUEST_COUNT`,
-  to_timestamp_ltz(b.`created_at`, 3) AS `BOOKING_DATE`,
-  to_timestamp_ltz(b.`check_in`, 3) AS `CHECK_IN`,
-  to_timestamp_ltz(b.`check_out`, 3) AS `CHECK_OUT`,
-  c.`email` AS `CUSTOMER_EMAIL`,
-  c.`first_name` AS `CUSTOMER_FIRST_NAME`,
-  hr.`review_rating` AS `REVIEW_RATING`,
-  hr.`review_text` AS `REVIEW_TEXT`,
-  to_timestamp_ltz(hr.`created_at`, 3) AS `REVIEW_DATE`,
-  b.`booking_id` AS `BOOKING_ID`,
-  h.`hotel_id` AS `HOTEL_ID`
+  h.`name` AS `hotel_name`,
+  h.`description` AS `hotel_description`,
+  h.`category` AS `hotel_category`,
+  h.`city` AS `hotel_city`,
+  h.`country` AS `hotel_country`,
+  b.`price` AS `booking_amount`,
+  b.`occupants` AS `guest_count`,
+  to_timestamp_ltz(b.`created_at`, 3) AS `booking_date`,
+  to_timestamp_ltz(b.`check_in`, 3) AS `check_in`,
+  to_timestamp_ltz(b.`check_out`, 3) AS `check_out`,
+  c.`email` AS `customer_email`,
+  c.`first_name` AS `customer_first_name`,
+  hr.`review_rating` AS `review_rating`,
+  hr.`review_text` AS `review_text`,
+  to_timestamp_ltz(hr.`created_at`, 3) AS `review_date`,
+  b.`booking_id` AS `booking_id`,
+  h.`hotel_id` AS `hotel_id`
 FROM `bookings` b
    -- $rowtime for dimension joins (data availability)
    JOIN `CUSTOMER_SNAPSHOT` c
@@ -426,8 +426,8 @@ ALTER TABLE CUSTOMER_SNAPSHOT SET ('changelog.mode' = 'append');
 
 When creating aggregate tables in Flink SQL, you may encounter primary key errors due to nullable columns:
 
-> Invalid primary key 'PK_HOTEL_ID_HOTEL_NAME_HOTEL_CITY_HOTEL_COUNTRY_HOTEL_DESCRIPTION'.
-> Column 'HOTEL_NAME' is nullable.
+> Invalid primary key 'PK_hotel_id_hotel_name_hotel_city_hotel_country_hotel_description'.
+> Column 'hotel_name' is nullable.
 
 This occurs because Flink auto-infers primary keys from `GROUP BY` columns, but cannot create primary keys from nullable columns.
 
@@ -436,22 +436,22 @@ This occurs because Flink auto-infers primary keys from `GROUP BY` columns, but 
 **Quick null handling in aggregation queries:**
 
 ```sql
-CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
+CREATE TABLE aggregate_hotel_reviews AS (
    SELECT
-      COALESCE(HOTEL_ID, 'UNKNOWN_HOTEL') AS HOTEL_ID,
-      COALESCE(HOTEL_NAME, 'UNKNOWN_NAME') AS HOTEL_NAME,
-      COALESCE(HOTEL_CITY, 'UNKNOWN_CITY') AS HOTEL_CITY,
-      COALESCE(HOTEL_COUNTRY, 'UNKNOWN_COUNTRY') AS HOTEL_COUNTRY,
-      COALESCE(HOTEL_DESCRIPTION, 'NO_DESCRIPTION') AS HOTEL_DESCRIPTION,
-      AVG(REVIEW_RATING) AS AVERAGE_REVIEW_RATING,
-      COUNT(REVIEW_RATING) AS REVIEW_COUNT,
-      ARRAY_JOIN(ARRAY_AGG(REVIEW_TEXT), '||| ') AS HOTEL_REVIEWS
-   FROM DENORMALIZED_HOTEL_BOOKINGS
-   GROUP BY COALESCE(HOTEL_ID, 'UNKNOWN_HOTEL'),
-      COALESCE(HOTEL_NAME, 'UNKNOWN_NAME'),
-      COALESCE(HOTEL_CITY, 'UNKNOWN_CITY'),
-      COALESCE(HOTEL_COUNTRY, 'UNKNOWN_COUNTRY'),
-      COALESCE(HOTEL_DESCRIPTION, 'NO_DESCRIPTION')
+      COALESCE(hotel_id, 'UNKNOWN_HOTEL') AS hotel_id,
+      COALESCE(hotel_name, 'UNKNOWN_NAME') AS hotel_name,
+      COALESCE(hotel_city, 'UNKNOWN_CITY') AS hotel_city,
+      COALESCE(hotel_country, 'UNKNOWN_COUNTRY') AS hotel_country,
+      COALESCE(hotel_description, 'NO_DESCRIPTION') AS hotel_description,
+      AVG(review_rating) AS average_review_rating,
+      COUNT(review_rating) AS review_count,
+      ARRAY_JOIN(ARRAY_AGG(review_text), '||| ') AS hotel_reviews
+   FROM denormalized_hotel_bookings
+   GROUP BY COALESCE(hotel_id, 'UNKNOWN_HOTEL'),
+      COALESCE(hotel_name, 'UNKNOWN_NAME'),
+      COALESCE(hotel_city, 'UNKNOWN_CITY'),
+      COALESCE(hotel_country, 'UNKNOWN_COUNTRY'),
+      COALESCE(hotel_description, 'NO_DESCRIPTION')
 );
 ```
 
@@ -464,71 +464,71 @@ CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
 
 ```sql
 -- Step 1: Define exact schema with constraints
-CREATE TABLE DENORMALIZED_HOTEL_BOOKINGS (
-  HOTEL_NAME VARCHAR NOT NULL,           -- Explicitly non-nullable
-  HOTEL_DESCRIPTION VARCHAR NOT NULL,    -- Explicitly non-nullable
-  HOTEL_CLASS VARCHAR,                   -- Nullable (optional)
-  HOTEL_CITY VARCHAR NOT NULL,           -- Explicitly non-nullable
-  HOTEL_COUNTRY VARCHAR NOT NULL,        -- Explicitly non-nullable
-  BOOKING_AMOUNT DECIMAL(10,2),
-  GUEST_COUNT INT,
-  BOOKING_DATE TIMESTAMP(3),
-  CHECK_IN TIMESTAMP(3),
-  CHECK_OUT TIMESTAMP(3),
-  CUSTOMER_EMAIL VARCHAR,
-  CUSTOMER_FIRST_NAME VARCHAR,
-  REVIEW_RATING INT,
-  REVIEW_TEXT STRING,
-  REVIEW_DATE TIMESTAMP(3),
-  BOOKING_ID VARCHAR NOT NULL,
-  HOTEL_ID VARCHAR NOT NULL,
-  PRIMARY KEY (BOOKING_ID, HOTEL_ID) NOT ENFORCED  -- Explicit PK
+CREATE TABLE denormalized_hotel_bookings (
+  hotel_name VARCHAR NOT NULL,           -- Explicitly non-nullable
+  hotel_description VARCHAR NOT NULL,    -- Explicitly non-nullable
+  hotel_class VARCHAR,                   -- Nullable (optional)
+  hotel_city VARCHAR NOT NULL,           -- Explicitly non-nullable
+  hotel_country VARCHAR NOT NULL,        -- Explicitly non-nullable
+  booking_amount DECIMAL(10,2),
+  guest_count INT,
+  booking_date TIMESTAMP(3),
+  check_in TIMESTAMP(3),
+  check_out TIMESTAMP(3),
+  customer_email VARCHAR,
+  customer_first_name VARCHAR,
+  review_rating INT,
+  review_text STRING,
+  review_date TIMESTAMP(3),
+  booking_id VARCHAR NOT NULL,
+  hotel_id VARCHAR NOT NULL,
+  PRIMARY KEY (booking_id, hotel_id) NOT ENFORCED  -- Explicit PK
 );
 
 -- Step 2: Insert data with COALESCE to meet NOT NULL constraints
-INSERT INTO DENORMALIZED_HOTEL_BOOKINGS
+INSERT INTO denormalized_hotel_bookings
 SELECT
-  COALESCE(h.NAME, 'UNKNOWN_NAME') AS HOTEL_NAME,     -- Converts nulls to defaults
-  COALESCE(h.DESCRIPTION, 'NO_DESCRIPTION') AS HOTEL_DESCRIPTION,
-  h.CLASS AS HOTEL_CLASS,                             -- Allows nulls
-  COALESCE(h.CITY, 'UNKNOWN_CITY') AS HOTEL_CITY,
-  COALESCE(h.COUNTRY, 'UNKNOWN_COUNTRY') AS HOTEL_COUNTRY,
-  b.PRICE AS BOOKING_AMOUNT,
-  b.OCCUPANTS AS GUEST_COUNT,
-  to_timestamp_ltz(b.CREATED_AT, 3) AS BOOKING_DATE,
-  to_timestamp_ltz(b.CHECK_IN, 3) AS CHECK_IN,
-  to_timestamp_ltz(b.CHECK_OUT, 3) AS CHECK_OUT,
-  c.EMAIL AS CUSTOMER_EMAIL,
-  c.FIRST_NAME AS CUSTOMER_FIRST_NAME,
-  hr.REVIEW_RATING,
-  hr.REVIEW_TEXT,
-  to_timestamp_ltz(hr.CREATED_AT, 3) AS REVIEW_DATE,
-  b.BOOKING_ID,
-  h.HOTEL_ID
+  COALESCE(h.name, 'UNKNOWN_NAME') AS hotel_name,     -- Converts nulls to defaults
+  COALESCE(h.description, 'NO_DESCRIPTION') AS hotel_description,
+  h.class AS hotel_class,                             -- Allows nulls
+  COALESCE(h.city, 'UNKNOWN_CITY') AS hotel_city,
+  COALESCE(h.country, 'UNKNOWN_COUNTRY') AS hotel_country,
+  b.price AS booking_amount,
+  b.occupants AS guest_count,
+  to_timestamp_ltz(b.created_at, 3) AS booking_date,
+  to_timestamp_ltz(b.check_in, 3) AS check_in,
+  to_timestamp_ltz(b.check_out, 3) AS check_out,
+  c.email AS customer_email,
+  c.first_name AS customer_first_name,
+  hr.review_rating,
+  hr.review_text,
+  to_timestamp_ltz(hr.created_at, 3) AS review_date,
+  b.booking_id,
+  h.hotel_id
 FROM bookings b
-  JOIN CUSTOMER_SNAPSHOT c
-    ON c.EMAIL = b.CUSTOMER_EMAIL
+  JOIN customer_snapshot c
+    ON c.email = b.customer_email
     AND c.$rowtime BETWEEN b.$rowtime - INTERVAL '1' DAY AND b.$rowtime + INTERVAL '1' DAY
-  JOIN HOTEL_SNAPSHOT h
-    ON h.HOTEL_ID = b.HOTEL_ID
+  JOIN hotel_snapshot h
+    ON h.hotel_id = b.hotel_id
     AND h.$rowtime BETWEEN b.$rowtime - INTERVAL '1' DAY AND b.$rowtime + INTERVAL '1' DAY
   LEFT JOIN hotel_reviews hr
-    ON hr.BOOKING_ID = b.BOOKING_ID
+    ON hr.booking_id = b.booking_id
     AND hr.$rowtime BETWEEN b.$rowtime AND b.$rowtime + INTERVAL '90' DAY;
 
 -- Step 3: Subsequent aggregates work without COALESCE
-CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
+CREATE TABLE aggregate_hotel_reviews AS (
    SELECT
-      HOTEL_ID,                           -- No COALESCE needed!
-      HOTEL_NAME,                         -- No COALESCE needed!
-      HOTEL_CITY,                         -- No COALESCE needed!
-      HOTEL_COUNTRY,                      -- No COALESCE needed!
-      HOTEL_DESCRIPTION,                  -- No COALESCE needed!
-      AVG(REVIEW_RATING) AS AVERAGE_REVIEW_RATING,
-      COUNT(REVIEW_RATING) AS REVIEW_COUNT,
-      ARRAY_JOIN(ARRAY_AGG(REVIEW_TEXT), '||| ') AS HOTEL_REVIEWS
-   FROM DENORMALIZED_HOTEL_BOOKINGS
-   GROUP BY HOTEL_ID, HOTEL_NAME, HOTEL_CITY, HOTEL_COUNTRY, HOTEL_DESCRIPTION
+      hotel_id,                           -- No COALESCE needed!
+      hotel_name,                         -- No COALESCE needed!
+      hotel_city,                         -- No COALESCE needed!
+      hotel_country,                      -- No COALESCE needed!
+      hotel_description,                  -- No COALESCE needed!
+      AVG(review_rating) AS average_review_rating,
+      COUNT(review_rating) AS review_count,
+      ARRAY_JOIN(ARRAY_AGG(review_text), '||| ') AS hotel_reviews
+   FROM denormalized_hotel_bookings
+   GROUP BY hotel_id, hotel_name, hotel_city, hotel_country, hotel_description
 );
 ```
 
@@ -546,19 +546,19 @@ CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
 **Modify source snapshot tables to enforce NOT NULL:**
 
 ```sql
--- After creating HOTEL_SNAPSHOT, add constraints
-ALTER TABLE HOTEL_SNAPSHOT MODIFY (
-  HOTEL_ID VARCHAR NOT NULL,
-  NAME VARCHAR NOT NULL,
-  CITY VARCHAR NOT NULL,
-  COUNTRY VARCHAR NOT NULL,
-  DESCRIPTION VARCHAR NOT NULL
+-- After creating hotel_snapshot, add constraints
+ALTER TABLE hotel_snapshot MODIFY (
+  hotel_id VARCHAR NOT NULL,
+  name VARCHAR NOT NULL,
+  city VARCHAR NOT NULL,
+  country VARCHAR NOT NULL,
+  description VARCHAR NOT NULL
 );
 
--- After creating CUSTOMER_SNAPSHOT, add constraints
-ALTER TABLE CUSTOMER_SNAPSHOT MODIFY (
-  EMAIL VARCHAR NOT NULL,
-  FIRST_NAME VARCHAR NOT NULL
+-- After creating customer_snapshot, add constraints
+ALTER TABLE customer_snapshot MODIFY (
+  email VARCHAR NOT NULL,
+  first_name VARCHAR NOT NULL
 );
 ```
 

@@ -245,8 +245,8 @@ resource "null_resource" "wait_for_trust_policy_phase1" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
-      echo "⏳ Waiting 90 seconds for Phase 1 IAM propagation..."
-      sleep 90
+      echo "⏳ Waiting 60 seconds for Phase 1 IAM propagation..."
+      sleep 60
       echo "✅ Phase 1 propagation wait complete!"
     EOT
   }
@@ -342,8 +342,8 @@ resource "null_resource" "wait_for_trust_policy_phase2" {
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
-      echo "⏳ Waiting 60 seconds for Phase 2 IAM propagation..."
-      sleep 60
+      echo "⏳ Waiting 30 seconds for Phase 2 IAM propagation..."
+      sleep 30
       echo "✅ Phase 2 propagation wait complete!"
     EOT
   }

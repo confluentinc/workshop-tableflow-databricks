@@ -24,3 +24,8 @@ output "expected_schema_name" {
   description = "Expected schema name (Kafka cluster ID)"
   value       = var.kafka_cluster_id
 }
+
+output "sql_warehouse_id" {
+  description = "SQL Warehouse ID"
+  value       = data.databricks_sql_warehouse.main.id
+}

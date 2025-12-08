@@ -1,9 +1,9 @@
 # ===============================
 # General Overrides
 # ===============================
+prefix       = ""
 email        = ""
 cloud_region = ""
-prefix       = ""
 
 # ===============================
 # Confluent Cloud Overrides

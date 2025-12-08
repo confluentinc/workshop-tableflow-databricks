@@ -55,7 +55,7 @@ These resources and connections were created through web interfaces and need to 
    ![Topic configuration page](./images/tableflow_disable_topic.png)
 
 5. Copy and paste the topic name into the field and click **Confirm**
-6. Repeat steps 1-5 for the `clickstream` and `HOTEL_STATS` topics
+6. Repeat steps 1-5 for the `clickstream` and `hotel_stats` topics
 
 #### Databricks
 

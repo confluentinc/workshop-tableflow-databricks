@@ -34,14 +34,14 @@ If you have any issues with or feedback for this workshop, Please let us know in
 > 1. `us-west-2` or `us-east-2`
 > 2. `us-east-1`
 >
-> If you are going through this workshop with a presenter from Confluent, they should provide additional guidance/limitations for cloud regions as needed.
+> If you are going through this workshop with a presenter from Confluent, they may provide additional guidance/limitations for cloud regions as needed.
 
 You must complete each of these in order to successfully go through this workshop:
 
 ### Required Accounts
 
 - **Confluent Cloud account** with admin privileges - [sign up for a free trial](https://www.confluent.io/confluent-cloud/tryfree?utm_campaign=tm.fm-ams_cd.Build-an-A[…]ne_id.701Uz00000fEQeEIAW&utm_source=zoom&utm_medium=workshop)
-- **Databricks account** and existing workspace - paid or [free edition account](https://login.databricks.com/?intent=SIGN_UP&provider=DB_FREE_TIER) are strongly recommended. [Free trial account](https://docs.databricks.com/aws/en/getting-started/express-setup) sometimes experience data syncing issues with this workshop, so we recommend that you use **paid** or **free edition** accounts.
+- **Databricks account** and existing workspace - paid or [free edition account](https://login.databricks.com/?intent=SIGN_UP&provider=DB_FREE_TIER) are strongly recommended. [Free trial account](https://docs.databricks.com/aws/en/getting-started/express-setup) sometimes experience data syncing issues with this workshop, so we recommend that you use **paid** or **free edition** accounts instead.
 - **AWS account** with permissions to create cloud resources (EC2, S3, VPC, IAM)
 
 > [!IMPORTANT]
@@ -53,33 +53,116 @@ You must complete each of these in order to successfully go through this worksho
 
 You only need to have these two tools installed on your local machine:
 
-- **[Git](https://git-scm.com/downloads)** installed
-- **[Docker Desktop](https://docs.docker.com/get-started/get-docker/)** installed and running
+1. **[Git](https://git-scm.com/downloads)**
+2. **[Docker Desktop](https://docs.docker.com/get-started/get-docker/)** installed and running
 
-### Initial Setup Steps
+<details>
+<summary>Install on macOS</summary>
+
+Using [Homebrew](https://brew.sh/):
+
+```sh
+# Install Git
+brew install git
+
+# Install Docker Desktop
+brew install --cask docker
+```
+
+After installation, launch Docker Desktop from Applications and ensure it's running (look for the whale icon in the menu bar).
+
+</details>
+
+<details>
+<summary>Install on Windows</summary>
+
+Using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) (Windows Package Manager):
+
+```powershell
+# Install Git
+winget install --id Git.Git -e --source winget
+
+# Install Docker Desktop
+winget install --id Docker.DockerDesktop -e --source winget
+```
+
+After installation:
+
+1. Restart your terminal
+2. Launch Docker Desktop from the Start menu
+3. Ensure Docker is running (look for the whale icon in the system tray)
+
+</details>
+
+<details>
+<summary>Install on Linux (Ubuntu/Debian)</summary>
+
+```sh
+# Install Git
+sudo apt update && sudo apt install -y git
+
+# Install Docker Engine
+sudo apt install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Add your user to the docker group (logout/login required)
+sudo usermod -aG docker $USER
+```
+
+> **Note**: Log out and back in for the group change to take effect.
+
+</details>
+
+<details>
+<summary>Install on Linux (Fedora/RHEL)</summary>
+
+```sh
+# Install Git
+sudo dnf install -y git
+
+# Install Docker Engine
+sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Start Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add your user to the docker group (logout/login required)
+sudo usermod -aG docker $USER
+```
+
+> **Note**: Log out and back in for the group change to take effect.
+
+</details>
+
+## Initial Setup Steps
 
 Once you have the required tools installed and configured, then perform these steps:
 
-#### Step 1: Clone this Repository
+### Step 1: Clone this Repository
 
 Get started by cloning the workshop repository
 
 1. Open your preferred command-line interface, like *zsh* or *Powershell*
 2. Clone this repository with git:
 
-   **HTTP:**
-
    ```sh
    git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
    ```
 
-   **SSH:**
-
-   ```sh
-   git clone git@github.com:confluentinc/workshop-tableflow-databricks.git
-   ```
-
-#### Step 2: Pull and Build Docker Images
+### Step 2: Pull and Build Docker Images
 
 You will use a Docker container to run Terraform, ensuring consistent behavior across all operating systems (macOS, Linux, Windows). This container includes Terraform, AWS CLI, and SSH tools needed for infrastructure provisioning.
 
@@ -116,13 +199,38 @@ Next, you need to pull down the data generator (ShadowTraffic) docker image by f
 > [!NOTE]
 > **First-Time Build**
 >
-> The initial build takes 1-2 minutes as it downloads the base Terraform image and installs additional tools. Subsequent builds use cached layers and complete in seconds.
+> The initial pull and build may take a few minutes. Subsequent uses leverage cached layers and should complete in seconds.
 
-You can continue while the docker images are pulled down. [Skip to the lab section](#-workshop-labs) to bypass the background and use case content so you can more quickly get started with the next workshop steps.
+**You can continue on with the workshop while the docker images are pulled down.**
 
 ## 🏨 Use Case
 
-*River Hotels* is at a critical juncture. Despite being a successful hospitality company with properties across multiple continents, they're slowly losing ground to more agile competitors who can respond to market opportunities in real-time. The executive leadership team has identified a fundamental problem: their data infrastructure is holding back their ability to compete effectively in today's fast-paced hospitality market.
+*River Hotels* is at a critical juncture. Despite being a successful hospitality company with properties across multiple continents, they're slowly losing ground to more agile competitors who can respond to market opportunities in real-time. The executive leadership team has identified a fundamental problem: **their data infrastructure is holding back their ability to compete effectively in today's fast-paced hospitality market.**
+
+## 🏛️ Architecture Overview
+
+At a high level, the solution you will build is represented by this diagram:
+
+![Architecture Diagram](./assets/images/tableflow_databricks_architecture_diagram.jpg)
+
+### 🗄 Datasets
+
+There are five normalized interrelated datasets that you will be streaming to Confluent Cloud:
+
+1. **Customers**: Master customer profiles containing contact information and demographics. These records serve as the foundation for customer behavior analysis across all other data streams.
+
+2. **Hotels**: Comprehensive hotel property data including amenities, descriptions, locations, and capacity details.
+
+3. **Clickstream**: Real-time website interaction events capturing customer browsing behavior, page views, and hotel searches.
+
+4. **Hotel Reviews**: Customer feedback with ratings (1-5 stars) and detailed review text, linked to specific bookings.
+
+5. **Bookings**: Reservation transaction data linking customers to hotels with check-in/check-out dates, pricing, and guest counts.
+
+Expand the accordion below for more background details about this use case. Otherwise, continue on to the next section of this workshop.
+
+<details>
+<summary>Use Case Details</summary>
 
 ### ⚠️ The Challenge
 
@@ -193,26 +301,6 @@ By the end of this workshop, you will have constructed a sophisticated data pipe
 - **Data Lake Integration**: Use Tableflow to seamlessly bridge streaming data and analytics platforms
 - **AI-Powered Analytics**: Apply generative AI for both data summarization and marketing content creation
 - **Event-Driven Architecture**: Design systems that react to customer behavior in real-time
-
-## 🏛️ Architecture Overview
-
-At a high level, the solution you build is represented by this diagram:
-
-![Architecture Diagram](./assets/images/tableflow_databricks_architecture_diagram.jpg)
-
-### 🗄 Datasets
-
-There are five normalized interrelated datasets that you will be streaming to Confluent Cloud:
-
-1. **Customers**: Master customer profiles containing contact information and demographics. These records serve as the foundation for customer behavior analysis across all other data streams.
-
-2. **Hotels**: Comprehensive hotel property data including amenities, descriptions, locations, and capacity details.
-
-3. **Clickstream**: Real-time website interaction events capturing customer browsing behavior, page views, and hotel searches.
-
-4. **Hotel Reviews**: Customer feedback with ratings (1-5 stars) and detailed review text, linked to specific bookings.
-
-5. **Bookings**: Reservation transaction data linking customers to hotels with check-in/check-out dates, pricing, and guest counts.
 
 ### 🔗 Data Entity Relationship
 
@@ -302,95 +390,12 @@ erDiagram
    - **Databricks Genie**: Natural language interface for business intelligence
    - **AI Agents**: Intelligent hotel selection, review analysis, and customer targeting for automated marketing campaigns
 
-## 🔬 Workshop Labs
-
-This workshop is organized into seven sequential labs listed below.
-
-Each lab builds upon the previous one, so start with LAB 1 and continue sequentially until completion.
-
-### [LAB 1: Account Setup](./labs/LAB1_account_setup/LAB1.md)
-
-**Duration**: ~15 minutes
-
-Configure cloud platform accounts and credentials:
-
-- **Repository Setup**: Clone workshop repository and prepare workspace
-- **Confluent Cloud Configuration**: Set up environment and API keys
-- **Databricks Account Setup**: Configure service principal and workspace access
-- **AWS CLI Authentication**: Establish AWS credentials and permissions
-
-### [LAB 2: Cloud Infrastructure Deployment](./labs/LAB2_cloud_deployment/LAB2.md)
-
-**Duration**: ~10 minutes
-
-Deploy the infrastructure foundation using Terraform:
-
-- **Multi-Cloud Infrastructure Deployment**: Provision AWS, Confluent Cloud, and Databricks resources
-- **Infrastructure Validation**: Verify resource creation and connectivity
-- **Platform Integration**: Establish secure connections between cloud platforms
-
-### [LAB 3: Tableflow and Connector Setup](./labs/LAB3_tableflow_and_connector/LAB3.md)
-
-**Duration**: ~15 minutes
-
-Connect systems and enable data streaming:
-
-- **Unity Catalog Integration**: Configure Confluent Tableflow with Databricks Unity Catalog
-- **Oracle Data Streaming**: Set up Oracle XStream CDC connector for real-time database changes
-
-### [LAB 4: Data Generation](./labs/LAB4_data_generation/LAB4.md)
-
-**Duration**: ~10 minutes
-
-Generate realistic customer behavior data:
-
-- **Realistic Data Generation**: Deploy ShadowTraffic for authentic hospitality industry data patterns
-- **Topic Validation**: Verify Oracle CDC and ShadowTraffic data streaming to Kafka topics
-- **Tableflow Integration**: Enable automated Delta Lake synchronization for clickstream data
-
-### [LAB 5: Stream Processing](./labs/LAB5_stream_processing/LAB5.md)
-
-**Duration**: ~15 minutes
-
-Transform raw data streams into intelligent, enriched data products:
-
-- **Stream Processing**: Build Flink SQL queries for real-time data enrichment and denormalization
-- **Data Product Creation**: Create snapshot tables and interval joins for reliable CDC processing
-- **Delta Lake Sync**: Configure Tableflow for automated streaming to Delta Lake tables
-
-### [LAB 6: Analytics and AI-Powered Marketing Automation](./labs/LAB6_databricks/LAB6.md)
-
-**Duration**: ~25 minutes
-
-Generate actionable insights and AI-powered marketing campaigns:
-
-- **AI-Powered Business Intelligence**: Use Databricks Genie for natural language insights
-- **Intelligent Marketing Automation**: Craft and deploy a personalized AI agent for hotel promotion and customer targeting
-- **End-to-End Pipeline Validation**: Complete real-time journey from customer behavior to AI-generated marketing content
-
-### [LAB 7: Resource Cleanup](./labs/LAB7_clean_up/LAB7.md)
-
-**Duration**: ~5 minutes
-
-Responsible cleanup of all provisioned cloud resources:
-
-- **Manual Cleanup**: UI-created resources (connectors, integrations)
-- **Automated Cleanup**: Terraform destroy for infrastructure resources
-- **Cost Optimization**: Ensure no resources are left running
-
-### Additional Resources
-
-- **[Recap](./labs/recap.md)**: Summary of accomplishments and business value delivered
-- **[Troubleshooting](./labs/troubleshooting.md)**: Common issues and solutions
-- **[Advanced Flink SQL Patterns](./labs/flink-joins.md)**: Detailed guide for streaming join patterns and schema management
-- **[Optional: Bedrock LLM Integration](./labs/optional_bedrock_llm/optional_bedrock_llm.md)**: AWS Bedrock integration for AI-powered review summarization
-
 ## 🛠️ Technical Stack
 
 ### Core Technologies
 
 - **[Terraform](https://terraform.io/)**: Infrastructure as Code for multi-cloud deployment
-- **[Oracle XStream](https://docs.oracle.com/en/database/oracle/oracle-database/21/xstrm/)**: Change data capture for real-time data streaming
+<!-- - **[Oracle XStream](https://docs.oracle.com/en/database/oracle/oracle-database/21/xstrm/)**: Change data capture for real-time data streaming -->
 - **[Apache Kafka](https://kafka.apache.org/)**: Distributed streaming platform via Confluent Cloud
 - **[Apache Flink](https://flink.apache.org/)**: Stream processing and real-time analytics
 - **[Delta Lake](https://delta.io/)**: Open-source storage framework for data lakes
@@ -414,9 +419,34 @@ Responsible cleanup of all provisioned cloud resources:
 - **[AWS CLI](https://aws.amazon.com/cli/)**: AWS command-line interface
 - **[ShadowTraffic](https://shadowtraffic.io/)**: Realistic synthetic data generation
 
+</details>
+
+## 🔬 Workshop Labs
+
+This workshop is organized into seven sequential labs listed below.
+
+Each lab builds upon the previous one, so start with LAB 1 and continue sequentially until completion.
+
+| Lab | Duration | Details |
+|-----|----------|-------------|
+| [LAB 1: Account Setup](./labs/LAB1_account_setup/LAB1.md) | ~15 min | **Configure cloud platform accounts**: clone repo, set up Confluent Cloud API keys, configure Databricks service principal, establish AWS credentials. ![Required Accounts](./labs/LAB1_account_setup/images/required_accounts.png)|
+| [LAB 2: Cloud Infrastructure](./labs/LAB2_cloud_deployment/LAB2.md) | ~10 min | **Deploy infrastructure with Terraform**: provision AWS, Confluent Cloud, and Databricks resources. |
+| [LAB 3: Data Generation](./labs/LAB3_data_generation/LAB3.md) | ~10 min | **Generate data**: deploy ShadowTraffic for realistic hospitality data, validate Kafka topics, enable Delta Lake sync. ![Architecture diagram for data generation](./labs/LAB3_data_generation/images/architecture_data_generation.jpg)|
+| [LAB 4: Tableflow & Unity Catalog](./labs/LAB4_tableflow/LAB4.md) | ~15 min | **Configure Tableflow**: Connect Tableflow with Unity Catalog, enable Tableflow on Clickstream topic. |
+| [LAB 5: Stream Processing](./labs/LAB5_stream_processing/LAB5.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with interval joins, configure Tableflow sync. ![Architecture diagram for stream processing](./labs/LAB5_stream_processing/images/architecture_stream_processing.jpg) |
+| [LAB 6: Analytics & AI](./labs/LAB6_databricks/LAB6.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. ![Databricks architecture diagram](./labs/LAB6_databricks/images/architecture_databricks.jpg) |
+| [LAB 7: Cleanup](./labs/LAB7_clean_up/LAB7.md) | ~5 min | **Clean up resources**: remove UI-created resources and terraform destroy the remainder. |
+
+### Additional Resources
+
+- **[Recap](./labs/recap.md)**: Summary of accomplishments and business value delivered
+- **[Troubleshooting](./labs/troubleshooting.md)**: Common issues and solutions
+- **[Advanced Flink SQL Patterns](./labs/flink-joins.md)**: Detailed guide for streaming join patterns and schema management
+<!-- - **[Optional: Bedrock LLM Integration](./labs/optional_bedrock_llm/optional_bedrock_llm.md)**: AWS Bedrock integration for AI-powered review summarization -->
+
 ## 🏁 Conclusion
 
-Congratulations, you have completed this hands-on workshop to Streamline Agentic AI with Confluent and Databricks!
+Congratulations, you have completed this hands-on workshop on creating a streaming AI agent on AWS with Confluent and Databricks!
 
 > [!IMPORTANT]
 > **Your Feedback Helps!**

@@ -65,3 +65,12 @@ resource "databricks_grants" "storage_credential" {
 # are created in root main.tf AFTER the IAM trust policy
 # is updated. This avoids the 403 Forbidden error.
 # ===============================
+
+# ===============================
+# SQL Warehouse Data Source
+# ===============================
+
+data "databricks_sql_warehouse" "main" {
+  provider = databricks.workspace
+  name     = "Starter Warehouse"
+}

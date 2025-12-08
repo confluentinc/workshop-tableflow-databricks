@@ -9,11 +9,26 @@
                 "type": "record",
                 "name": "HotelReviewEvent",
                 "fields": [
-                    {"name": "review_id", "type": "string"},
-                    {"name": "booking_id", "type": "string"},
-                    {"name": "review_rating", "type": "int"},
-                    {"name": "review_text", "type": "string"},
-                    {"name": "created_at", "type": "long"}
+                    {
+                        "name": "review_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "booking_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "review_rating",
+                        "type": "int"
+                    },
+                    {
+                        "name": "review_text",
+                        "type": "string"
+                    },
+                    {
+                        "name": "created_at",
+                        "type": "long"
+                    }
                 ]
             }
         }

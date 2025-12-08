@@ -6,31 +6,16 @@ Welcome to the analytics powerhouse of your real-time AI marketing pipeline! Tra
 
 ### What You'll Accomplish
 
-```mermaid
-graph LR
-   A[1\. Explore Delta Lake Data] --> B[2\. Generate BI Insights with Genie]
-   B --> C[3\. Create AI Marketing Agent]
-   C --> D[4\. Execute Automated Campaigns]
-   D --> E[5\. Complete AI Pipeline]
-```
+![Architecture Diagram for Databricks](./images/architecture_databricks.jpg)
 
 By the end of this lab, you will have:
 
-1. **Delta Lake Analytics Integration**: Connect your streaming Delta tables from Confluent Tableflow to Databricks for advanced analytics and querying
-2. **AI-Powered Business Intelligence**: Use Databricks Genie to generate natural language insights about customer behavior, booking patterns, and hotel performance metrics
-3. **Intelligent Marketing Automation**: Deploy an AI agent that automatically identifies underperforming hotels with good customer satisfaction, generates personalized social media campaigns based on customer reviews, and creates targeted customer lists for marketing outreach
-4. **End-to-End Pipeline Validation**: Demonstrate a complete real-time journey from customer behavior to AI-generated marketing content
-
-### Key Technologies You'll Use
-
-- **Databricks SQL**: High-performance analytics engine for complex queries and data exploration
-- **Databricks Genie**: Natural language interface for business intelligence and data exploration
-- **LangChain AI Agents**: Intelligent automation framework that combines multiple data analysis functions to automate hotel promotion and customer targeting
-- **Delta Lake**: Open-source storage layer providing reliable, high-performance analytics on your streaming data
+1. **AI-Powered Business Intelligence**: Use Databricks Genie to generate natural language insights about customer behavior, booking patterns, and hotel performance metrics
+2. **Intelligent Marketing Automation**: Deploy an AI agent that automatically identifies underperforming hotels with good customer satisfaction, generates personalized social media campaigns based on customer reviews, and creates targeted customer lists for marketing outreach
 
 ### Prerequisites
 
-- Completed [LAB 5: Stream Processing](../LAB5_stream_processing/LAB5.md) with enriched data products flowing to Delta Lake tables
+Completed [LAB 5: Stream Processing](../LAB5_stream_processing/LAB5.md) with enriched data products flowing to Delta Lake tables
 
 ## 👣 Steps
 
@@ -40,26 +25,39 @@ Now that both raw and enriched data is flowing from Confluent via Tableflow to D
 
 First, follow these steps to verify that the data is flowing in as expected:
 
-1. Navigate to your Databricks account in your web browser
+1. Login and navigate to your Databricks account in your web browser
 2. Click on **Catalog** in the left menu
-3. Verify that you see a catalog with *tableflow-databricks* in it, it should look something like this:
+3. Verify that you see your Tableflow catalog, it will look something like this:
 
    ![Databricks Catalog explorer](./images/databricks_catalog.png)
 
-4. Click to expand your *tableflow-databricks* catalog
+4. Click to expand your Tableflow catalog
 5. Click to expand your Confluent cluster schema - its name should match the ID of your Confluent Cloud kafka cluster
 6. Verify that you see three tables: *clickstream*, *denormalized_hotel_bookings*, and *hotel_stats*
 
    ![Expanded Catalog schema](./images/databricks_catalog_cluster_schema.png)
 
-7. Select the *denormalized_hotel_bookings* table
+7. Select the `clickstream` table
 8. Click the **Create** dropdown button in the top right of the screen
 9. Select **Query** from the dropdown list
-10. In the SQL editor, run this query to see if data is available
+10. Select your *catalog* and *schema* from the dropdowns
+
+   ![Two dropdown selectors for catalog and schema](./images/databricks_query_dropdowns.png)
+
+1.  In the SQL editor, run this query to see if data is available
 
 ```sql
 SELECT * FROM clickstream LIMIT 20;
 ```
+
+> [!TIP]
+> **Compute Resource**
+>
+> You may see this modal pop up, especially if you are using a free edition or free trial Databricks account:
+>
+> ![Start compute resource modal](./images/databricks_compute_resource_modal.png)
+>
+> If you do, select the **Automatically launch and attach without prompting** and click the **Start, attach and run** button
 
 You should see 20 records of clickstream data.
 
@@ -68,10 +66,7 @@ You should see 20 records of clickstream data.
 > [!IMPORTANT]
 > **10-15 Minute Data Sync**
 >
-> It may take 5-10 minutes for the `SELECT` queries to return data for the `denormalized_hotel_bookings` and
-> `hotel_stats` tables, as you may have only recently enabled them with TableFlow.
->
-> ![Empty result set](images/databricks_sql_editor_query_no_rows.png)
+> It may take 5-10 minutes for the `SELECT` queries to return data for the `denormalized_hotel_bookings` and `hotel_stats` tables, as you may have only recently enabled them with TableFlow.
 
 ### Step 2: Derive Data Product Insights with Genie
 
@@ -84,7 +79,7 @@ Follow these steps to set Genie up:
 1. Click on the **Genie** link under the *SQL* section in the left sidebar
 2. Click on the **+ New** button in the top right of the screen to create a new Genie space
 3. Click on the **All** toggle
-4. Navigate to your workshop *catalog* and *database* (e.g. `****-tableflow-databricks-****` and `lkc-****`)
+4. Navigate to your workshop *catalog* and *database*
 5. Select all three of the `clickstream`, `denormalized_hotel_bookings`, and `hotel_stats` tables
 
    ![Databricks Genie connect to data sources](images/databricks_genie_connect_data.png)
@@ -131,13 +126,13 @@ See which cities top your list, it may look similar to this:
 
 You may continue with your own prompts or clicking on Genie-suggested ones to further learn from the data.
 
-Executing this final prompt will provide the *class* of hotel that you will use to fulfill the targeted Marketing campaign:
+Executing this final prompt will provide the *category* of hotel that you will use to fulfill the targeted Marketing campaign:
 
-> Which class of hotel had the lowest interest from customers?
+> Which category of hotel had the lowest interest from customers?
 
-![Result set showing hotel class and corresponding customer interest count](images/databricks_genie_prompt_hotel_class.png)
+![Result set showing hotel category and corresponding customer interest count](images/databricks_genie_prompt_hotel_category.png)
 
-Identify the *Hotel Class* with the lowest customer interest, you will use this in the next section to create an intelligent marketing agent.
+Identify the *Hotel Category* with the lowest customer interest, you will use this in the next section to create an intelligent marketing agent.
 
 ### Step 3: Create and Deploy Marketing Campaign Agent
 
@@ -145,50 +140,11 @@ In this section you will use a provided Jupyter Notebook to generate an AI agent
 
 The AI agent combines three intelligent functions:
 
-1. **Hotel Selection**: Identifies the lowest-performing hotel in a given class that has above-average customer satisfaction (3+ reviews) - perfect candidates for promotion
+1. **Hotel Selection**: Identifies the lowest-performing hotel in a given category that has above-average customer satisfaction (3+ reviews) - perfect candidates for promotion
 2. **Content Generation**: Leverages AI to analyze customer reviews and extract the top 3 reasons guests enjoyed their stay, then creates positive social media posts highlighting these strengths
-3. **Customer Targeting**: Uncovers customers who showed high interest (many page views/clicks) but made few bookings in that hotel class - prime targets for conversion
+3. **Customer Targeting**: Uncovers customers who showed high interest (many page views/clicks) but made few bookings in that hotel category - prime targets for conversion
 
-This diagram shows a detailed flow of the notebook:
-
-```mermaid
-flowchart TD
-    A[User Input: Hotel Class] --> B[AI Agent Initialization]
-    B --> C[Tool 1: get_hotel_to_promote]
-    C --> D[Query hotel_stats table]
-    D --> E[Find underperforming hotel with good reviews]
-
-    E --> F[Tool 2: summarize_customer_reviews]
-    F --> G[Query denormalized_hotel_bookings]
-    G --> H[AI_GEN extracts top 3 customer likes]
-
-    H --> I[Tool 3: identify_target_customers]
-    I --> J[Query clickstream data]
-    J --> K[Find high-interest, low-booking customers]
-
-    K --> L[LLM Processes All Data]
-    L --> M[Generate Marketing Post]
-    L --> N[Target Customer List]
-
-    M --> O[Final Output: Complete Marketing Campaign]
-    N --> O
-
-    subgraph "Data Sources"
-        P[hotel_stats]
-        Q[denormalized_hotel_bookings]
-        R[clickstream]
-    end
-
-    D -.-> P
-    G -.-> Q
-    J -.-> R
-
-    style A fill:#f5f7ff,color:#000000
-    style C fill:#0099ff
-    style F fill:#0099ff
-    style I fill:#0099ff
-    style O fill:#aa2bce
-```
+See the [**optional** Notebook deep dive](notebook_details.md) for more information.
 
 #### Import and Configure Notebook
 
@@ -196,27 +152,37 @@ Follow these steps to import and use a pre-built Notebook to generate your AI Ag
 
 1. Click on the light-red **+ New** button in the top left of the screen
 2. Select **Notebook**
-3. Select **File**
-4. Browse for [this file](./river_hotel_marketing_agent.ipynb)
-5. Click **Import**
+3. Click on **File**
+4. Select **Import**
+
+   ![File selection menu](./images/databricks_import_notebook_dropdown.png)
+
+5. Select **URL**
+6. Paste in this value
+
+   ```link
+   https://raw.githubusercontent.com/confluentinc/workshop-tableflow-databricks/refs/heads/main/labs/LAB6_databricks/river_hotel_marketing_agent.ipynb
+   ```
+
+7. Click **Import**
 
    ![Import dialog with Notebook selected](images/databricks_import_notebook.png)
 
-6. Click on the Notebook name in the success modal to navigate to it, or find it using the *Search* bar at the top of the page
+8. The Notebook should load in a new tab
 
-7. Follow the instructions in the Notebook to create and deploy the marketing campaign agent.
+9. Follow the instructions in the Notebook to create and deploy the marketing campaign agent.
 
 #### Use Agent in AI Playground
 
-Now you can interact with your agent through AI Playground:
+Once you have completed creating and deploying your marketing agent, you can interact with it through the Databricks AI Playground:
 
 1. Click on **Playground** in the left sidebar (under the *AI* section)
 2. In the model dropdown, you should now see your `river-hotel-agent-playground` endpoint
 3. Select it and start chatting with your agent!
 
 4. Try these example prompts:
-   - "Which hotel should we create a marketing campaign for in the Airport class?"
-   - "Find the best hotel to promote in the Luxury class"
+   - "Which hotel should we create a marketing campaign for in the Airport category?"
+   - "Find the best hotel to promote in the Luxury category"
    - "Create a targeted campaign for Extended Stay hotels"
 
 5. Your agent will automatically:

@@ -154,6 +154,7 @@ output "databricks_integration" {
     catalog_name            = databricks_catalog.main.name
     catalog_storage_root    = databricks_catalog.main.storage_root
     expected_schema_name    = module.databricks.expected_schema_name
+    sql_warehouse_id        = module.databricks.sql_warehouse_id
   }
 }
 
