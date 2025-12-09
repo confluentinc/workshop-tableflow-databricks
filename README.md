@@ -151,6 +151,63 @@ sudo usermod -aG docker $USER
 
 Once you have the required tools installed and configured, then perform these steps:
 
+### Windows Users
+
+> [!IMPORTANT]
+> **Instructions for Windows Users: Use WSL 2 with Ubuntu for Best Results**
+>
+> If you're on Windows, please expand the section below to learn what setup we recommend, common pitfalls to avoid, and tips and tricks.
+
+<details>
+<summary>Expand for Windows-specific instructions</summary>
+
+We strongly recommend running this workshop from within **WSL 2** (Windows Subsystem for Linux) with **Ubuntu** rather than PowerShell or Command Prompt. This avoids Docker volume permission issues that can prevent Terraform from writing files.
+
+**Setup Instructions:**
+
+1. Install Ubuntu in WSL 2 (run in PowerShell as Admin):
+
+   ```powershell
+    wsl --install -d Ubuntu
+    ```
+2. Restart your computer if prompted, then open **Ubuntu** from the Start menu
+3. Open Docker Desktop → **Settings** → **Resources** → **WSL Integration** → Enable **Ubuntu**
+4. In the Ubuntu terminal, clone the repo and navigate to it:
+   ```bash
+   cd ~
+   git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
+   cd workshop-tableflow-databricks/terraform
+   ```
+
+   ⚠️ **Important:** Verify you're in the **Linux filesystem**, not the mounted Windows drive:
+   ```bash
+   pwd
+   ```
+   - ✅ **Correct:** `/home/<username>/workshop-tableflow-databricks/terraform`
+   - ❌ **Wrong:** `/mnt/c/Users/...` (this will cause permission errors!)
+
+   If you see `/mnt/c/...`, run `cd ~` and clone the repo again.
+
+5. Run all `docker compose` commands from this Ubuntu terminal (use `sudo -E` if you get permission errors):
+   ```bash
+   sudo -E docker compose build
+   sudo -E docker compose run --rm terraform
+   ```
+   The `-E` flag preserves your environment variables (like AWS credentials) when using sudo.
+
+**Tip:**
+
+To avoid typing `sudo -E` every time, add your user to the docker group:
+
+```sh
+sudo usermod -aG docker $USER
+```
+Then close and reopen Ubuntu for the change to take effect.
+
+**Why WSL?** Docker on Windows with WSL 2 has full write permissions to the Linux filesystem (`~/`) but limited permissions to Windows paths (`/mnt/c/...`). Running from within WSL can help avoid "permission denied" errors for some terraform commands, like `terraform init`.
+
+</details>
+
 ### Step 1: Clone this Repository
 
 Get started by cloning the workshop repository

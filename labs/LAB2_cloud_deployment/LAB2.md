@@ -18,6 +18,11 @@ By the end of this lab, you will have:
 
 ## 👣 Steps
 
+> [!NOTE]
+> **Recommendation for Windows Users**
+>
+> We strongly recommend that you run this workshop from a **WSL 2 terminal** (not PowerShell). See the [Windows setup instructions](../../README.md#step-2-pull-and-build-docker-images) if you haven't configured this yet.
+
 ### Step 1: Deploy Cloud Infrastructure with Terraform
 
 Now it's time for you to perform some deployment magic! 🪄🎩

@@ -303,11 +303,9 @@ secret_key     ****************XXXX              env
 ```
 
 > [!WARNING]
-> **Windows Error: Access is Denied**
+> **Windows Users: Permission Errors**
 >
-> If running the `docker-compose run --rm terraform -c "aws configure list"` command on Windows results in an **Access is Denied** error, then try running this from the terraform directory:
->
-> ```New-Item -ItemType Directory -Path ".\aws-config" -Force```
+> If you encounter "Access is Denied" or "Permission denied" errors on Windows, you should run this workshop from **WSL 2** instead of PowerShell. See the [Windows setup instructions in the README](../../README.md#step-2-pull-and-build-docker-images) for details.
 >
 
 ## 🏁 Conclusion
