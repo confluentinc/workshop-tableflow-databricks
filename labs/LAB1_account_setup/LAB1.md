@@ -14,13 +14,6 @@ By the end of this lab, you will have:
 
 ![AWS, Confluent Cloud, and Databricks are required accounts](./images/required_accounts.png)
 
-### Key Technologies You'll Use
-
-- **Terraform**: Infrastructure as Code tool that requires cloud platform credentials for automated deployment
-- **Confluent Cloud**: Fully managed Apache Kafka platform - you'll create API keys for cloud resource management
-- **Databricks**: Unified analytics platform - you'll configure service principals and enable external data access
-- **AWS CLI**: Command-line interface for Amazon Web Services - you'll authenticate with your AWS account
-
 ### Prerequisites
 
 Review the [README](../../README.md) and complete its [prerequisites](../../README.md#-prerequisites)
@@ -29,13 +22,9 @@ Review the [README](../../README.md) and complete its [prerequisites](../../READ
 
 ### Step 1: Create Terraform Variables File
 
-1. Copy the sample configuration file:
-
-   ```sh
-   cp sample-tfvars terraform.tfvars
-   ```
-
-2. Open `terraform.tfvars` in your preferred editor
+1. Navigate to the `terraform` directory
+2. Rename the `sample-tfvars` file to `terraform.tfvars`
+3. Open `terraform.tfvars` in your preferred editor
 
 Now you can configure each cloud platform's credentials and settings. It should look like this
 
@@ -312,6 +301,14 @@ access_key     ****************XXXX              env
 secret_key     ****************XXXX              env
     region                us-east-2              env    AWS_DEFAULT_REGION
 ```
+
+> [!WARNING]
+> **Windows Error: Access is Denied**
+>
+> If running the `docker-compose run --rm terraform -c "aws configure list"` command on Windows results in an **Access is Denied** error, then try running this from the terraform directory:
+>
+> ```New-Item -ItemType Directory -Path ".\aws-config" -Force```
+>
 
 ## 🏁 Conclusion
 

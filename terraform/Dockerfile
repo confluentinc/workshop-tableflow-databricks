@@ -33,9 +33,9 @@ SHELL ["/bin/bash", "-c"]
 # Create working directory
 WORKDIR /workspace
 
-# Copy entrypoint script
+# Copy entrypoint script and ensure Unix line endings (fixes Windows CRLF issue)
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Use entrypoint script to set up AWS credentials
 ENTRYPOINT ["/entrypoint.sh"]

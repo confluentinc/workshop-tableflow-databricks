@@ -60,4 +60,6 @@ override.tf.json
 terraform.rc
 
 # Local AWS credentials directory (used by Docker container)
-terraform/aws-config/
+# Ignore contents but keep the .gitkeep placeholder
+terraform/aws-config/*
+!terraform/aws-config/.gitkeep
