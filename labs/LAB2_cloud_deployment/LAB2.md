@@ -203,13 +203,6 @@ Follow these steps in a separate browser tab to verify that your Databricks clou
 
 🎉 **Congratulations!** You've successfully deployed the complete infrastructure foundation for River Hotels' AI-powered marketing pipeline!
 
-### What You've Achieved
-
-In this lab, you have:
-
-- ✅ **Deployed Production-Scale Infrastructure**: Provisioned 40+ cloud resources across AWS, Confluent Cloud, and Databricks using Terraform
-- ✅ **Validated Multi-Cloud Integration**: Confirmed that all platforms are properly connected, secured, and ready for data streaming
-
 ## ➡️ What's Next
 
 Resume your journey in **[LAB 3: Data Generation](../LAB3_data_generation/LAB3.md)**.

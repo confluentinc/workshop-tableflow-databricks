@@ -317,18 +317,6 @@ secret_key     ****************XXXX              env
 
 🎉 **Congratulations!** You've successfully configured all the cloud platform accounts and credentials needed for River Hotels' AI-powered marketing pipeline!
 
-<!-- ### What You've Achieved
-
-In this lab, you have:
-
-✅ **Repository Setup**: Cloned the workshop repository and prepared Terraform configuration files
-
-✅ **Confluent Cloud Access**: Created cloud resource management API keys for automated infrastructure deployment
-
-✅ **Databricks Configuration**: Set up service principals, enabled external data access, and configured account permissions
-
-✅ **AWS CLI Authentication**: Established secure access for Terraform to deploy AWS resources -->
-
 ## ➡️ What's Next
 
 Your journey continues in **[LAB 2: Cloud Infrastructure Deployment](../LAB2_cloud_deployment/LAB2.md)**

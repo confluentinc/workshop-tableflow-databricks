@@ -34,18 +34,19 @@ Apache Flink on Confluent.
 Follow these steps to navigate to the *Flink Compute Pool* that you spun up
 earlier with Terraform:
 
-1. Click on your workshop environment link in the navigation breadcrumbs
-2. Click on the `Flink` menu item in the left-side navigation
+1. Navigate to your [workshop flink compute pool]()
+2. Select your workshop environment
+3. Click **Continue**
 
-   ![Flink Compute Pools](images/confluent_environment_flink.png)
+   ![Environment dropdown in flink navigation modal](./images/navigate_to_flink.png)
 
-3. Click on the `Open SQL workspace` button in your workshop Flink compute pool
+4. Click on the **Open SQL workspace** button in your workshop Flink compute pool
 
    ![Flink Compute Pools](images/flink_compute_pool.png)
 
-4. Ensure your workspace environment and cluster are both selected in the
+5. Ensure your workspace environment and cluster are both selected in the
    `Catalog` and `Database` dropdowns at the top of your compute pool screen
-5. Drill down in the left navigation to see the tables in your environment and
+6. Drill down in the left navigation to see the tables in your environment and
    cluster
 
    ![Flink file tree](images/flink_data_explorer.png)
@@ -176,15 +177,6 @@ This query uses a **hybrid timestamp strategy** combining processing-time and bu
 | **Dimension joins** (customer/hotel) | `$rowtime` | 7 days | Ensures data was available when booking was processed |
 | **Event joins** (reviews) | `created_at` | 90 days | Reflects realistic business timing relationships |
 
-**Why Snapshot Tables?**
-
-PostgreSQL CDC sources produce changelog streams (`INSERT`, `UPDATE`, `DELETE`) that aren't directly compatible with interval joins. The snapshot tables convert these to append-only format for reliable processing.
-
-**Key Query Components:**
-
-- **`JOIN customer_snapshot`** / **`JOIN hotel_snapshot`** — 7-day `$rowtime` windows ensure dimension data availability
-- **`LEFT JOIN hotel_reviews`** — 90-day `created_at` window captures reviews within 3 months of booking
-- **Timestamp conversions** — `to_timestamp_ltz(b.created_at, 3)` converts epoch milliseconds
 
 > [!TIP]
 > **Deep Dive: CDC Join Challenges**
@@ -217,6 +209,9 @@ Some observations from the data:
 - Because of the **LEFT JOIN** on `hotel_reviews`, there are some hotels that have bookings but no customer reviews
 - The `check_in`, `check_out`, `booking_date`, and `review_date` columns are now human readable and immediately useful!
 
+<details>
+<summary>Expand to learn tips and tricks about table schemas</summary>
+
 #### Review Table Schema and Details
 
 Now look into the details of the table by reviewing the table schema in the left side navigation:
@@ -241,6 +236,8 @@ Now look into the details of the table by reviewing the table schema in the left
    display in the bottom panel
 
    ![List of tables](images/confluent_flink_table_schema.png)
+
+</details>
 
 #### Hotel Stats Data Product
 
@@ -367,13 +364,6 @@ Follow these steps to verify that the integration between Tableflow and Unity Ca
 ## 🏁 Conclusion
 
 🎉 **Huzzah!** You've successfully built a sophisticated real-time streaming pipeline that transforms raw customer data into enriched insights ready for analytics.
-
-### Your Achievements
-
-- ✅ **Intelligent Stream Processing**: Your Flink SQL queries with snapshot tables and interval joins
-process and denormalize customer, booking, and hotel data reliably in real-time
-- ✅ **Production-Ready Data Products**: Multiple enriched streaming tables now
-flow continuously to Delta Lake, ready for advanced analytics
 
 ## ➡️ What's Next
 

@@ -163,10 +163,10 @@ Follow these steps to switch on Tableflow for the `clickstream` topic:
 10. Run this command
 
    ```sh
-   docker-compose run --rm terraform -c "terraform output aws_s3"
+   docker-compose run --rm terraform -c "terraform output databricks_integration"
    ```
 
-11. Copy the value from the `bucket_name` property and paste it into the *AWS S3 Bucket name* textbox; your selections should look like this:
+11. Copy the value from the `s3_bucket_name` property and paste it into the *AWS S3 Bucket name* textbox; your selections should look like this:
 
    ![Tableflow configuration storage form](images/confluent_tableflow_storage_configuration.png)
 
