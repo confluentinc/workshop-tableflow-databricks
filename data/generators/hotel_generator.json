@@ -1,7 +1,7 @@
 {
     "name": "hotel_generator",
-    "table": "sample.hotel",
-    "connection": "oracle",
+    "table": "cdc.hotel",
+    "connection": "postgres",
     "localConfigs": {
         "maxEvents": 30
     },
@@ -225,7 +225,7 @@
             "_gen": "oneOf",
             "choices": [
                 {
-                    "class": "Economy",
+                    "category": "Economy",
                     "description": {
                         "_gen": "oneOf",
                         "choices": {
@@ -235,7 +235,7 @@
                     }
                 },
                 {
-                    "class": "Extended Stay",
+                    "category": "Extended Stay",
                     "description": {
                         "_gen": "oneOf",
                         "choices": {
@@ -245,7 +245,7 @@
                     }
                 },
                 {
-                    "class": "Luxury",
+                    "category": "Luxury",
                     "description": {
                         "_gen": "oneOf",
                         "choices": {
@@ -255,7 +255,7 @@
                     }
                 },
                 {
-                    "class": "Resort",
+                    "category": "Resort",
                     "description": {
                         "_gen": "oneOf",
                         "choices": {
@@ -265,7 +265,7 @@
                     }
                 },
                 {
-                    "class": "Airport",
+                    "category": "Airport",
                     "description": {
                         "_gen": "oneOf",
                         "choices": {
@@ -278,53 +278,60 @@
         }
     },
     "row": {
-        "HOTEL_ID": {
+        "hotel_id": {
             "_gen": "sequentialString",
             "startingFrom": 10000305,
             "expr": "H~d",
-            "sqlHint": "VARCHAR2(255) NOT NULL PRIMARY KEY"
+            "pgHint": "VARCHAR(50) PRIMARY KEY"
         },
-        "NAME": {
+        "name": {
             "_gen": "string",
-            "expr": "River #{city} #{hotel_noun}"
+            "expr": "River #{city} #{hotel_noun}",
+            "pgHint": "VARCHAR(255)"
         },
-        "CLASS": {
+        "category": {
             "_gen": "var",
             "var": "hotel_class_info",
             "path": [
-                "class"
-            ]
+                "category"
+            ],
+            "pgHint": "VARCHAR(50)"
         },
-        "DESCRIPTION": {
+        "description": {
             "_gen": "var",
             "var": "hotel_class_info",
             "path": [
                 "description"
-            ]
+            ],
+            "pgHint": "TEXT"
         },
-        "CITY": {
+        "city": {
             "_gen": "var",
-            "var": "city"
+            "var": "city",
+            "pgHint": "VARCHAR(100)"
         },
-        "COUNTRY": {
+        "country": {
             "_gen": "var",
             "var": "location",
             "path": [
                 "country"
-            ]
+            ],
+            "pgHint": "VARCHAR(100)"
         },
-        "ROOM_CAPACITY": {
+        "room_capacity": {
             "_gen": "normalDistribution",
             "mean": 250,
             "sd": 50,
             "clamp": [
                 150,
                 500
-            ]
+            ],
+            "pgHint": "INTEGER"
         },
-        "CREATED_AT": {
+        "created_at": {
             "_gen": "math",
-            "expr": "currentTimeInMs - 6048000000"
+            "expr": "currentTimeInMs - 6048000000",
+            "pgHint": "BIGINT"
         }
     }
 }

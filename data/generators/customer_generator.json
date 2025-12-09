@@ -1,7 +1,7 @@
 {
     "name": "customer_generator",
-    "table": "sample.customer",
-    "connection": "oracle",
+    "table": "cdc.customer",
+    "connection": "postgres",
     "localConfigs": {
         "maxEvents": 1000
     },
@@ -11,31 +11,36 @@
         }
     },
     "row": {
-        "CUSTOMER_ID": {
+        "customer_id": {
             "_gen": "sequentialString",
             "startingFrom": 200000303,
-            "expr": "C~d"
+            "expr": "C~d",
+            "pgHint": "VARCHAR(50)"
         },
-        "EMAIL": {
+        "email": {
             "_gen": "string",
             "expr": "#{Internet.emailAddress}",
-            "sqlHint": "VARCHAR2(255) NOT NULL PRIMARY KEY"
+            "pgHint": "VARCHAR(255) PRIMARY KEY"
         },
-        "FIRST_NAME": {
+        "first_name": {
             "_gen": "string",
-            "expr": "#{Name.firstName}"
+            "expr": "#{Name.firstName}",
+            "pgHint": "VARCHAR(100)"
         },
-        "LAST_NAME": {
+        "last_name": {
             "_gen": "string",
-            "expr": "#{Name.lastName}"
+            "expr": "#{Name.lastName}",
+            "pgHint": "VARCHAR(100)"
         },
-        "BIRTH_DATE": {
+        "birth_date": {
             "_gen": "string",
-            "expr": "#{Date.birthday 'yyyy-MM-dd'}"
+            "expr": "#{Date.birthday 'yyyy-MM-dd'}",
+            "pgHint": "VARCHAR(10)"
         },
-        "CREATED_AT": {
+        "created_at": {
             "_gen": "math",
-            "expr": "currentTimeInMs - 6048000000"
+            "expr": "currentTimeInMs - 6048000000",
+            "pgHint": "BIGINT"
         }
     }
 }

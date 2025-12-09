@@ -6,31 +6,15 @@ Now that you've configured your cloud platform accounts, it's time to deploy the
 
 ### What You'll Accomplish
 
-```mermaid
-graph LR
-   A[1\. Deploy Infrastructure] --> B[2\. Verify AWS Resources]
-   B --> C[3\. Verify Databricks Resources]
-   C --> D[4\. Verify Confluent Resources]
-   D --> E[5\. Infrastructure Ready]
-```
-
 By the end of this lab, you will have:
 
 1. **Multi-Cloud Infrastructure Deployment**: Use Terraform to automatically provision 40+ cloud resources across AWS, Confluent Cloud, and Databricks with proper security, networking, and integration
-2. **Infrastructure Validation**: Verify that all deployed resources are running correctly and accessible
-3. **Platform Integration**: Confirm that AWS, Confluent Cloud, and Databricks are properly connected and ready for data streaming
-
-### Key Technologies You'll Deploy
-
-- **Terraform**: Infrastructure as Code for automated multi-cloud resource provisioning and management
-- **AWS Services**: EC2 for Oracle hosting, S3 for Delta Lake storage, VPC for networking, IAM for security
-- **Confluent Cloud**: Environment, Kafka cluster, Flink compute pool, and AWS provider integration
-- **Databricks**: External locations, storage credentials, and Unity Catalog integration
-- **Multi-Cloud Networking**: Secure connections and access policies between all platforms
+2. **Platform Integration**: Confirm that AWS, Confluent Cloud, and Databricks are properly connected and ready for data streaming
 
 ### Prerequisites
 
-Complete **[LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)** with all cloud platform credentials configured in your `terraform.tfvars` file
+- Completed the [README prerequisites](../../README.md#-prerequisites)
+- Completed **[LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)** with all cloud platform credentials configured in your `terraform.tfvars` file
 
 ## 👣 Steps
 
@@ -38,50 +22,65 @@ Complete **[LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)** with all clou
 
 Now it's time for you to perform some deployment magic! 🪄🎩
 
-The `terraform` commands below will set up, validate, and create the cloud resources for this workshop.
+The following commands will initialize, validate, and apply the Terraform configuration to create your cloud resources.
 
-First, switch to your shell window and navigate to the terraform directory.
+#### Initialize Terraform
 
-Next, initialize Terraform by running this command:
+Run Terraform init inside the container:
 
 ```sh
-terraform init
+docker-compose run --rm terraform -c "terraform init"
 ```
 
-You should see this success message in your shell:
-> Terraform has been successfully initialized!
-
-Next, verify that your Terraform configuration is valid by executing this command:
+You should see this success message:
 
 ```sh
-terraform validate
+Terraform has been successfully initialized!
 ```
 
-You should see this success message in your shell:
-> Success! The configuration is valid.
+#### Validate Configuration
 
-Finally, initiate cloud resource creation by invoking this command:
+Verify that your Terraform configuration is valid:
 
 ```sh
-terraform apply -auto-approve
+docker-compose run --rm terraform -c "terraform validate"
+```
+
+You should see this success message:
+
+```sh
+Success! The configuration is valid.
+```
+
+#### Deploy Infrastructure
+
+Initiate cloud resource creation:
+
+```sh
+docker-compose run --rm terraform -c "./terraform-apply-wrapper-with-retry.sh"
 ```
 
 > [!NOTE]
-> **Duration: 5-10 Minutes**
+> **Duration: 7-10 Minutes**
 >
-> It should take between 5-10 minutes for terraform to completely generate all of the needed cloud resources, so hang tight!
+> It should take between 7-10 minutes for Terraform to completely generate all of the needed cloud resources.
 >
-> While you wait, you should see an extensive log output in your shell showing the progress of generating the  cloud resources.  When finished, you should see a message like this:
+> You may continue on with this lab while Terraform provisions. Alternatively, you may also spend *~10 minutes* going through this [optional data contracts and governance lab](../LAB_data_governance/LAB_data_governance.md) while you wait.
+>
+> You should see an extensive log output in your shell showing the progress of generating the cloud resources. When finished, you should see a message like this:
 >
 > *Apply complete! Resources: XX added, 0 changed, 0 destroyed.*
 
-Here is a summary of the main cloud resources you created through Terraform:
+Expand the section below for a summary of the main cloud resources created through Terraform:
+
+<details>
+<summary>Cloud Resources Created</summary>
 
 **AWS Resources:**
 
 - VPC with proper networking components
 - Security groups with minimal required access
-- EC2 instance running Oracle XE database with XStream enabled
+- EC2 instance running PostgreSQL database with logical replication enabled
 - S3 general-purpose bucket to store Delta table data
 - IAM roles and policies for secure access
 
@@ -97,22 +96,31 @@ Here is a summary of the main cloud resources you created through Terraform:
 - External Location to access S3 bucket
 - Storage Credential for secure access
 
-**Terraform Output:**
+</details>
 
-When the deployment completes, Terraform will output helpful cloud resource values to your shell. You can view these values at any time by running this command within your root Terraform directory:
+#### Terraform Output
+
+When the deployment completes, Terraform outputs helpful cloud resource values. You can view these values at any time by running:
 
 ```sh
-terraform output
+docker-compose run --rm terraform -c "terraform output"
 ```
 
 > [!IMPORTANT]
 > **Troubleshoot Terraform Issues**
 >
 > If your terraform execution fails, you can [review these common issues](../troubleshooting.md#terraform).
+>
+> If you encounter a `500 Internal Server Error` when creating the Databricks external location, this is a transient error due to IAM propagation delays. The `terraform-apply-wrapper-with-retry.sh` script will automatically retry until successful.
+>
+> See [this section](../troubleshooting.md#transient-500-error-during-external-location-creation) of the Troubleshooting Guide for more details.
 
-### Step 2: Verify Infrastructure Deployment
+### Step 3: Verify Infrastructure Deployment (Optional)
 
-Now is a good time to verify that the cloud resources we created via Terraform are accessible to us and working as expected.
+You can verify that the cloud resources we created via Terraform are accessible and working as expected by expanding the section below and following the steps:
+
+<details>
+<summary>Review Cloud Resources</summary>
 
 #### Verify AWS Resources
 
@@ -121,7 +129,7 @@ Now is a good time to verify that the cloud resources we created via Terraform a
 3. **Ensure EC2 Instance is running**
    1. Navigate to the EC2 home page
    2. Click on *Instances* in the left navigation
-   3. Search for the name of your instance (it should contain your AWS username)
+   3. Search for the name of your instance (it should contain your call sign)
    4. Click on the link for it
    5. Check that it is running
 
@@ -181,48 +189,15 @@ Follow these steps in a separate browser tab to verify that your Databricks clou
 
    ![Topic tiles and quickstart links ](images/confluent_cluster_topics_empty.png)
 
+</details>
+
 ## 🏁 Conclusion
 
 🎉 **Congratulations!** You've successfully deployed the complete infrastructure foundation for River Hotels' AI-powered marketing pipeline!
 
-### What You've Achieved
-
-In this lab, you have:
-
-- ✅ **Deployed Production-Scale Infrastructure**: Provisioned 40+ cloud resources across AWS, Confluent Cloud, and Databricks using Terraform
-- ✅ **Validated Multi-Cloud Integration**: Confirmed that all platforms are properly connected, secured, and ready for data streaming
-- ✅ **Established Resource Foundation**: Created the networking, storage, and compute resources needed for the data pipeline
-
-### Your Infrastructure Foundation
-
-You now have a robust multi-cloud platform consisting of:
-
-**AWS Resources:**
-
-- **EC2 instance** running Oracle XE database with XStream enabled
-- **S3 bucket** for Delta Lake table storage
-- **VPC and security groups** for secure networking
-- **IAM roles and policies** for cross-platform access
-
-**Confluent Cloud Resources:**
-
-- **Kafka cluster** ready for data streaming
-- **Flink compute pool** for stream processing
-- **AWS provider integration** for Tableflow Delta Lake sync
-
-**Databricks Resources:**
-
-- **External location** configured to access S3 storage
-- **Storage credentials** for secure Unity Catalog integration
-- **Catalog permissions** ready for data governance
-
 ## ➡️ What's Next
 
-Your journey continues in **[LAB 3: Tableflow and Connector Setup](../LAB3_tableflow_and_connector/LAB3.md)** where you will:
-
-1. **Configure Oracle XStream Connector**: Set up real-time change data capture from Oracle to Confluent Cloud
-2. **Enable Tableflow Integration**: Connect Confluent Cloud with Databricks Unity Catalog for automated Delta Lake sync
-3. **Generate Realistic Data**: Deploy Shadow Traffic to create authentic customer behavior patterns
+Resume your journey in **[LAB 3: Data Generation](../LAB3_data_generation/LAB3.md)**.
 
 ## 🔧 Troubleshooting
 

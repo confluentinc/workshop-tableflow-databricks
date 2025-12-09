@@ -2,13 +2,13 @@
 
 ## 🎯 Overview
 
-This document chronicles our journey in solving complex streaming join challenges when working with Oracle CDC sources in Confluent Cloud Flink. What started as a straightforward temporal join implementation evolved into a comprehensive exploration of streaming join patterns, revealing important insights about CDC compatibility and optimal strategies for real-time data processing.
+This document chronicles our journey in solving complex streaming join challenges when working with PostgreSQL CDC sources in Confluent Cloud Flink. What started as a straightforward temporal join implementation evolved into a comprehensive exploration of streaming join patterns, revealing important insights about CDC compatibility and optimal strategies for real-time data processing.
 
 ## 📖 The Journey: From Problem to Solution
 
 ### 🚨 **Chapter 1: The Initial Challenge**
 
-**The Goal**: Create a denormalized view by joining streaming bookings with customer and hotel dimension data from Oracle CDC sources.
+**The Goal**: Create a denormalized view by joining streaming bookings with customer and hotel dimension data from PostgreSQL CDC sources.
 
 **The Expectation**: Use temporal joins (`FOR SYSTEM_TIME AS OF`) for proper versioned table semantics.
 
@@ -25,21 +25,21 @@ Our systematic investigation revealed all the "usual suspects" were correctly co
 
 #### ✅ **Infrastructure Validation**
 
-**Oracle Database Primary Keys**: Perfect
-- **CUSTOMER table**: Primary key on `EMAIL` column ✅
-- **HOTEL table**: Primary key on `HOTEL_ID` column ✅
+**PostgreSQL Database Primary Keys**: Perfect
+- **customer table**: Primary key on `email` column ✅
+- **hotel table**: Primary key on `hotel_id` column ✅
 
 ```sql
 -- Confirmed proper primary key constraints
-DESCRIBE SAMPLE.CUSTOMER;  -- EMAIL: NOT NULL VARCHAR2(255)
-DESCRIBE SAMPLE.HOTEL;     -- HOTEL_ID: NOT NULL VARCHAR2(255)
+\d public.customer;  -- email: NOT NULL VARCHAR(255)
+\d public.hotel;     -- hotel_id: NOT NULL VARCHAR(50)
 ```
 
 **Kafka Topic Configuration**: Perfect
-- **`riverhotel.SAMPLE.CUSTOMER`**: `cleanup.policy=compact` ✅
-- **`riverhotel.SAMPLE.HOTEL`**: `cleanup.policy=compact` ✅
+- **`riverhotel.CDC.customer`**: `cleanup.policy=compact` ✅
+- **`riverhotel.CDC.hotel`**: `cleanup.policy=compact` ✅
 
-**Oracle XStream Connector**: Working Correctly
+**PostgreSQL CDC Connector (Debezium)**: Working Correctly
 - Primary key metadata successfully captured (evidenced by `DISTRIBUTED BY HASH`)
 - CDC operations flowing properly to Kafka topics
 
@@ -53,13 +53,13 @@ With infrastructure confirmed correct, we embarked on extensive testing to under
 
 ```sql
 -- Attempt: Declare primary keys explicitly
-ALTER TABLE `riverhotel.SAMPLE.CUSTOMER` ADD PRIMARY KEY (`EMAIL`) NOT ENFORCED;
-ALTER TABLE `riverhotel.SAMPLE.HOTEL` ADD PRIMARY KEY (`HOTEL_ID`) NOT ENFORCED;
+ALTER TABLE `riverhotel.CDC.customer` ADD PRIMARY KEY (`email`) NOT ENFORCED;
+ALTER TABLE `riverhotel.CDC.hotel` ADD PRIMARY KEY (`hotel_id`) NOT ENFORCED;
 
 -- Test temporal join
 SELECT ... FROM `bookings` b
-JOIN `riverhotel.SAMPLE.CUSTOMER` FOR SYSTEM_TIME AS OF b.`$rowtime` AS c
-  ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+JOIN `riverhotel.CDC.customer` FOR SYSTEM_TIME AS OF b.`$rowtime` AS c
+  ON c.`email` = b.`customer_email`
 LIMIT 5;
 ```
 
@@ -74,8 +74,8 @@ LIMIT 5;
 ```sql
 -- Attempt: Add time buffer for CDC processing
 SELECT ... FROM `bookings` b
-JOIN `riverhotel.SAMPLE.CUSTOMER` FOR SYSTEM_TIME AS OF (b.`$rowtime` + INTERVAL '5' MINUTE) AS c
-  ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+JOIN `riverhotel.CDC.customer` FOR SYSTEM_TIME AS OF (b.`$rowtime` + INTERVAL '5' MINUTE) AS c
+  ON c.`email` = b.`customer_email`
 ```
 
 **Result**: **Syntax Error** 🚫
@@ -92,8 +92,8 @@ Error: "Temporal table join currently only supports 'FOR SYSTEM_TIME AS OF' left
 ```sql
 -- Attempt: Use current data state
 SELECT ... FROM `bookings` b
-JOIN `riverhotel.SAMPLE.CUSTOMER` FOR SYSTEM_TIME AS OF CURRENT_TIMESTAMP AS c
-  ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+JOIN `riverhotel.CDC.customer` FOR SYSTEM_TIME AS OF CURRENT_TIMESTAMP AS c
+  ON c.`email` = b.`customer_email`
 ```
 
 **Result**: **Internal Error** 🚫
@@ -110,7 +110,7 @@ Error: "Internal error occurred"
 ```sql
 -- Sanity check: Regular join without temporal semantics
 SELECT ... FROM `bookings` b
-JOIN `riverhotel.SAMPLE.CUSTOMER` c ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+JOIN `riverhotel.CDC.customer` c ON c.`email` = b.`customer_email`
 LIMIT 10;
 ```
 
@@ -149,8 +149,8 @@ StreamPhysicalIntervalJoin doesn't support consuming update and delete changes
 ```sql
 -- This FAILS with CDC sources
 SELECT ... FROM `bookings` b
-JOIN `riverhotel.SAMPLE.CUSTOMER` c
-  ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+JOIN `riverhotel.CDC.customer` c
+  ON c.`email` = b.`customer_email`
   AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '1' DAY AND b.`$rowtime` + INTERVAL '1' DAY
 ```
 
@@ -182,8 +182,8 @@ StreamPhysicalIntervalJoin doesn't support consuming update and delete changes
 ```sql
 -- Create append-only customer snapshot
 CREATE TABLE CUSTOMER_SNAPSHOT AS (
-SELECT CUSTOMER_ID, EMAIL, FIRST_NAME, LAST_NAME, BIRTH_DATE, CREATED_AT
-FROM `riverhotel.SAMPLE.CUSTOMER`
+SELECT customer_id, email, first_name, last_name, birth_date, created_at
+FROM `riverhotel.CDC.customer`
 );
 
 -- Force append-only mode (overrides inherited CDC changelog mode)
@@ -195,7 +195,7 @@ ALTER TABLE CUSTOMER_SNAPSHOT SET ('changelog.mode' = 'append');
 -- This WORKS: Snapshots are append-only compatible
 SELECT ... FROM `bookings` b
 JOIN `CUSTOMER_SNAPSHOT` c
-  ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+  ON c.`email` = b.`customer_email`
   AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
 LIMIT 10;
 ```
@@ -211,21 +211,21 @@ Our journey led to a sophisticated **hybrid timestamp strategy** that combines t
 ### **The Hybrid Approach**: Different Timestamps for Different Join Types
 
 ```sql
--- ✅ SOLUTION: Use $rowtime for dimensions, CREATED_AT for events
+-- ✅ SOLUTION: Use $rowtime for dimensions, created_at for events
 FROM `bookings` b
    -- Use $rowtime for dimension joins (data availability)
    JOIN `CUSTOMER_SNAPSHOT` c
-     ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+     ON c.`email` = b.`customer_email`
      AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
    JOIN `HOTEL_SNAPSHOT` h
-     ON h.`HOTEL_ID` = b.`HOTEL_ID`
+     ON h.`hotel_id` = b.`hotel_id`
      AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
-   -- Use CREATED_AT for business logic joins (realistic timing)
+   -- Use created_at for business logic joins (realistic timing)
    LEFT JOIN `hotel_reviews` hr
-     ON hr.`BOOKING_ID` = b.`BOOKING_ID`
-     AND to_timestamp_ltz(hr.`CREATED_AT`, 3) BETWEEN
-         to_timestamp_ltz(b.`CREATED_AT`, 3) AND
-         to_timestamp_ltz(b.`CREATED_AT`, 3) + INTERVAL '90' DAY
+     ON hr.`booking_id` = b.`booking_id`
+     AND to_timestamp_ltz(hr.`created_at`, 3) BETWEEN
+         to_timestamp_ltz(b.`created_at`, 3) AND
+         to_timestamp_ltz(b.`created_at`, 3) + INTERVAL '90' DAY
 ```
 
 ### **Why This Hybrid Strategy Works**
@@ -236,7 +236,7 @@ FROM `bookings` b
 - **Semantics**: "Find customer/hotel data as it existed around processing time"
 - **Handles**: CDC processing delays and ordering issues
 
-#### **`CREATED_AT` for Events** (Reviews)
+#### **`created_at` for Events** (Reviews)
 - **Purpose**: Reflects realistic business timing relationships
 - **Window**: Longer (90 days) - events can happen over extended periods
 - **Semantics**: "Find reviews created within 90 days after booking was made"
@@ -253,14 +253,14 @@ FROM `bookings` b
 ```sql
 -- Step 1: Create snapshot tables from CDC sources
 CREATE TABLE CUSTOMER_SNAPSHOT AS (
-SELECT CUSTOMER_ID, EMAIL, FIRST_NAME, LAST_NAME, BIRTH_DATE, CREATED_AT
-FROM `riverhotel.SAMPLE.CUSTOMER`
+SELECT customer_id, email, first_name, last_name, birth_date, created_at
+FROM `riverhotel.CDC.customer`
 );
 ALTER TABLE CUSTOMER_SNAPSHOT SET ('changelog.mode' = 'append');
 
 CREATE TABLE HOTEL_SNAPSHOT AS (
-SELECT HOTEL_ID, NAME, CLASS, DESCRIPTION, CITY, COUNTRY, ROOM_CAPACITY, CREATED_AT
-FROM `riverhotel.SAMPLE.HOTEL`
+SELECT hotel_id, name, category, description, city, country, room_capacity, created_at
+FROM `riverhotel.CDC.hotel`
 );
 ALTER TABLE HOTEL_SNAPSHOT SET ('changelog.mode' = 'append');
 
@@ -268,37 +268,37 @@ ALTER TABLE HOTEL_SNAPSHOT SET ('changelog.mode' = 'append');
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
 CREATE TABLE DENORMALIZED_HOTEL_BOOKINGS AS (
 SELECT
-  h.`NAME` AS `HOTEL_NAME`,
-  h.`DESCRIPTION` AS `HOTEL_DESCRIPTION`,
-  h.`CLASS` AS `HOTEL_CLASS`,
-  h.`CITY` AS `HOTEL_CITY`,
-  h.`COUNTRY` AS `HOTEL_COUNTRY`,
-  b.`PRICE` AS `BOOKING_AMOUNT`,
-  b.`OCCUPANTS` AS `GUEST_COUNT`,
-  to_timestamp_ltz(b.`CREATED_AT`, 3) AS `BOOKING_DATE`,
-  to_timestamp_ltz(b.`CHECK_IN`, 3) AS `CHECK_IN`,
-  to_timestamp_ltz(b.`CHECK_OUT`, 3) AS `CHECK_OUT`,
-  c.`EMAIL` AS `CUSTOMER_EMAIL`,
-  c.`FIRST_NAME` AS `CUSTOMER_FIRST_NAME`,
-  hr.`REVIEW_RATING`,
-  hr.`REVIEW_TEXT`,
-  to_timestamp_ltz(hr.`CREATED_AT`, 3) AS `REVIEW_DATE`,
-  b.`BOOKING_ID`,
-  h.`HOTEL_ID`
+  h.`name` AS `hotel_name`,
+  h.`description` AS `hotel_description`,
+  h.`category` AS `hotel_category`,
+  h.`city` AS `hotel_city`,
+  h.`country` AS `hotel_country`,
+  b.`price` AS `booking_amount`,
+  b.`occupants` AS `guest_count`,
+  to_timestamp_ltz(b.`created_at`, 3) AS `booking_date`,
+  to_timestamp_ltz(b.`check_in`, 3) AS `check_in`,
+  to_timestamp_ltz(b.`check_out`, 3) AS `check_out`,
+  c.`email` AS `customer_email`,
+  c.`first_name` AS `customer_first_name`,
+  hr.`review_rating` AS `review_rating`,
+  hr.`review_text` AS `review_text`,
+  to_timestamp_ltz(hr.`created_at`, 3) AS `review_date`,
+  b.`booking_id` AS `booking_id`,
+  h.`hotel_id` AS `hotel_id`
 FROM `bookings` b
    -- $rowtime for dimension joins (data availability)
    JOIN `CUSTOMER_SNAPSHOT` c
-     ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+     ON c.`email` = b.`customer_email`
      AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
    JOIN `HOTEL_SNAPSHOT` h
-     ON h.`HOTEL_ID` = b.`HOTEL_ID`
+     ON h.`hotel_id` = b.`hotel_id`
      AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
-   -- CREATED_AT for business logic joins (realistic timing)
+   -- created_at for business logic joins (realistic timing)
    LEFT JOIN `hotel_reviews` hr
-     ON hr.`BOOKING_ID` = b.`BOOKING_ID`
-     AND to_timestamp_ltz(hr.`CREATED_AT`, 3) BETWEEN
-         to_timestamp_ltz(b.`CREATED_AT`, 3) AND
-         to_timestamp_ltz(b.`CREATED_AT`, 3) + INTERVAL '90' DAY
+     ON hr.`booking_id` = b.`booking_id`
+     AND to_timestamp_ltz(hr.`created_at`, 3) BETWEEN
+         to_timestamp_ltz(b.`created_at`, 3) AND
+         to_timestamp_ltz(b.`created_at`, 3) + INTERVAL '90' DAY
 );
 ```
 
@@ -309,7 +309,7 @@ Our journey revealed several crucial insights about streaming joins with CDC sou
 ### **🔍 Technical Discoveries**
 
 #### **1. Stream Semantics Matter More Than Configuration**
-- ✅ **Infrastructure was perfect**: Oracle PKs, Kafka compaction, connector metadata
+- ✅ **Infrastructure was perfect**: PostgreSQL PKs, Kafka compaction, connector metadata
 - ❌ **Stream compatibility was the issue**: CDC changelog vs join requirements
 - 💡 **Lesson**: Focus on stream semantics, not just configuration
 
@@ -426,8 +426,8 @@ ALTER TABLE CUSTOMER_SNAPSHOT SET ('changelog.mode' = 'append');
 
 When creating aggregate tables in Flink SQL, you may encounter primary key errors due to nullable columns:
 
-> Invalid primary key 'PK_HOTEL_ID_HOTEL_NAME_HOTEL_CITY_HOTEL_COUNTRY_HOTEL_DESCRIPTION'.
-> Column 'HOTEL_NAME' is nullable.
+> Invalid primary key 'PK_hotel_id_hotel_name_hotel_city_hotel_country_hotel_description'.
+> Column 'hotel_name' is nullable.
 
 This occurs because Flink auto-infers primary keys from `GROUP BY` columns, but cannot create primary keys from nullable columns.
 
@@ -436,22 +436,22 @@ This occurs because Flink auto-infers primary keys from `GROUP BY` columns, but 
 **Quick null handling in aggregation queries:**
 
 ```sql
-CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
+CREATE TABLE aggregate_hotel_reviews AS (
    SELECT
-      COALESCE(HOTEL_ID, 'UNKNOWN_HOTEL') AS HOTEL_ID,
-      COALESCE(HOTEL_NAME, 'UNKNOWN_NAME') AS HOTEL_NAME,
-      COALESCE(HOTEL_CITY, 'UNKNOWN_CITY') AS HOTEL_CITY,
-      COALESCE(HOTEL_COUNTRY, 'UNKNOWN_COUNTRY') AS HOTEL_COUNTRY,
-      COALESCE(HOTEL_DESCRIPTION, 'NO_DESCRIPTION') AS HOTEL_DESCRIPTION,
-      AVG(REVIEW_RATING) AS AVERAGE_REVIEW_RATING,
-      COUNT(REVIEW_RATING) AS REVIEW_COUNT,
-      ARRAY_JOIN(ARRAY_AGG(REVIEW_TEXT), '||| ') AS HOTEL_REVIEWS
-   FROM DENORMALIZED_HOTEL_BOOKINGS
-   GROUP BY COALESCE(HOTEL_ID, 'UNKNOWN_HOTEL'),
-      COALESCE(HOTEL_NAME, 'UNKNOWN_NAME'),
-      COALESCE(HOTEL_CITY, 'UNKNOWN_CITY'),
-      COALESCE(HOTEL_COUNTRY, 'UNKNOWN_COUNTRY'),
-      COALESCE(HOTEL_DESCRIPTION, 'NO_DESCRIPTION')
+      COALESCE(hotel_id, 'UNKNOWN_HOTEL') AS hotel_id,
+      COALESCE(hotel_name, 'UNKNOWN_NAME') AS hotel_name,
+      COALESCE(hotel_city, 'UNKNOWN_CITY') AS hotel_city,
+      COALESCE(hotel_country, 'UNKNOWN_COUNTRY') AS hotel_country,
+      COALESCE(hotel_description, 'NO_DESCRIPTION') AS hotel_description,
+      AVG(review_rating) AS average_review_rating,
+      COUNT(review_rating) AS review_count,
+      ARRAY_JOIN(ARRAY_AGG(review_text), '||| ') AS hotel_reviews
+   FROM denormalized_hotel_bookings
+   GROUP BY COALESCE(hotel_id, 'UNKNOWN_HOTEL'),
+      COALESCE(hotel_name, 'UNKNOWN_NAME'),
+      COALESCE(hotel_city, 'UNKNOWN_CITY'),
+      COALESCE(hotel_country, 'UNKNOWN_COUNTRY'),
+      COALESCE(hotel_description, 'NO_DESCRIPTION')
 );
 ```
 
@@ -464,71 +464,71 @@ CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
 
 ```sql
 -- Step 1: Define exact schema with constraints
-CREATE TABLE DENORMALIZED_HOTEL_BOOKINGS (
-  HOTEL_NAME VARCHAR NOT NULL,           -- Explicitly non-nullable
-  HOTEL_DESCRIPTION VARCHAR NOT NULL,    -- Explicitly non-nullable
-  HOTEL_CLASS VARCHAR,                   -- Nullable (optional)
-  HOTEL_CITY VARCHAR NOT NULL,           -- Explicitly non-nullable
-  HOTEL_COUNTRY VARCHAR NOT NULL,        -- Explicitly non-nullable
-  BOOKING_AMOUNT DECIMAL(10,2),
-  GUEST_COUNT INT,
-  BOOKING_DATE TIMESTAMP(3),
-  CHECK_IN TIMESTAMP(3),
-  CHECK_OUT TIMESTAMP(3),
-  CUSTOMER_EMAIL VARCHAR,
-  CUSTOMER_FIRST_NAME VARCHAR,
-  REVIEW_RATING INT,
-  REVIEW_TEXT STRING,
-  REVIEW_DATE TIMESTAMP(3),
-  BOOKING_ID VARCHAR NOT NULL,
-  HOTEL_ID VARCHAR NOT NULL,
-  PRIMARY KEY (BOOKING_ID, HOTEL_ID) NOT ENFORCED  -- Explicit PK
+CREATE TABLE denormalized_hotel_bookings (
+  hotel_name VARCHAR NOT NULL,           -- Explicitly non-nullable
+  hotel_description VARCHAR NOT NULL,    -- Explicitly non-nullable
+  hotel_class VARCHAR,                   -- Nullable (optional)
+  hotel_city VARCHAR NOT NULL,           -- Explicitly non-nullable
+  hotel_country VARCHAR NOT NULL,        -- Explicitly non-nullable
+  booking_amount DECIMAL(10,2),
+  guest_count INT,
+  booking_date TIMESTAMP(3),
+  check_in TIMESTAMP(3),
+  check_out TIMESTAMP(3),
+  customer_email VARCHAR,
+  customer_first_name VARCHAR,
+  review_rating INT,
+  review_text STRING,
+  review_date TIMESTAMP(3),
+  booking_id VARCHAR NOT NULL,
+  hotel_id VARCHAR NOT NULL,
+  PRIMARY KEY (booking_id, hotel_id) NOT ENFORCED  -- Explicit PK
 );
 
 -- Step 2: Insert data with COALESCE to meet NOT NULL constraints
-INSERT INTO DENORMALIZED_HOTEL_BOOKINGS
+INSERT INTO denormalized_hotel_bookings
 SELECT
-  COALESCE(h.NAME, 'UNKNOWN_NAME') AS HOTEL_NAME,     -- Converts nulls to defaults
-  COALESCE(h.DESCRIPTION, 'NO_DESCRIPTION') AS HOTEL_DESCRIPTION,
-  h.CLASS AS HOTEL_CLASS,                             -- Allows nulls
-  COALESCE(h.CITY, 'UNKNOWN_CITY') AS HOTEL_CITY,
-  COALESCE(h.COUNTRY, 'UNKNOWN_COUNTRY') AS HOTEL_COUNTRY,
-  b.PRICE AS BOOKING_AMOUNT,
-  b.OCCUPANTS AS GUEST_COUNT,
-  to_timestamp_ltz(b.CREATED_AT, 3) AS BOOKING_DATE,
-  to_timestamp_ltz(b.CHECK_IN, 3) AS CHECK_IN,
-  to_timestamp_ltz(b.CHECK_OUT, 3) AS CHECK_OUT,
-  c.EMAIL AS CUSTOMER_EMAIL,
-  c.FIRST_NAME AS CUSTOMER_FIRST_NAME,
-  hr.REVIEW_RATING,
-  hr.REVIEW_TEXT,
-  to_timestamp_ltz(hr.CREATED_AT, 3) AS REVIEW_DATE,
-  b.BOOKING_ID,
-  h.HOTEL_ID
+  COALESCE(h.name, 'UNKNOWN_NAME') AS hotel_name,     -- Converts nulls to defaults
+  COALESCE(h.description, 'NO_DESCRIPTION') AS hotel_description,
+  h.class AS hotel_class,                             -- Allows nulls
+  COALESCE(h.city, 'UNKNOWN_CITY') AS hotel_city,
+  COALESCE(h.country, 'UNKNOWN_COUNTRY') AS hotel_country,
+  b.price AS booking_amount,
+  b.occupants AS guest_count,
+  to_timestamp_ltz(b.created_at, 3) AS booking_date,
+  to_timestamp_ltz(b.check_in, 3) AS check_in,
+  to_timestamp_ltz(b.check_out, 3) AS check_out,
+  c.email AS customer_email,
+  c.first_name AS customer_first_name,
+  hr.review_rating,
+  hr.review_text,
+  to_timestamp_ltz(hr.created_at, 3) AS review_date,
+  b.booking_id,
+  h.hotel_id
 FROM bookings b
-  JOIN CUSTOMER_SNAPSHOT c
-    ON c.EMAIL = b.CUSTOMER_EMAIL
+  JOIN customer_snapshot c
+    ON c.email = b.customer_email
     AND c.$rowtime BETWEEN b.$rowtime - INTERVAL '1' DAY AND b.$rowtime + INTERVAL '1' DAY
-  JOIN HOTEL_SNAPSHOT h
-    ON h.HOTEL_ID = b.HOTEL_ID
+  JOIN hotel_snapshot h
+    ON h.hotel_id = b.hotel_id
     AND h.$rowtime BETWEEN b.$rowtime - INTERVAL '1' DAY AND b.$rowtime + INTERVAL '1' DAY
   LEFT JOIN hotel_reviews hr
-    ON hr.BOOKING_ID = b.BOOKING_ID
+    ON hr.booking_id = b.booking_id
     AND hr.$rowtime BETWEEN b.$rowtime AND b.$rowtime + INTERVAL '90' DAY;
 
 -- Step 3: Subsequent aggregates work without COALESCE
-CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
+CREATE TABLE aggregate_hotel_reviews AS (
    SELECT
-      HOTEL_ID,                           -- No COALESCE needed!
-      HOTEL_NAME,                         -- No COALESCE needed!
-      HOTEL_CITY,                         -- No COALESCE needed!
-      HOTEL_COUNTRY,                      -- No COALESCE needed!
-      HOTEL_DESCRIPTION,                  -- No COALESCE needed!
-      AVG(REVIEW_RATING) AS AVERAGE_REVIEW_RATING,
-      COUNT(REVIEW_RATING) AS REVIEW_COUNT,
-      ARRAY_JOIN(ARRAY_AGG(REVIEW_TEXT), '||| ') AS HOTEL_REVIEWS
-   FROM DENORMALIZED_HOTEL_BOOKINGS
-   GROUP BY HOTEL_ID, HOTEL_NAME, HOTEL_CITY, HOTEL_COUNTRY, HOTEL_DESCRIPTION
+      hotel_id,                           -- No COALESCE needed!
+      hotel_name,                         -- No COALESCE needed!
+      hotel_city,                         -- No COALESCE needed!
+      hotel_country,                      -- No COALESCE needed!
+      hotel_description,                  -- No COALESCE needed!
+      AVG(review_rating) AS average_review_rating,
+      COUNT(review_rating) AS review_count,
+      ARRAY_JOIN(ARRAY_AGG(review_text), '||| ') AS hotel_reviews
+   FROM denormalized_hotel_bookings
+   GROUP BY hotel_id, hotel_name, hotel_city, hotel_country, hotel_description
 );
 ```
 
@@ -546,19 +546,19 @@ CREATE TABLE AGGREGATE_HOTEL_REVIEWS AS (
 **Modify source snapshot tables to enforce NOT NULL:**
 
 ```sql
--- After creating HOTEL_SNAPSHOT, add constraints
-ALTER TABLE HOTEL_SNAPSHOT MODIFY (
-  HOTEL_ID VARCHAR NOT NULL,
-  NAME VARCHAR NOT NULL,
-  CITY VARCHAR NOT NULL,
-  COUNTRY VARCHAR NOT NULL,
-  DESCRIPTION VARCHAR NOT NULL
+-- After creating hotel_snapshot, add constraints
+ALTER TABLE hotel_snapshot MODIFY (
+  hotel_id VARCHAR NOT NULL,
+  name VARCHAR NOT NULL,
+  city VARCHAR NOT NULL,
+  country VARCHAR NOT NULL,
+  description VARCHAR NOT NULL
 );
 
--- After creating CUSTOMER_SNAPSHOT, add constraints
-ALTER TABLE CUSTOMER_SNAPSHOT MODIFY (
-  EMAIL VARCHAR NOT NULL,
-  FIRST_NAME VARCHAR NOT NULL
+-- After creating customer_snapshot, add constraints
+ALTER TABLE customer_snapshot MODIFY (
+  email VARCHAR NOT NULL,
+  first_name VARCHAR NOT NULL
 );
 ```
 
@@ -582,26 +582,26 @@ Flink determines source field nullability through multiple mechanisms:
 #### 1. Source Connector Metadata
 
 ```sql
--- Oracle table definition
+-- PostgreSQL table definition
 CREATE TABLE hotel (
-  HOTEL_ID VARCHAR2(255) NOT NULL PRIMARY KEY,
-  NAME VARCHAR2(500),                    -- No NOT NULL constraint
-  CITY VARCHAR2(255) NOT NULL
+  hotel_id VARCHAR(50) NOT NULL PRIMARY KEY,
+  name VARCHAR(255),                     -- No NOT NULL constraint
+  city VARCHAR(100) NOT NULL
 );
 ```
 
 Flink inherits:
 
-- `HOTEL_ID`: NOT NULL ✅
-- `NAME`: **NULLABLE** ❌ (because Oracle allows NULL)
-- `CITY`: NOT NULL ✅
+- `hotel_id`: NOT NULL ✅
+- `name`: **NULLABLE** ❌ (because PostgreSQL allows NULL)
+- `city`: NOT NULL ✅
 
 #### 2. CDC Stream Characteristics
 
-Even if Oracle column is NOT NULL, CDC can introduce nullability:
+Even if PostgreSQL column is NOT NULL, CDC can introduce nullability:
 
 ```sql
-UPDATE hotel SET name = NULL WHERE hotel_id = 'H123';  -- Now NAME is null
+UPDATE hotel SET name = NULL WHERE hotel_id = 'H123';  -- Now name is null
 ```
 
 CDC streams carry these operations, so Flink **conservatively assumes nullable** for CDC sources.
@@ -633,17 +633,17 @@ In complex joins involving both **dimension data** (customers, hotels) and **eve
 FROM `bookings` b
    -- Use $rowtime for dimension joins (data availability)
    JOIN `CUSTOMER_SNAPSHOT` c
-     ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+     ON c.`email` = b.`customer_email`
      AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
    JOIN `HOTEL_SNAPSHOT` h
-     ON h.`HOTEL_ID` = b.`HOTEL_ID`
+     ON h.`hotel_id` = b.`hotel_id`
      AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
-   -- Use CREATED_AT for business logic joins (realistic timing)
+   -- Use created_at for business logic joins (realistic timing)
    LEFT JOIN `hotel_reviews` hr
-     ON hr.`BOOKING_ID` = b.`BOOKING_ID`
-     AND to_timestamp_ltz(hr.`CREATED_AT`, 3) BETWEEN
-         to_timestamp_ltz(b.`CREATED_AT`, 3) AND
-         to_timestamp_ltz(b.`CREATED_AT`, 3) + INTERVAL '90' DAY
+     ON hr.`booking_id` = b.`booking_id`
+     AND to_timestamp_ltz(hr.`created_at`, 3) BETWEEN
+         to_timestamp_ltz(b.`created_at`, 3) AND
+         to_timestamp_ltz(b.`created_at`, 3) + INTERVAL '90' DAY
 ```
 
 ### 🔍 **Why This Works**
@@ -654,7 +654,7 @@ FROM `bookings` b
 - **Window**: Short (7 days) - dimensions change infrequently
 - **Semantics**: "Find customer/hotel data as it existed around processing time"
 
-#### **`CREATED_AT` for Events**
+#### **`created_at` for Events**
 
 - **Purpose**: Reflects realistic business timing relationships
 - **Window**: Longer (90 days) - events can happen over extended periods

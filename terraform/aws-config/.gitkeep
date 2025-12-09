@@ -1,0 +1,3 @@
+# This directory stores AWS credentials configured inside the Docker container.
+# Contents are gitignored - only this placeholder file is committed.
+# This ensures the directory exists for Docker volume mounts on all platforms.

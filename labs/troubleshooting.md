@@ -27,7 +27,7 @@ Confluent Cloud prevents deletion of provider integrations that are actively bei
 1. **Remove the problematic resource from Terraform state:**
 
    ```sh
-   terraform state rm confluent_provider_integration.s3_tableflow_integration
+   docker-compose run --rm terraform -c "terraform state rm confluent_provider_integration.s3_tableflow_integration"
    ```
 
    > [!NOTE]
@@ -38,10 +38,54 @@ Confluent Cloud prevents deletion of provider integrations that are actively bei
 2. **Rerun the terraform destroy command:**
 
    ```sh
-   terraform destroy -auto-approve
+   docker-compose run --rm terraform -c "terraform destroy -auto-approve"
    ```
 
 3. **If issues persist**, manually stop TableFlow in Confluent Console before running destroy
+
+### PostgreSQL Readiness Check Timeout
+
+**Issue:**
+
+When running `terraform apply` with `create_postgres_cdc_connector = true`, you encounter a timeout error:
+
+```
+Error: PostgreSQL did not become ready after 12 minutes
+```
+
+**Why This Happens:**
+
+The EC2 `user_data` script takes time to complete (Docker install, PostgreSQL container startup, schema initialization). If Terraform's readiness check times out before PostgreSQL is fully ready, the connector creation fails.
+
+**Resolution:**
+
+1. **Option A: Disable automated connector creation** (recommended):
+
+   ```hcl
+   # terraform.tfvars
+   create_postgres_cdc_connector = false
+   ```
+
+   Then create the connector manually in LAB3 (~5 minutes).
+
+2. **Option B: Increase timeout and retry**:
+
+   Run `docker-compose run --rm terraform -c "terraform apply -auto-approve"` again - the EC2 instance is already running, so PostgreSQL should be ready.
+
+3. **Option C: Verify PostgreSQL manually**:
+
+   ```bash
+   # SSH to the instance
+   ssh -i sshkey-*.pem ec2-user@<instance-dns>
+
+   # Check if PostgreSQL container is running
+   sudo docker ps
+
+   # Test database connection
+   sudo docker exec postgres-workshop pg_isready -U postgres
+   ```
+
+---
 
 ## 🗄️ Oracle Database
 
@@ -96,10 +140,10 @@ Oracle database issues can stem from:
 
 **Resolution:**
 
-1. **Get connection details** from Terraform output:
+1. **Get connection details** from Terraform output (run from the `terraform/` directory):
 
 ```sh
-terraform output oracle_vm
+docker-compose run --rm terraform -c "terraform output oracle_vm"
 ```
 
 2. **Connect to the Oracle EC2 instance** using SSH:
@@ -136,7 +180,7 @@ ALTER SESSION SET CONTAINER = XEPDB1;
 ```
 
 ```sql
-DESCRIBE SAMPLE.CUSTOMER;
+DESCRIBE CDC.customer;
 ```
 
 ```sql
@@ -146,7 +190,7 @@ WHERE CONSTRAINT_NAME = (
     SELECT CONSTRAINT_NAME
     FROM ALL_CONSTRAINTS
     WHERE TABLE_NAME = 'CUSTOMER'
-    AND OWNER = 'SAMPLE'
+    AND OWNER = 'CDC'
     AND CONSTRAINT_TYPE = 'P'
 );
 ```
@@ -193,14 +237,14 @@ If you need an immediate working solution, use the **snapshot + interval joins a
 
    ```sql
    CREATE TABLE CUSTOMER_SNAPSHOT AS (
-   SELECT CUSTOMER_ID, EMAIL, FIRST_NAME, LAST_NAME, BIRTH_DATE, CREATED_AT
-   FROM `riverhotel.SAMPLE.CUSTOMER`
+   SELECT customer_id, email, first_name, last_name, birth_date, created_at
+   FROM `riverhotel.CDC.customer`
    );
    ALTER TABLE CUSTOMER_SNAPSHOT SET ('changelog.mode' = 'append');
 
    CREATE TABLE HOTEL_SNAPSHOT AS (
-   SELECT HOTEL_ID, NAME, CLASS, DESCRIPTION, CITY, COUNTRY, ROOM_CAPACITY, CREATED_AT
-   FROM `riverhotel.SAMPLE.HOTEL`
+   SELECT hotel_id, name, category, description, city, country, room_capacity, created_at
+   FROM `riverhotel.CDC.hotel`
    );
    ALTER TABLE HOTEL_SNAPSHOT SET ('changelog.mode' = 'append');
    ```
@@ -210,10 +254,10 @@ If you need an immediate working solution, use the **snapshot + interval joins a
    ```sql
    FROM `bookings` b
       JOIN `CUSTOMER_SNAPSHOT` c
-        ON c.`EMAIL` = b.`CUSTOMER_EMAIL`
+        ON c.`email` = b.`customer_email`
         AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
       JOIN `HOTEL_SNAPSHOT` h
-        ON h.`HOTEL_ID` = b.`HOTEL_ID`
+        ON h.`hotel_id` = b.`hotel_id`
         AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
    ```
 
@@ -240,6 +284,136 @@ Use streaming-optimized join patterns:
    ```sql
    SET 'table.exec.state.ttl' = '7d';
    ```
+
+## 🔐 Databricks Authentication
+
+### Service Principal Authentication Issues
+
+**Issue:**
+
+When running `terraform apply`, you encounter authentication errors related to Databricks:
+
+```
+Error: cannot authenticate with Databricks: invalid client credentials
+```
+
+or
+
+```
+Error: cannot create storage credential: permission denied
+```
+
+**Why This Happens:**
+
+This workshop uses **Service Principal with OAuth** for Databricks authentication. Common causes include:
+
+1. **Invalid credentials** - Client ID or Secret is incorrect
+2. **Missing permissions** - Service Principal is not in the **admins** group
+3. **OAuth secret expired** - Secrets have a limited lifetime
+
+**Resolution:**
+
+1. **Verify Service Principal credentials**:
+   - Go to Databricks → Settings → Identity and access → Service principals
+   - Confirm the Client ID matches your `terraform.tfvars`
+   - If needed, generate a new OAuth secret
+
+2. **Check Service Principal permissions**:
+   - Go to Settings → Identity and access → Groups → **admins**
+   - Verify your Service Principal is a member
+   - If not, add it to the admins group
+
+3. **Regenerate OAuth secret**:
+   - Click on your Service Principal → OAuth secrets tab
+   - Generate a new secret
+   - Update `databricks_service_principal_client_secret` in `terraform.tfvars`
+
+### External Data Access Not Enabled
+
+**Issue:**
+
+Terraform fails to create external location or storage credential.
+
+**Resolution:**
+
+1. Go to Databricks → Catalog → Select your metastore
+2. Click **Edit** → Enable **External data access**
+3. Save changes and retry `docker-compose run --rm terraform -c "terraform apply -auto-approve"`
+
+### Transient 500 Error During External Location Creation
+
+**Issue:**
+
+When running `terraform apply`, the `databricks_external_location` resource fails with a 500 Internal Server Error:
+
+```
+Error: cannot create external location:
+
+  with databricks_external_location.main,
+  on main.tf line 362, in resource "databricks_external_location" "main":
+ 362: resource "databricks_external_location" "main" {
+```
+
+The Terraform debug log shows:
+
+```
+POST /api/2.1/unity-catalog/external-locations
+< HTTP/2.0 500 Internal Server Error
+< {
+<   "error_code": "INTERNAL_ERROR",
+<   "message": ""
+< }
+```
+
+**Why This Happens:**
+
+This is a **transient error** that occurs due to IAM trust policy propagation delays. When Terraform updates the IAM role trust policy with the Databricks external ID and then immediately tries to create the external location, Databricks may not yet be able to assume the role because:
+
+1. **AWS IAM eventual consistency** - IAM policy changes can take 30-60+ seconds to propagate globally
+2. **Databricks internal validation** - Databricks validates it can assume the role before creating the external location
+3. **Race condition** - The wait period in Terraform may not be sufficient for all AWS regions
+
+**Resolution:**
+
+Since this is a transient error, the IAM configuration is correct - it just needs more time to propagate.
+
+1. **Option A: Simply re-run terraform apply** (recommended):
+
+   ```bash
+   docker-compose run --rm terraform -c "terraform apply -auto-approve"
+   ```
+
+   Since the IAM trust policy has already been updated and time has passed, the second run typically succeeds. Terraform will only attempt to create the resources that failed.
+
+2. **Option B: Use the retry wrapper script**:
+
+   A wrapper script is provided that automatically retries `terraform apply` with delays:
+
+   ```bash
+   cd terraform
+   chmod +x terraform-apply-wrapper-with-retry.sh
+   ./terraform-apply-wrapper-with-retry.sh
+   ```
+
+   This script will:
+   - Attempt `terraform apply` up to 6 times
+   - Wait 30 seconds between attempts
+   - Provide clear status output for each attempt
+
+3. **Option C: Increase wait times in Terraform** (for persistent issues):
+
+   If you consistently encounter this error, you can increase the wait time in `main.tf` by modifying the `null_resource.wait_for_trust_policy_phase2` resource:
+
+   ```terraform
+   # Change sleep 60 to sleep 120 or higher
+   command = <<-EOT
+     echo "⏳ Waiting 120 seconds for Phase 2 IAM propagation..."
+     sleep 120
+     echo "✅ Phase 2 propagation wait complete!"
+   EOT
+   ```
+
+---
 
 ## 🧱 Databricks
 
@@ -279,7 +453,7 @@ Try these solutions in order:
 1. **Verify external location configuration** - Ensure your external location is properly configured in Databricks
 2. **Check service principal permissions** - Verify IAM and Databricks permissions are correctly set
 3. **Use alternative account type**:
-   - Clean up current workshop resources: `terraform destroy -auto-approve`
+   - Clean up current workshop resources: `docker-compose run --rm terraform -c "terraform destroy -auto-approve"`
    - Restart workshop with a Databricks paid account or different free edition account
 4. **Create new service principal**:
    - Clean up current workshop resources

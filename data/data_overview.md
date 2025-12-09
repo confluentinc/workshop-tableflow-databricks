@@ -17,11 +17,17 @@ data/
 │   ├── booking_generator_streaming.json
 │   ├── review_generator_historical.json
 │   ├── review_generator_streaming.json
-│   ├── review_text_choices_1_star.json
-│   ├── review_text_choices_2_star.json
-│   ├── review_text_choices_3_star.json
-│   ├── review_text_choices_4_star.json
-│   └── review_text_choices_5_star.json
+│   └── content/                       # Text content for generators
+│       ├── hotel_descriptions_airport.json
+│       ├── hotel_descriptions_economy.json
+│       ├── hotel_descriptions_extended_stay.json
+│       ├── hotel_descriptions_luxury.json
+│       ├── hotel_descriptions_resort.json
+│       ├── review_text_choices_1_star.json
+│       ├── review_text_choices_2_star.json
+│       ├── review_text_choices_3_star.json
+│       ├── review_text_choices_4_star.json
+│       └── review_text_choices_5_star.json
 ├── schemas/                           # Avro schema definitions
 │   ├── booking_schema.avsc
 │   ├── clickstream_schema.avsc
@@ -42,13 +48,13 @@ Several critical files are automatically generated and destroyed by Terraform du
 
 #### Auto-Generated Files
 
-- **`connections/oracle.json`** - Oracle database connection with dynamic host IP and credentials
+- **`connections/postgres.json`** - PostgreSQL database connection with dynamic host IP and credentials
 - **`connections/confluent.json`** - Confluent Cloud connection with API keys, bootstrap servers, and schema registry URLs
 - **`shadow-traffic-license.env`** - ShadowTraffic license downloaded from GitHub
 
 #### Why Terraform Management?
 
-These files require numerous resource values and IDs from other Terraform-managed cloud resources (AWS instances, Confluent clusters, API keys, etc.) that need to be dynamically interpolated. Rather than requiring manual configuration with complex resource references, Terraform automatically:
+These files require numerous resource values and IDs from other Terraform-managed cloud resources (AWS EC2 instances running PostgreSQL, Confluent clusters, API keys, etc.) that need to be dynamically interpolated. Rather than requiring manual configuration with complex resource references, Terraform automatically:
 
 1. **Generates** these files during `terraform apply` with proper resource interpolation
 2. **Destroys** these files during `terraform destroy` for clean teardown
@@ -60,10 +66,24 @@ This approach eliminates manual configuration errors and ensures the ShadowTraff
 
 ### Data Source Generators
 
-#### Oracle Database Generators
+#### PostgreSQL Database Generators
 
 - **`customer_generator.json`** - Generates 1,000 customer records with contact information
-- **`hotel_generator.json`** - Generates 30 hotel properties across 9 countries with amenities and descriptions
+- **`hotel_generator.json`** - Generates 30 hotel properties across 9 countries with category-based descriptions
+
+##### Hotel Categories
+
+The hotel generator creates properties across 5 categories, each with dedicated description content:
+
+| Category | Description File |
+|----------|-----------------|
+| Economy | `hotel_descriptions_economy.json` |
+| Extended Stay | `hotel_descriptions_extended_stay.json` |
+| Luxury | `hotel_descriptions_luxury.json` |
+| Resort | `hotel_descriptions_resort.json` |
+| Airport | `hotel_descriptions_airport.json` |
+
+Each hotel is randomly assigned a category, and the description is selected from the corresponding category-specific content file to ensure realistic, contextually appropriate hotel descriptions.
 
 #### Kafka Topic Generators
 
@@ -74,7 +94,11 @@ This approach eliminates manual configuration errors and ensures the ShadowTraff
 - **`review_generator_historical.json`** - Generates 200 historical hotel reviews with unique booking references (B600000100-B600000299)
 - **`review_generator_streaming.json`** - Produces streaming reviews every 100-150 seconds with unique booking references (B600000300-B600000309)
 
-### Review Text Resources
+### Content Resources
+
+The `generators/content/` directory contains text content used by generators:
+
+#### Review Text Files
 
 Rating-specific review text files ensure sentiment matches numeric ratings:
 
@@ -84,6 +108,16 @@ Rating-specific review text files ensure sentiment matches numeric ratings:
 - **`review_text_choices_4_star.json`** - Pretty good experiences (25% frequency)
 - **`review_text_choices_5_star.json`** - Great experiences (15% frequency)
 
+#### Hotel Description Files
+
+Category-specific hotel descriptions ensure appropriate marketing copy for each property type:
+
+- **`hotel_descriptions_airport.json`** - Convenient, transit-focused descriptions
+- **`hotel_descriptions_economy.json`** - Budget-friendly, value-focused descriptions
+- **`hotel_descriptions_extended_stay.json`** - Home-like amenities, long-term comfort descriptions
+- **`hotel_descriptions_luxury.json`** - Premium, exclusive experience descriptions
+- **`hotel_descriptions_resort.json`** - Vacation, relaxation-focused descriptions
+
 ## Schemas
 
 Avro schema files define the structure for Kafka topics and ensure type safety:
@@ -92,25 +126,25 @@ Avro schema files define the structure for Kafka topics and ensure type safety:
 
 Defines the booking event structure with fields:
 
-- `BOOKING_ID`, `CUSTOMER_EMAIL`, `HOTEL_ID`
-- `CHECK_IN`, `CHECK_OUT`, `OCCUPANTS`, `PRICE`
-- `CREATED_AT` (with Flink timestamp precision)
+- `booking_id`, `customer_email`, `hotel_id`
+- `check_in`, `check_out`, `occupants`, `price`
+- `created_at` (with Flink timestamp precision)
 
 ### `clickstream_schema.avsc`
 
 Defines website interaction events with fields:
 
-- `ACTIVITY_ID`, `CUSTOMER_EMAIL`, `HOTEL_ID`
-- `ACTION`, `EVENT_DURATION`, `URL`
-- `CREATED_AT` (with Flink timestamp precision)
+- `activity_id`, `customer_email`, `hotel_id`
+- `action`, `event_duration`, `url`
+- `created_at` (with Flink timestamp precision)
 
 ### `review_schema.avsc`
 
 Defines hotel review events with fields:
 
-- `REVIEW_ID`, `BOOKING_ID`
-- `REVIEW_RATING`, `REVIEW_TEXT`
-- `CREATED_AT` (with Flink timestamp precision)
+- `review_id`, `booking_id`
+- `review_rating`, `review_text`
+- `created_at` (with Flink timestamp precision)
 
 ## Connections
 
@@ -118,7 +152,7 @@ The `connections/` directory contains auto-generated connection files managed by
 
 ### Connection Files
 
-- **`oracle.json`** - Oracle database connection for customer and hotel data with dynamic AWS EC2 instance details
+- **`postgres.json`** - PostgreSQL database connection for customer and hotel data with dynamic AWS EC2 instance details
 - **`confluent.json`** - Confluent Cloud connection for Kafka topic streaming with live API keys and cluster endpoints
 
 ### Terraform Integration
@@ -126,17 +160,20 @@ The `connections/` directory contains auto-generated connection files managed by
 These connection files are automatically managed through the Terraform lifecycle:
 
 ```hcl
-# Example from data_generator.tf
-resource "local_file" "oracle_connection_config" {
+# Example from modules/data-generator/main.tf
+resource "local_file" "postgres_connection" {
   content = jsonencode({
-    kind: "oracle"
-    connectionConfigs: {
-      host: "${aws_instance.oracle_instance.public_ip}"
-      port: "${var.oracle_db_port}"
-      # ... other dynamic values
+    kind : "postgres"
+    tablePolicy : "create"
+    connectionConfigs : {
+      host : var.postgres_hostname
+      port : var.postgres_port
+      username : var.postgres_username
+      password : var.postgres_password
+      db : var.postgres_database
     }
   })
-  filename = "../data/connections/oracle.json"
+  filename = "${var.output_path}/postgres.json"
 }
 ```
 
@@ -156,7 +193,7 @@ resource "local_file" "oracle_connection_config" {
 - **Unique Booking References**: Reviews use sequential booking ID references to ensure no duplicate reviews per booking
 - **Customer Behavior Modeling**: 80% of activities/bookings from repeat customers
 - **Timestamp Formatting**: All date fields use proper formatting with `decimals: 0`
-- **Master Data Timing**: Customer and hotel data generated in memory but delayed 15 minutes before Oracle insertion, simulating master data propagation timing
+- **Category-Based Content**: Hotel descriptions are matched to property categories (Economy, Extended Stay, Luxury, Resort, Airport)
 
 ### Unique Booking ID Constraint in Hotel Reviews
 
@@ -217,17 +254,34 @@ This violates the business constraint that each booking should have **at most on
 - ✅ **Data Integrity**: Eliminates downstream processing issues from duplicate reviews
 - ✅ **Realistic Business Logic**: Mirrors real-world constraint where bookings have 0 or 1 review
 - ✅ **Workshop Focus**: Keeps complexity on core streaming concepts rather than data generation edge cases
-- ✅ **Clear Data Lineage**: Easy to understand which bookings have reviews (first 210 of 420 total)
+- ✅ **Clear Data Lineage**: Easy to understand which bookings have reviews
 
 #### Business Impact
 
-**Review Distribution**:
+**Booking ID Ranges**:
+
+| Generator | ID Range | Count |
+|-----------|----------|-------|
+| Historical Bookings | B600000100 - B600000499 | 400 |
+| Streaming Bookings | B650000100 - B650000119 | 20 |
+
+**Review Coverage**:
+
+| Generator | References Bookings | Count |
+|-----------|---------------------|-------|
+| Historical Reviews | B600000100 - B600000299 | 200 |
+| Streaming Reviews | B600000300 - B600000309 | 10 |
+
+**Summary**:
 
 - **Total Bookings**: 420 (400 historical + 20 streaming)
-- **Bookings with Reviews**: 210 (200 historical + 10 streaming)
-- **Review Rate**: 50% (realistic for hospitality industry)
+- **Bookings with Reviews**: 210 (all from historical booking range)
+- **Review Rate**: 50% of historical bookings (realistic for hospitality industry)
 
-This creates a authentic dataset for testing stream processing, analytics, and AI workflows without data quality issues interfering with learning objectives.
+> [!NOTE]
+> Streaming reviews reference booking IDs from the historical range (B600000300-B600000309), simulating guests leaving reviews for past stays. The 20 streaming bookings (B650000100+) represent new reservations that haven't been reviewed yet.
+
+This creates an authentic dataset for testing stream processing, analytics, and AI workflows without data quality issues interfering with learning objectives.
 
 ### Rating-Based Review System
 
@@ -258,9 +312,21 @@ The review generators implement a sophisticated rating-based text selection syst
 ### Technical Implementation
 
 ```json
+"localConfigs": {
+    "avroSchemaHint": {
+        "value": {
+            "type": "record",
+            "name": "HotelReviewEvent",
+            "fields": [
+                {"name": "review_id", "type": "string"},
+                {"name": "review_text", "type": "string"}
+            ]
+        }
+    }
+},
 "varsOnce": {
-    "oneStarTexts": { "_gen": "loadJsonFile", "file": "review_text_choices_1_star.json" },
-    "twoStarTexts": { "_gen": "loadJsonFile", "file": "review_text_choices_2_star.json" }
+    "oneStarTexts": { "_gen": "loadJsonFile", "file": "/home/data/generators/content/review_text_choices_1_star.json" },
+    "twoStarTexts": { "_gen": "loadJsonFile", "file": "/home/data/generators/content/review_text_choices_2_star.json" }
     // ... (3-5 star text files loaded once)
 },
 "value": {
@@ -270,8 +336,7 @@ The review generators implement a sophisticated rating-based text selection syst
             { "weight": 10, "value": 1 },
             { "weight": 20, "value": 2 }
             // ... (weights 30, 25, 15 for ratings 3, 4, 5)
-        ],
-        "avroHint": { "type": "int" }
+        ]
     },
     "REVIEW_TEXT": {
         "_gen": "weightedOneOf",
@@ -279,8 +344,7 @@ The review generators implement a sophisticated rating-based text selection syst
             { "weight": 10, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "oneStarTexts" }}},
             { "weight": 20, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "twoStarTexts" }}}
             // ... (matching weights for 3-5 star texts)
-        ],
-        "avroHint": { "type": "string" }
+        ]
     }
 }
 ```
@@ -289,37 +353,31 @@ The review generators implement a sophisticated rating-based text selection syst
 
 1. **Stage 0: Configuration**
    1. The `shadow-traffic-configuration.json` file contains a three-sequential-stage approach to generate both a batch of historical data and periodic ongoing streaming data
-   2. Connections to Oracle and Confluent Cloud are prebuilt
-2. **Stage 1: Seed Data (Oracle Database)**
-   1. The `customer_generator` creates 1,000 customer records with timestamps of 10 weeks ago
-      - **15-Minute Delay**: Records are generated in memory immediately but delayed 15 minutes before Oracle insertion
-   2. The `hotel_generator` creates 30 hotel records across 9 countries with timestamps of 10 weeks ago
-      - **15-Minute Delay**: Records are generated in memory immediately but delayed 15 minutes before Oracle insertion
+   2. Connections to PostgreSQL and Confluent Cloud are prebuilt
+2. **Stage 1: Seed Data (PostgreSQL Database)**
+   1. The `customer_generator` creates 1,000 customer records with timestamps of ~10 weeks ago
+   2. The `hotel_generator` creates 30 hotel records across 9 countries with category-based descriptions and timestamps of ~10 weeks ago
 3. **Stage 2: Historical Data (Kafka Topics)**
-   1. **Clickstream Generator (Historical)** - Generates 3,000 clickstream events with random timestamps over the past 8 weeks
-   2. **Booking Generator (Historical)** - Generates 400 booking records with random timestamps over the past 8 weeks
-   3. **Review Generator (Historical)** - Generates 200 hotel reviews with unique booking references (B600000100-B600000299) and timestamps over the past 8 weeks
+   1. **Clickstream Generator (Historical)** - Generates 3,000 clickstream events with random timestamps over the past ~8 weeks
+   2. **Booking Generator (Historical)** - Generates 400 booking records with random timestamps over the past ~8 weeks
+   3. **Review Generator (Historical)** - Generates 200 hotel reviews with unique booking references (B600000100-B600000299) and timestamps over the past ~8 weeks
 4. **Stage 3: Streaming Data (Kafka Topics)**
    1. **Clickstream Generator (Streaming)** - Produces messages every 10-15 seconds to the `clickstream` topic with a maximum of 125 events
-      - References customer emails and hotel IDs from Oracle data
+      - References customer emails and hotel IDs from PostgreSQL data
       - 80% of clickstream activity come from existing customers, 20% from anonymous users
    2. **Booking Generator (Streaming)** - Produces messages every 45-60 seconds to the `bookings` topic with a maximum of 20 events
-      - Ensures that 20% of customers never appear in bookings
-      - References customer emails and hotel IDs from Oracle data
+      - References customer emails and hotel IDs from PostgreSQL data
    3. **Review Generator (Streaming)** - Produces messages every 100-150 seconds to the `hotel_reviews` topic up to a max of 10 events
       - Includes all review ratings from 1-5 stars with weighted distribution
       - References unique booking IDs (B600000300-B600000309) to ensure no duplicate reviews
 
-### Timing Strategy
+### Stage Dependencies
 
-The practical reason for the 15-minute delay for customers and hotels data is to allow for the dockerized Oracle database to fully spin up and start accepting connections.
+The three-stage approach ensures proper data dependencies:
 
-However, The 15-minute delay for master data (customers and hotels) can simulate a realistic data pipeline simulation where:
-
-- **Kafka Streams** begin immediately with clickstream, booking, and review events
-- **Master Data** appears in Oracle after 15 minutes, simulating typical enterprise data propagation delays
-- **Lookup Operations** in Kafka consumers can demonstrate handling of missing reference data scenarios
-- **Data Dependencies** mirror real-world timing where transactional events may arrive before their related master data
+- **Stage 1** completes first, populating PostgreSQL with customer and hotel master data
+- **Stage 2** runs after Stage 1, allowing historical Kafka events to reference existing master data via lookups
+- **Stage 3** runs after Stage 2, producing ongoing streaming events that also reference master data
 
 ## Usage
 
@@ -328,7 +386,7 @@ However, The 15-minute delay for master data (customers and hotels) can simulate
 Execute the data generation with this Docker command:
 
 ```sh
-docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.1.1 --config /home/data/shadow-traffic-configuration.json --watch
+docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/data" shadowtraffic/shadowtraffic:1.11.13 --config /home/data/shadow-traffic-configuration.json --watch
 ```
 
 ### Docker Command Breakdown
@@ -338,7 +396,7 @@ docker run --env-file ./data/shadow-traffic-license.env -v "$(pwd)/data/:/home/d
 | `docker run` | Starts a new Docker container |
 | `--env-file ./data/shadow-traffic-license.env` | Loads ShadowTraffic license environment variables |
 | `-v "$(pwd)/data/:/home/data"` | Mounts local `data/` directory to container for file access |
-| `shadowtraffic/shadowtraffic:1.1.1` | Specifies ShadowTraffic Docker image version |
+| `shadowtraffic/shadowtraffic:1.11.13` | Specifies ShadowTraffic Docker image version |
 | `--config /home/data/shadow-traffic-configuration.json` | Points to main configuration file |
 | `--watch` | Auto-restarts generation when config files change |
 
@@ -360,6 +418,6 @@ This configuration generates realistic River Hotels data for testing AI-powered 
 - **Customer interactions** through website clickstream events
 - **Booking transactions** with proper temporal relationships
 - **Review feedback** with sentiment matching ratings
-- **Multi-system integration** across Oracle, Kafka, and analytics platforms
+- **Multi-system integration** across PostgreSQL, Kafka, and analytics platforms
 
 The synthetic data enables comprehensive testing of real-time AI marketing systems without requiring production data or complex customer privacy considerations.

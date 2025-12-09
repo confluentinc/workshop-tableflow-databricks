@@ -6,28 +6,13 @@ Welcome to the first step of building your real-time AI marketing pipeline! In t
 
 ### What You'll Accomplish
 
-```mermaid
-graph LR
-   A[1\. Clone Repository] --> B[2\. Configure Confluent Cloud]
-   B --> C[3\. Configure Databricks]
-   C --> D[4\. Configure AWS CLI]
-   D --> E[5\. Ready for Deployment]
-```
-
 By the end of this lab, you will have:
 
-1. **Repository Setup**: Clone the workshop repository and prepare Terraform configuration files
-2. **Confluent Cloud Configuration**: Create API keys and set up cloud resource management access
-3. **Databricks Account Setup**: Configure account access, create service principals, and enable external data access
-4. **AWS CLI Authentication**: Set up AWS credentials for Terraform to deploy infrastructure
+1. **Configured Confluent Cloud**: Create API keys and set up cloud resource management access
+2. **Setup Databricks Account**: Configure account access, create service principals, and enable external data access
+3. **Authenticated with AWS**: Set up AWS credentials for Terraform to deploy infrastructure
 
-### Key Technologies You'll Configure
-
-- **Git**: Version control system for cloning the workshop repository
-- **Terraform**: Infrastructure as Code tool that requires cloud platform credentials for automated deployment
-- **Confluent Cloud**: Fully managed Apache Kafka platform - you'll create API keys for cloud resource management
-- **Databricks**: Unified analytics platform - you'll configure service principals and enable external data access
-- **AWS CLI**: Command-line interface for Amazon Web Services - you'll authenticate with your AWS account
+![AWS, Confluent Cloud, and Databricks are required accounts](./images/required_accounts.png)
 
 ### Prerequisites
 
@@ -35,40 +20,11 @@ Review the [README](../../README.md) and complete its [prerequisites](../../READ
 
 ## 👣 Steps
 
-### Step 1: Clone this Repository
+### Step 1: Create Terraform Variables File
 
-Get started by cloning the workshop repository and navigating to the Terraform configuration directory.
-
-1. Open your preferred command-line interface, like *zsh* or *Powershell*
-2. Clone this repository with git:
-
-   **HTTP:**
-
-   ```sh
-   git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
-   ```
-
-   **SSH:**
-
-   ```sh
-   git clone git@github.com:confluentinc/workshop-tableflow-databricks.git
-   ```
-
-3. Navigate to the Terraform directory:
-
-   ```sh
-   cd workshop-tableflow-databricks/terraform
-   ```
-
-#### Create Terraform Variables File
-
-1. Copy the sample configuration file:
-
-   ```sh
-   cp sample-tfvars terraform.tfvars
-   ```
-
-2. Open `terraform.tfvars` in your preferred editor
+1. Navigate to the `terraform` directory
+2. Rename the `sample-tfvars` file to `terraform.tfvars`
+3. Open `terraform.tfvars` in your preferred editor
 
 Now you can configure each cloud platform's credentials and settings. It should look like this
 
@@ -76,9 +32,10 @@ Now you can configure each cloud platform's credentials and settings. It should 
 # ===============================
 # General Overrides
 # ===============================
+prefix       = ""
 email        = ""
 cloud_region = ""
-call_sign    = ""
+
 
 # ===============================
 # Confluent Cloud Overrides
@@ -89,32 +46,45 @@ confluent_cloud_api_secret = ""
 # ===============================
 # Databricks Overrides
 # ===============================
-databricks_account_id                      = ""
-databricks_service_principal_client_id     = ""
-databricks_service_principal_client_secret = ""
-databricks_host                            = ""
-databricks_user_email                      = ""
+databricks_host                            = ""  # e.g., https://your-workspace.cloud.databricks.com
+databricks_account_id                      = ""  # Required for IAM trust policy (external ID)
+databricks_user_email                      = ""  # Your Databricks user email for granting permissions
+databricks_service_principal_client_id     = ""  # Service Principal Application ID
+databricks_service_principal_client_secret = ""  # Service Principal OAuth Secret
 
 # ===============================
 # AWS Overrides
 # ===============================
-# Uncomment the line below if you are using an AWS free tier account:
-# oracle_instance_type = "m7i-flex.large"
+# Uncomment the lines below if you are using an AWS free tier account:
+# oracle_instance_type   = "m7i-flex.large"
+# postgres_instance_type = "m7i-flex.large"
 
 # AWS Free Tier now allows for c7i-flex.large and m7i-flex.large for accounts created after July 15, 2025
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/LaunchingAndUsingInstances.html
-```
 
-> [!NOTE]
-> **Call Sign**
->
->You are going to prefix all cloud resources you create through terraform with the `call_sign` variable, so enter a short value for it.
->
->For example, it could be something like `neo` or `maverick`.  Pick something memorable, short, and fun!
+# ===============================
+# Optional: Connector Automation
+# ===============================
+# Set to false if you want to manually create the PostgreSQL CDC connector as a learning exercise
+# create_postgres_cdc_connector = false
+```
 
 Terraform requires API keys and configuration values to create resources across multiple cloud platforms. You'll configure these values in a `terraform.tfvars` file in the following steps.
 
-### Step 2: Configure Confluent Cloud Account
+### Step 2: Cloud Resource Prefix
+
+The `prefix` terraform variable helps identify the cloud resources you create for this workshop. Because every resource will have it, pick something memorable, short, and fun - like your initials or a nickname.
+
+Here is an example:
+
+```hcl
+# ===============================
+# General Overrides
+# ===============================
+prefix       = "neo"
+```
+
+### Step 3: Configure Confluent Cloud Account
 
 Follow this next section of steps to create a Confluent *Cloud resource management* API key and token.
 
@@ -144,7 +114,7 @@ Follow this next section of steps to create a Confluent *Cloud resource manageme
 1. In your code editor of choice, open your `terraform.tfvars` file and enter in the `confluent_cloud_api_key` and `confluent_cloud_api_secret` values from your newly-created **Key** and **Secret**. Save the `terraform.tfvars` file.
 2. Back in Confluent Cloud, click the *Complete* button
 
-### Step 3: Configure Databricks Account
+### Step 4: Configure Databricks Account
 
 There are many values to add from Databricks, and these steps will guide you through it:
 
@@ -159,7 +129,20 @@ Navigate to [Databricks](https://login.databricks.com/) and login with your acco
 
 #### Databricks Account ID
 
-##### Account ID For Paid or Free Trial Accounts
+<details>
+<summary>Get Account ID For <b>Free Edition</b> Accounts</summary>
+
+1. Open a separate browser tab to the [Databricks Admin Console](https://accounts.cloud.databricks.com/)
+2. Find the `account_id=` in the browser tab url and copy the value
+
+   ![Databricks Free Account ID](images/databricks_free_account_id.png)
+
+3. Paste it into your `terraform.tfvars` file for the `databricks_account_id` key
+
+</details>
+
+<details>
+<summary>Get Account ID For <b>Paid</b> or <b>Free Trial</b> Accounts</summary>
 
 1. Open a separate browser tab to the [Databricks Admin Console](https://accounts.cloud.databricks.com/)
 2. Click on the user icon in the top right
@@ -168,14 +151,7 @@ Navigate to [Databricks](https://login.databricks.com/) and login with your acco
 
 3. Copy the **Account ID** value and paste it into your `terraform.tfvars` file for the `databricks_account_id` key
 
-##### Account ID For Free Edition Accounts
-
-1. Open a separate browser tab to the [Databricks Admin Console](https://accounts.cloud.databricks.com/)
-2. Find the `account_id=` in the browser tab url and copy the value
-
-   ![Databricks Free Account ID](images/databricks_free_account_id.png)
-
-3. Paste it into your `terraform.tfvars` file for the `databricks_account_id` key
+</details>
 
 #### Additional Databricks IDs
 
@@ -197,128 +173,150 @@ Navigate to [Databricks](https://login.databricks.com/) and login with your acco
 In this step you will create a [Service Principal](https://docs.databricks.com/aws/en/admin/users-groups/service-principals) to authenticate automated tasks, like Terraform, in your Databricks account.
 
 1. Click on your username in the top right bar and select *Settings*
-2. Click on **Identity and access**
-3. Click the **Manage** button next to *Service principals*
+2. Click on *Identity and access*
+3. Click the *Manage* button next to *Service principals*
 
-   ![Databricks manage service principal](images/databricks_manage_service_principals.png)
+   ![Databricks manage service principal](./images/databricks_manage_service_principals.png)
 
-4. Click on the **Add service principal** button
-5. Click on the **Add new** button
+4. Click on the *Add service principal* button
+5. Click on the *Add new* button
 6. Enter a descriptive name in the textbox, something like *workshop-tableflow-databricks*
 
-   ![Databricks add service principal](images/databricks_add_service_principal.png)
+   ![Databricks add service principal](./images/databricks_add_service_principal.png)
 
-7. Click on the **Add** button
+7. Click on the *Add* button
 
-#### Create OAuth Secret for Service Principal
+##### Create OAuth Secret for Service Principal
 
 1. Click on your newly-created Service Principal
-2. Click on the **Secrets** tab
-3. Click on the **Generate secret** button
+2. Click on the *Secrets* tab
+3. Click on the *Generate secret* button
 4. Enter a reasonable duration lifetime, something like `30` or above
 
-   ![Form input for secret duration](images/databricks_generate_oauth_secret.png)
+   ![Databricks generate OAuth secret](./images/databricks_generate_oauth_secret.png)
 
-5. Click the **Generate** button
+5. Click the *Generate* button
 6. Copy and paste the `Secret` and `Client ID` into the corresponding databricks Terraform variables in your `terraform.tfvars` file
+
+   ![Terraform databricks oauth](./images/databricks_terraform_oauth_tfvar.png)
 
 7. Click on the *Done* button
 
-#### Add Service Principal to Admin Group
+##### Add Service Principal to Admin Group
+
+Next, you want to grant the Service Principal admin privileges:
 
 1. Click on the *Identity and access* link under the *Settings* heading
 2. Click on the *Manage* button next to the *Groups* section
 3. Click on the *admins* link
 
-   ![Databricks groups admins](images/databricks_groups_admins.png)
+   ![Databricks groups admins](./images/databricks_groups_admins.png)
 
 4. Click on the *Add members* button
 5. Search for the name of the Service Principal you just created and select it from the dropdown
 
-   ![Databricks add service principal to admins](images/databricks_admins_service_principal.png)
+   ![Databricks add service principal to admins](./images/databricks_admins_service_principal.png)
 
 6. Click on the *Add* button
 
+Now your Service Principal should be part of the **admins** group and have the proper permissions for this workshop.
+
 #### Enable External Data Access
+
+The last Databricks setup step is to enable external data access:
 
 1. Click on *Catalog* in the left menu
 2. Click on the gear icon to expand a dropdown
 3. Click on the *Metastore* dropdown
 
-   ![Databricks Catalog settings select metastore](images/databricks_catalog_metastore.png)
+   ![Databricks Catalog settings select metastore](./images/databricks_catalog_metastore.png)
 
 4. Toggle the *External data access* so that is enabled
 
-   ![Databricks Metastore configurations](images/databricks_external_data_access.png)
+   ![Databricks Metastore configurations](./images/databricks_external_data_access.png)
 
 #### Databricks Setup Complete
 
-You have completed the Databricks set up and each of the Databricks entries in your `terraform.tfvars` file should be populated with values.
+You have completed the Databricks setup! At this point, your `terraform.tfvars` file should have the following Databricks values populated:
+
+- `databricks_host` - Your workspace URL (e.g. *https://dbc-12f34e56-123e.cloud.databricks.com*)
+- `databricks_account_id` - Your Databricks account ID
+- `databricks_user_email` - Your Databricks user email
+- `databricks_service_principal_client_id` - Service Principal Application ID
+- `databricks_service_principal_client_secret` - Service Principal OAuth Secret
 
 You are now ready to configure your AWS account!
 
 ### Step 4: Configure AWS Account
 
-With the AWS CLI already installed, follow [these instructions](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html) to configure and authenticate it with your AWS account.
+The Terraform Docker container automatically detects AWS credentials from multiple sources. Choose the option that matches your setup:
+
+<details>
+<summary>Option A: AWS Workshop Studio Accounts</summary>
+
+If you are using an AWS Workshop Studio account:
+
+1. Click on the **Get AWS CLI credentials** link on your event home screen
+2. Copy the environment variable export commands for your operating system
+3. **Run the export commands in the same terminal** where you will run Terraform Docker commands
+
+   ![Menu for AWS CLI](images/aws_cli_credentials.png)
 
 > [!IMPORTANT]
-> **AWS Workshop Studio Accounts**
+> **Same Terminal Window Required**
 >
-> If you are using an AWS Workshop Studio account, click on the **Get AWS CLI credentials** link on your event home screen and follow the instructions for your operating system.
->
-> **Ensure that you set/export the variables in the same shell window that you will be running your terraform commands in.**
->
-> ![Menu for AWS CLI](images/aws_cli_credentials.png)
+> The environment variables must be exported in the same terminal window where you will run `docker-compose` commands. The Docker container will automatically inherit these exported credentials.
 
-Verify that you are authenticated with the AWS CLI by invoking this command
+</details>
+
+<details>
+<summary>Option B: Personal AWS Accounts</summary>
+
+If you are using your personal AWS account, configure credentials on your **host machine**:
 
 ```sh
-aws configure list
+aws configure
 ```
 
-You should see an output like this:
+The Docker container automatically mounts your `~/.aws` directory and will use these credentials.
+
+</details>
+
+#### Verify AWS Configuration
+
+To verify AWS credentials are working inside the Docker container, switch to your shell that is in the *workshop-tableflow-databricks/terraform* directory and run:
 
 ```sh
- Name                    Value             Type    Location
+docker-compose run --rm terraform -c "aws configure list"
+```
+
+You should an output similar to this:
+
+```sh
+✓ Using AWS credentials from environment variables
+      Name                    Value             Type    Location
       ----                    -----             ----    --------
    profile                <not set>             None    None
-access_key              ************             env
-secret_key              ************             env
-    region                **********             env    ******
+access_key     ****************XXXX              env
+secret_key     ****************XXXX              env
+    region                us-east-2              env    AWS_DEFAULT_REGION
 ```
+
+> [!WARNING]
+> **Windows Error: Access is Denied**
+>
+> If running the `docker-compose run --rm terraform -c "aws configure list"` command on Windows results in an **Access is Denied** error, then try running this from the terraform directory:
+>
+> ```New-Item -ItemType Directory -Path ".\aws-config" -Force```
+>
 
 ## 🏁 Conclusion
 
 🎉 **Congratulations!** You've successfully configured all the cloud platform accounts and credentials needed for River Hotels' AI-powered marketing pipeline!
 
-### What You've Achieved
-
-In this lab, you have:
-
-✅ **Repository Setup**: Cloned the workshop repository and prepared Terraform configuration files
-
-✅ **Confluent Cloud Access**: Created cloud resource management API keys for automated infrastructure deployment
-
-✅ **Databricks Configuration**: Set up service principals, enabled external data access, and configured account permissions
-
-✅ **AWS CLI Authentication**: Established secure access for Terraform to deploy AWS resources
-
-### Your Configuration Foundation
-
-You now have all the necessary credentials and configurations:
-
-- **`terraform.tfvars` file** with all required cloud platform credentials
-- **Confluent Cloud API keys** for resource management and deployment
-- **Databricks service principal** with proper permissions for automation
-- **AWS CLI authentication** ready for infrastructure provisioning
-
 ## ➡️ What's Next
 
-Your journey continues in **[LAB 2: Cloud Infrastructure Deployment](../LAB2_cloud_deployment/LAB2.md)** where you will:
-
-1. **Deploy Multi-Cloud Infrastructure**: Use Terraform to automatically provision 40+ resources across AWS, Confluent Cloud, and Databricks
-2. **Establish Data Integration**: Configure Oracle XStream CDC connector to stream database changes in real-time
-3. **Generate Realistic Data**: Deploy Shadow Traffic to create authentic customer behavior data with realistic patterns
+Your journey continues in **[LAB 2: Cloud Infrastructure Deployment](../LAB2_cloud_deployment/LAB2.md)**
 
 ## 🔧 Troubleshooting
 

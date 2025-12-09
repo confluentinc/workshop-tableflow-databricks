@@ -3,10 +3,46 @@
     "topic": "bookings",
     "connection": "confluent",
     "localConfigs": {
-        "maxEvents": 20,
+        "maxEvents": 100,
         "avroSchemaHint": {
-            "_gen": "loadJsonFile",
-            "file": "/home/data/schemas/booking_schema.avsc"
+            "value": {
+                "type": "record",
+                "name": "BookingEvent",
+                "fields": [
+                    {
+                        "name": "booking_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "customer_email",
+                        "type": "string"
+                    },
+                    {
+                        "name": "hotel_id",
+                        "type": "string"
+                    },
+                    {
+                        "name": "check_in",
+                        "type": "long"
+                    },
+                    {
+                        "name": "check_out",
+                        "type": "long"
+                    },
+                    {
+                        "name": "occupants",
+                        "type": "int"
+                    },
+                    {
+                        "name": "price",
+                        "type": "int"
+                    },
+                    {
+                        "name": "created_at",
+                        "type": "long"
+                    }
+                ]
+            }
         },
         "throttleMs": {
             "_gen": "uniformDistribution",
@@ -46,18 +82,18 @@
         }
     },
     "value": {
-        "BOOKING_ID": {
+        "booking_id": {
             "_gen": "sequentialString",
             "startingFrom": 650000100,
             "expr": "B~d"
         },
-        "CUSTOMER_EMAIL": {
+        "customer_email": {
             "_gen": "lookup",
-            "connection": "oracle",
-            "table": "sample.customer",
+            "connection": "postgres",
+            "table": "cdc.customer",
             "path": [
                 "row",
-                "EMAIL"
+                "email"
             ],
             "histogram": {
                 "_gen": "histogram",
@@ -69,25 +105,25 @@
                 ]
             }
         },
-        "HOTEL_ID": {
+        "hotel_id": {
             "_gen": "lookup",
-            "connection": "oracle",
-            "table": "sample.hotel",
+            "connection": "postgres",
+            "table": "cdc.hotel",
             "path": [
                 "row",
-                "HOTEL_ID"
+                "hotel_id"
             ]
         },
-        "CHECK_IN": {
+        "check_in": {
             "_gen": "var",
             "var": "check_in_time"
         },
-        "CHECK_OUT": {
+        "check_out": {
             "_gen": "math",
             "expr": "check_in_time + stay_duration",
             "decimals": 0
         },
-        "OCCUPANTS": {
+        "occupants": {
             "_gen": "normalDistribution",
             "mean": 3,
             "sd": 1,
@@ -97,7 +133,7 @@
                 6
             ]
         },
-        "PRICE": {
+        "price": {
             "_gen": "normalDistribution",
             "mean": 200,
             "sd": 25,
@@ -107,7 +143,7 @@
                 400
             ]
         },
-        "CREATED_AT": {
+        "created_at": {
             "_gen": "uniformDistribution",
             "bounds": [
                 {

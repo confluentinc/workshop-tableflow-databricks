@@ -1,0 +1,55 @@
+# Docker Compose for Terraform Workshop
+#
+# Usage:
+#   docker-compose build                                    # Build the container (one-time)
+#   docker-compose run --rm terraform                       # Interactive shell
+#   docker-compose run --rm terraform -c "terraform init"   # Run specific command
+#
+# AWS Credentials (in priority order):
+#   1. Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
+#   2. Host machine's ~/.aws directory (mounted read-only)
+#   3. Local ./aws-config directory (for persistent container credentials)
+#
+# To use host credentials: Ensure ~/.aws/credentials exists on your host machine
+# To use local credentials: Run 'aws configure' inside the container (stored in ./aws-config/)
+
+services:
+  terraform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: workshop-terraform:latest
+    container_name: workshop-terraform
+    volumes:
+      # Mount parent directory so ../data is accessible for generated files
+      - ..:/workspace
+      # Mount host's AWS credentials (read-only) - PRIMARY source
+      # This uses credentials from 'aws configure' on your host machine
+      - ~/.aws:/root/.aws-host:ro
+      # Mount local AWS config for container-specific credentials - FALLBACK
+      # Run 'aws configure' inside container to populate this
+      - ./aws-config:/root/.aws-local
+    environment:
+      # AWS credentials from environment variables (HIGHEST priority - overrides mounted files)
+      # Set these if using temporary credentials or SSO
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_SESSION_TOKEN
+      - AWS_DEFAULT_REGION
+      # AWS config file locations (used by entrypoint script)
+      - AWS_HOST_CONFIG=/root/.aws-host
+      - AWS_LOCAL_CONFIG=/root/.aws-local
+      # Terraform variables (alternative to terraform.tfvars)
+      - TF_VAR_confluent_cloud_api_key
+      - TF_VAR_confluent_cloud_api_secret
+      - TF_VAR_databricks_host
+      - TF_VAR_databricks_service_principal_client_id
+      - TF_VAR_databricks_service_principal_client_secret
+      - TF_VAR_databricks_account_id
+      - TF_VAR_databricks_user_email
+      - TF_VAR_email
+      - TF_VAR_cloud_region
+      - TF_VAR_prefix
+    working_dir: /workspace/terraform
+    stdin_open: true
+    tty: true
