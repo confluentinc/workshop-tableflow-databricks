@@ -14,7 +14,7 @@
 #
 # Configuration:
 #   MAX_RETRIES=6    - Maximum number of apply attempts
-#   RETRY_DELAY=30   - Seconds between retry attempts
+#   RETRY_DELAY=15   - Seconds between retry attempts
 
 set -o pipefail
 
@@ -22,7 +22,7 @@ set -o pipefail
 # Configuration
 # ===============================
 MAX_RETRIES=6
-RETRY_DELAY=30  # seconds between retries
+RETRY_DELAY=15  # seconds between retries
 
 # ===============================
 # Colors for output
