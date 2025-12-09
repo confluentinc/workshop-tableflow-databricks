@@ -9,8 +9,7 @@ Now that you've configured your cloud platform accounts, it's time to deploy the
 By the end of this lab, you will have:
 
 1. **Multi-Cloud Infrastructure Deployment**: Use Terraform to automatically provision 40+ cloud resources across AWS, Confluent Cloud, and Databricks with proper security, networking, and integration
-2. **Infrastructure Validation**: Verify that all deployed resources are running correctly and accessible
-3. **Platform Integration**: Confirm that AWS, Confluent Cloud, and Databricks are properly connected and ready for data streaming
+2. **Platform Integration**: Confirm that AWS, Confluent Cloud, and Databricks are properly connected and ready for data streaming
 
 ### Prerequisites
 
@@ -66,13 +65,11 @@ docker-compose run --rm terraform -c "./terraform-apply-wrapper-with-retry.sh"
 >
 > It should take between 7-10 minutes for Terraform to completely generate all of the needed cloud resources.
 >
+> You may continue on with this lab while Terraform provisions. Alternatively, you may also spend *~10 minutes* going through this [optional data contracts and governance lab](../LAB_data_governance/LAB_data_governance.md) while you wait.
+>
 > You should see an extensive log output in your shell showing the progress of generating the cloud resources. When finished, you should see a message like this:
 >
 > *Apply complete! Resources: XX added, 0 changed, 0 destroyed.*
->
-> You may continue on with this lab while Terraform provisions.
->
-> Alternatively, you may also spend *~10 minutes* going through this [optional data contracts and governance lab](../LAB_data_governance/LAB_data_governance.md) while you wait.
 
 Expand the section below for a summary of the main cloud resources created through Terraform:
 
@@ -108,11 +105,6 @@ When the deployment completes, Terraform outputs helpful cloud resource values. 
 ```sh
 docker-compose run --rm terraform -c "terraform output"
 ```
-
-> [!TIP]
-> **Interactive Shell**
->
-> If you prefer to work in an interactive shell inside the container, run `docker-compose run --rm terraform` to drop into a bash shell where you can run `terraform` commands directly without the `-c` wrapper.
 
 > [!IMPORTANT]
 > **Troubleshoot Terraform Issues**

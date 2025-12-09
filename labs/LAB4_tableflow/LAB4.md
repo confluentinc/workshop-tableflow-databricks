@@ -6,6 +6,8 @@ Now with your data generated, it's time to integrate with Databricks Unity Catal
 
 ### What You'll Accomplish
 
+![Tableflow architecture diagram](./images/architecture_tableflow.jpg)
+
 By the end of this lab, you will have:
 
 1. **Unity Catalog Integration**: Connect Confluent Cloud with Databricks Unity Catalog through Tableflow for automated Delta Lake synchronization

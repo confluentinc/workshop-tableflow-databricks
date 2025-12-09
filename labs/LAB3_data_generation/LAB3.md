@@ -23,6 +23,8 @@ Completed **[LAB 2: Cloud Infrastructure Deployment](../LAB2_cloud_deployment/LA
 
 You will use a flexible data-generator tool called [Shadow Traffic](https://shadowtraffic.io/) to create *River Hotel* data streams using a three-stage approach that creates both historical and streaming data.
 
+Follow these steps to get started:
+
 1. Open a new shell tab
 2. Navigate to the workshop repository's root folder
 3. Execute the appropriate command for your OS

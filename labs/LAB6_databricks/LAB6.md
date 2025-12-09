@@ -46,9 +46,9 @@ First, follow these steps to verify that the data is flowing in as expected:
 
 11. Run the query that appears in the cell - it should look like this:
 
-```sql
-select * from `<catalog>`.`<schema>`.`clickstream` limit 100;
-```
+   ```sql
+   select * from `<catalog>`.`<schema>`.`clickstream` limit 100;
+   ```
 
 > [!TIP]
 > **Compute Resource**
@@ -59,7 +59,9 @@ select * from `<catalog>`.`<schema>`.`clickstream` limit 100;
 >
 > If you do, select the **Automatically launch and attach without prompting** and click the **Start, attach and run** button
 
-You should see 100 records of clickstream data.
+12. You should see a result like this:
+
+   ![sql query results](./images/databricks_query_clickstream.png)
 
 > [!IMPORTANT]
 > **10-15 Minute Data Sync**

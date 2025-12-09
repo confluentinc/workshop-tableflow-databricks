@@ -34,7 +34,7 @@ Apache Flink on Confluent.
 Follow these steps to navigate to the *Flink Compute Pool* that you spun up
 earlier with Terraform:
 
-1. Navigate to your [workshop flink compute pool]()
+1. Navigate to your [workshop flink compute pool](https://confluent.cloud/go/flink)
 2. Select your workshop environment
 3. Click **Continue**
 
@@ -304,12 +304,14 @@ In this next section you will stream your topics as *Delta Lake* tables with *Ta
 
 These steps guide you through enabling Tableflow for the `denormalized_hotel_bookings` and `hotel_stats` topics:
 
-1. Click on the *Environments* icon in the far left sidebar
-2. Click on your workshop environment
-3. Click on your workshop cluster
-4. Click on *Topics*
+1. Navigate to [your workshop topics](https://confluent.cloud/go/topics)
+2. Select your workshop environment and cluster
+3. Click **Continue**
 
-   Your Topics should looks something like:
+   ![Environment and cluster dropdowns](./images/navigate_to_topics.png)
+
+4. Verify that it looks something like this:
+
    ![List of Kafka Topics](images/topics_list_all.png)
 
 5. Click on the newly-created `denormalized_hotel_bookings` topic
@@ -319,16 +321,16 @@ These steps guide you through enabling Tableflow for the `denormalized_hotel_boo
 
    ![Delta table format selection](images/confluent_tableflow_format_selection.png)
 
-9. Click on the *Configure custom storage* button
-10. Select the *Store in your own bucket* option
+9.  Click on the **Configure custom storage** button
+10. Select the **Store in your own bucket** option
 11. Select the *tableflow-databricks* provider integration from the dropdown
-12. In your command-line interface in the *terraform* directory run
+12. In your *terraform* directory shell window, run
 
     ```sh
-    docker-compose run --rm terraform -c "terraform output aws_s3"
+    docker-compose run --rm terraform -c "terraform output databricks_integration"
     ```
 
-13. Copy the value from the `bucket_name` property and paste it into the *AWS S3 Bucket
+13. Copy the value from the `s3_bucket_name` property and paste it into the *AWS S3 Bucket
     name* textbox
 
     Your selections should look like this:
