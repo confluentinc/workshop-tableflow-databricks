@@ -1,19 +1,15 @@
 {
-    "name": "customer_generator",
+    "name": "customer_generator_streaming",
     "table": "cdc.customer",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 1000
-    },
-    "varsOnce": {
-        "currentTimeInMs": {
-            "_gen": "now"
-        }
+        "maxEvents": 240,
+        "throttleMs": 30000
     },
     "row": {
         "customer_id": {
             "_gen": "sequentialString",
-            "startingFrom": 200000303,
+            "startingFrom": 40000001,
             "expr": "C~d",
             "pgHint": "VARCHAR(50)"
         },
@@ -38,9 +34,18 @@
             "pgHint": "VARCHAR(10)"
         },
         "created_at": {
-            "_gen": "math",
-            "expr": "currentTimeInMs - 6048000000",
-            "pgHint": "BIGINT"
+            "_gen": "now",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMPTZ"
+        },
+        "updated_at": {
+            "_gen": "now",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMPTZ"
         }
     }
 }

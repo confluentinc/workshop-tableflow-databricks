@@ -61,7 +61,8 @@ CREATE TABLE IF NOT EXISTS cdc.customer (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     birth_date VARCHAR(10),
-    created_at BIGINT
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS cdc.hotel (
@@ -72,7 +73,9 @@ CREATE TABLE IF NOT EXISTS cdc.hotel (
     city VARCHAR(100),
     country VARCHAR(100),
     room_capacity INTEGER,
-    created_at BIGINT
+    available_rooms INTEGER,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
 );
 
 -- Create CDC user with SUPERUSER for Debezium CDC

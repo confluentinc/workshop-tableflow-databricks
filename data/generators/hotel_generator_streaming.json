@@ -1,0 +1,60 @@
+{
+    "name": "hotel_generator_streaming",
+    "table": "cdc.hotel",
+    "connection": "postgres",
+    "op": "update",
+    "localConfigs": {
+        "maxEvents": 240,
+        "throttleMs": 30000
+    },
+    "vars": {
+        "hotel_data": {
+            "_gen": "lookup",
+            "connection": "postgres",
+            "table": "cdc.hotel"
+        },
+        "hotel_id": {
+            "_gen": "var",
+            "var": "hotel_data",
+            "path": [
+                "row",
+                "hotel_id"
+            ]
+        },
+        "room_capacity": {
+            "_gen": "var",
+            "var": "hotel_data",
+            "path": [
+                "row",
+                "room_capacity"
+            ]
+        },
+        "low_occupancy_rate": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                0.10,
+                0.20
+            ],
+            "decimals": 2
+        }
+    },
+    "row": {
+        "updated_at": {
+            "_gen": "now",
+            "serialize": {
+                "type": "postgresTimestamp"
+            }
+        },
+        "available_rooms": {
+            "_gen": "math",
+            "expr": "room_capacity * low_occupancy_rate",
+            "decimals": 0
+        }
+    },
+    "where": {
+        "hotel_id": {
+            "_gen": "var",
+            "var": "hotel_id"
+        }
+    }
+}

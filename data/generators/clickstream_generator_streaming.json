@@ -3,48 +3,18 @@
     "topic": "clickstream",
     "connection": "confluent",
     "localConfigs": {
-        "maxEvents": 125,
+        "maxEvents": 400,
         "avroSchemaHint": {
             "value": {
-                "type": "record",
-                "name": "ClickstreamEvent",
-                "fields": [
-                    {
-                        "name": "activity_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "customer_email",
-                        "type": "string"
-                    },
-                    {
-                        "name": "hotel_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "action",
-                        "type": "string"
-                    },
-                    {
-                        "name": "event_duration",
-                        "type": "int"
-                    },
-                    {
-                        "name": "url",
-                        "type": "string"
-                    },
-                    {
-                        "name": "created_at",
-                        "type": "long"
-                    }
-                ]
+                "_gen": "loadJsonFile",
+                "file": "/home/data/schemas/clickstream_schema.avsc"
             }
         },
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                10000,
-                15000
+                5000,
+                9000
             ]
         }
     },
@@ -56,8 +26,7 @@
     "vars": {
         "hotel_id": {
             "_gen": "lookup",
-            "connection": "postgres",
-            "table": "cdc.hotel",
+            "name": "hotel_generator_historical",
             "path": [
                 "row",
                 "hotel_id"
@@ -80,8 +49,7 @@
         },
         "customer_email": {
             "_gen": "lookup",
-            "connection": "postgres",
-            "table": "cdc.customer",
+            "name": "customer_generator_historical",
             "path": [
                 "row",
                 "email"

@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Documentation Structure**: Restructured `flink-joins.md` from troubleshooting guide to comprehensive discovery journey with experiment results and context-specific recommendations
+- **Documentation Structure**: Restructured `stream-processing-insights.md` from troubleshooting guide to comprehensive discovery journey with experiment results and context-specific recommendations
 - **Content Organization**: Split labs into smaller, more feature-specific files for better modularity
 - **Streaming Joins Strategy**: Migrated to snapshot tables + interval joins for reliable CDC processing with hybrid timestamp strategy
 - **Oracle Infrastructure**: Enhanced Terraform configuration with pre-created tables, proper primary key constraints for XStream CDC

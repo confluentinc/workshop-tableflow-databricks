@@ -6,39 +6,49 @@
         "maxEvents": 400,
         "avroSchemaHint": {
             "value": {
-                "type": "record",
-                "name": "BookingEvent",
-                "fields": [
-                    {"name": "booking_id", "type": "string"},
-                    {"name": "customer_email", "type": "string"},
-                    {"name": "hotel_id", "type": "string"},
-                    {"name": "check_in", "type": "long"},
-                    {"name": "check_out", "type": "long"},
-                    {"name": "occupants", "type": "int"},
-                    {"name": "price", "type": "int"},
-                    {"name": "created_at", "type": "long"}
-                ]
+                "_gen": "loadJsonFile",
+                "file": "/home/data/schemas/booking_schema.avsc"
             }
         }
     },
     "varsOnce": {
         "currentTimeInMs": {
             "_gen": "now"
+        },
+        "baseTimeInMs": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 5184000000"
         }
     },
     "vars": {
-        "check_in_time": {
+        "eventIndex": {
+            "_gen": "sequentialInteger",
+            "startingFrom": 0
+        },
+        "eventIntervalMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                {
-                    "_gen": "math",
-                    "expr": "currentTimeInMs - 4438400000"
-                },
-                {
-                    "_gen": "math",
-                    "expr": "currentTimeInMs - 500000000"
-                }
+                10800000,
+                14400000
             ],
+            "decimals": 0
+        },
+        "booking_created_at": {
+            "_gen": "math",
+            "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+            "decimals": 0
+        },
+        "days_until_checkin": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                172800000,
+                1814400000
+            ],
+            "decimals": 0
+        },
+        "check_in_time": {
+            "_gen": "math",
+            "expr": "booking_created_at + days_until_checkin",
             "decimals": 0
         },
         "stay_duration": {
@@ -58,8 +68,7 @@
         },
         "customer_email": {
             "_gen": "lookup",
-            "connection": "postgres",
-            "table": "cdc.customer",
+            "name": "customer_generator_historical",
             "path": [
                 "row",
                 "email"
@@ -76,8 +85,7 @@
         },
         "hotel_id": {
             "_gen": "lookup",
-            "connection": "postgres",
-            "table": "cdc.hotel",
+            "name": "hotel_generator_historical",
             "path": [
                 "row",
                 "hotel_id"
@@ -113,18 +121,8 @@
             ]
         },
         "created_at": {
-            "_gen": "uniformDistribution",
-            "bounds": [
-                {
-                    "_gen": "math",
-                    "expr": "check_in_time - 1814400000"
-                },
-                {
-                    "_gen": "math",
-                    "expr": "check_in_time - 172800000"
-                }
-            ],
-            "decimals": 0
+            "_gen": "var",
+            "var": "booking_created_at"
         }
     }
 }

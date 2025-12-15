@@ -6,36 +6,18 @@
         "maxEvents": 200,
         "avroSchemaHint": {
             "value": {
-                "type": "record",
-                "name": "HotelReviewEvent",
-                "fields": [
-                    {
-                        "name": "review_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "booking_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "review_rating",
-                        "type": "int"
-                    },
-                    {
-                        "name": "review_text",
-                        "type": "string"
-                    },
-                    {
-                        "name": "created_at",
-                        "type": "long"
-                    }
-                ]
+                "_gen": "loadJsonFile",
+                "file": "/home/data/schemas/review_schema.avsc"
             }
         }
     },
     "varsOnce": {
         "currentTimeInMs": {
             "_gen": "now"
+        },
+        "baseTimeInMs": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 5184000000"
         },
         "oneStarTexts": {
             "_gen": "loadJsonFile",
@@ -58,6 +40,25 @@
             "file": "/home/data/generators/content/review_text_choices_5_star.json"
         }
     },
+    "vars": {
+        "eventIndex": {
+            "_gen": "sequentialInteger",
+            "startingFrom": 0
+        },
+        "eventIntervalMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                21600000,
+                28800000
+            ],
+            "decimals": 0
+        },
+        "review_created_at": {
+            "_gen": "math",
+            "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+            "decimals": 0
+        }
+    },
     "value": {
         "review_id": {
             "_gen": "sequentialString",
@@ -65,9 +66,12 @@
             "expr": "R~d"
         },
         "booking_id": {
-            "_gen": "sequentialString",
-            "startingFrom": 600000100,
-            "expr": "B~d"
+            "_gen": "lookup",
+            "name": "booking_generator_historical",
+            "path": [
+                "value",
+                "booking_id"
+            ]
         },
         "review_rating": {
             "_gen": "weightedOneOf",
@@ -150,18 +154,8 @@
             ]
         },
         "created_at": {
-            "_gen": "uniformDistribution",
-            "bounds": [
-                {
-                    "_gen": "math",
-                    "expr": "currentTimeInMs - 4838400000"
-                },
-                {
-                    "_gen": "math",
-                    "expr": "currentTimeInMs - 172800000"
-                }
-            ],
-            "decimals": 0
+            "_gen": "var",
+            "var": "review_created_at"
         }
     }
 }

@@ -208,60 +208,43 @@ sudo docker logs oracle-xe
 
 **Issue:**
 
-When working with Oracle CDC sources in Flink SQL, you may encounter various join-related errors such as:
+When working with CDC sources in Flink SQL, you may encounter errors such as:
 
 ```
 Temporal Table Join requires primary key in versioned table, but no primary key can be found.
-StreamPhysicalIntervalJoin doesn't support consuming update and delete changes
+Cannot apply '-' to arguments of type '<VARCHAR> - <INTERVAL SECOND>'
 ```
 
-**Comprehensive Solution:**
+**Solution: Create Versioned Tables with Proper Configuration**
 
-For a complete analysis of streaming join challenges with CDC sources and proven working solutions, see:
+For temporal joins with CDC sources, create versioned tables with:
+1. **Primary Key** declared
+2. **Watermark** on a timestamp column
+3. **Upsert changelog mode**
 
-**[Flink Streaming Joins with CDC Sources: A Journey of Discovery](flink-joins.md)**
+```sql
+CREATE TABLE customer_with_watermark (
+  PRIMARY KEY (`email`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '5' SECOND
+) DISTRIBUTED BY HASH(`email`) INTO 1 BUCKETS
+WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
+SELECT
+  `email`,
+  `customer_id`,
+  `first_name`,
+  `last_name`,
+  `birth_date`,
+  TO_TIMESTAMP(`created_at`) AS `created_at`,
+  TO_TIMESTAMP(`updated_at`) AS `updated_at`
+FROM `riverhotel.cdc.customer`;
+```
 
-This comprehensive guide documents our complete journey from initial temporal join failures through to reliable production solutions, including:
+> **Note**: Use `TO_TIMESTAMP()` to convert VARCHAR timestamps from CDC sources to proper TIMESTAMP types for watermark operations.
 
-- ✅ **Experiment results** from all attempted approaches
-- ✅ **Root cause analysis** of CDC stream compatibility issues
-- ✅ **Working solutions** using snapshot tables + interval joins
-- ✅ **Hybrid timestamp strategies** for optimal results
-- ✅ **Production recommendations** for different use cases
-
-**Quick Resolution for Workshop:**
-
-If you need an immediate working solution, use the **snapshot + interval joins approach**:
-
-1. **Create snapshot tables** from CDC sources:
-
-   ```sql
-   CREATE TABLE CUSTOMER_SNAPSHOT AS (
-   SELECT customer_id, email, first_name, last_name, birth_date, created_at
-   FROM `riverhotel.CDC.customer`
-   );
-   ALTER TABLE CUSTOMER_SNAPSHOT SET ('changelog.mode' = 'append');
-
-   CREATE TABLE HOTEL_SNAPSHOT AS (
-   SELECT hotel_id, name, category, description, city, country, room_capacity, created_at
-   FROM `riverhotel.CDC.hotel`
-   );
-   ALTER TABLE HOTEL_SNAPSHOT SET ('changelog.mode' = 'append');
-   ```
-
-2. **Use interval joins with snapshots**:
-
-   ```sql
-   FROM `bookings` b
-      JOIN `CUSTOMER_SNAPSHOT` c
-        ON c.`email` = b.`customer_email`
-        AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
-      JOIN `HOTEL_SNAPSHOT` h
-        ON h.`hotel_id` = b.`hotel_id`
-        AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
-   ```
-
-> **Note**: Direct interval joins with CDC sources will fail with "StreamPhysicalIntervalJoin doesn't support consuming update and delete changes"
+For more details on join patterns and changelog modes, see **[Stream Processing Insights](stream-processing-insights.md)**
 
 ### Streaming Join State Management
 

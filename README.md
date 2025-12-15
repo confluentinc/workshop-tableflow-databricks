@@ -170,29 +170,35 @@ We strongly recommend running this workshop from within **WSL 2** (Windows Subsy
    ```powershell
     wsl --install -d Ubuntu
     ```
+
 2. Restart your computer if prompted, then open **Ubuntu** from the Start menu
 3. Open Docker Desktop → **Settings** → **Resources** → **WSL Integration** → Enable **Ubuntu**
 4. In the Ubuntu terminal, clone the repo and navigate to it:
-   ```bash
+
+   ```sh
    cd ~
    git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
    cd workshop-tableflow-databricks/terraform
    ```
 
    ⚠️ **Important:** Verify you're in the **Linux filesystem**, not the mounted Windows drive:
-   ```bash
+
+   ```sh
    pwd
    ```
+
    - ✅ **Correct:** `/home/<username>/workshop-tableflow-databricks/terraform`
    - ❌ **Wrong:** `/mnt/c/Users/...` (this will cause permission errors!)
 
    If you see `/mnt/c/...`, run `cd ~` and clone the repo again.
 
 5. Run all `docker compose` commands from this Ubuntu terminal (use `sudo -E` if you get permission errors):
-   ```bash
+
+   ```sh
    sudo -E docker compose build
    sudo -E docker compose run --rm terraform
    ```
+
    The `-E` flag preserves your environment variables (like AWS credentials) when using sudo.
 
 **Tip:**
@@ -202,6 +208,7 @@ To avoid typing `sudo -E` every time, add your user to the docker group:
 ```sh
 sudo usermod -aG docker $USER
 ```
+
 Then close and reopen Ubuntu for the change to take effect.
 
 **Why WSL?** Docker on Windows with WSL 2 has full write permissions to the Linux filesystem (`~/`) but limited permissions to Windows paths (`/mnt/c/...`). Running from within WSL can help avoid "permission denied" errors for some terraform commands, like `terraform init`.
@@ -504,7 +511,7 @@ Each lab builds upon the previous one, so start with LAB 1 and continue sequenti
 
 - **[Recap](./labs/recap.md)**: Summary of accomplishments and business value delivered
 - **[Troubleshooting](./labs/troubleshooting.md)**: Common issues and solutions
-- **[Advanced Flink SQL Patterns](./labs/flink-joins.md)**: Detailed guide for streaming join patterns and schema management
+- **[Stream Processing Insights](./labs/stream-processing-insights.md)**: Detailed guide for streaming join patterns and schema management
 <!-- - **[Optional: Bedrock LLM Integration](./labs/optional_bedrock_llm/optional_bedrock_llm.md)**: AWS Bedrock integration for AI-powered review summarization -->
 
 ## 🏁 Conclusion
