@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-12-16
+
+### Added
+
+- **Streaming Generators**: Split data generators into historical and streaming variants for customers and hotels (`customer_generator_streaming.json`, `hotel_generator_streaming.json`)
+- **Stream Processing Guide**: Created comprehensive `stream-processing-insights.md` documenting temporal joins, changelog modes, state TTL, and windowed aggregations
+
+### Changed
+
+- **Temporal Joins Implementation**: Migrated LAB5 from regular joins to temporal joins with snapshot dimension tables (`customer_snapshot`, `hotel_snapshot`) for point-in-time CDC lookups
+- **Data Generator Updates**: Adjusted booking, clickstream, and review generators with improved timestamp handling and data schemas
+- **Shadow Traffic Configuration**: Updated to support new historical/streaming generator split with proper scheduling stages
+
+### Removed
+
+- **flink-joins.md**: Consolidated content into `stream-processing-insights.md`
+
+### Fixed
+
+- **PostgreSQL Timestamp Error**: Resolved `column "created_at" is of type timestamp with time zone but expression is of type character varying` by using proper timestamp serialization in streaming generators
+- **Agent Code Restoration**: Re-added agent creation code to the Databricks notebook
+
 ## [0.5.0] - 2025-12-09
 
 ### Added
@@ -58,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Documentation Structure**: Restructured `stream-processing-insights.md` from troubleshooting guide to comprehensive discovery journey with experiment results and context-specific recommendations
+- **Documentation Structure**: Restructured `flink-joins.md` from troubleshooting guide to comprehensive discovery journey with experiment results and context-specific recommendations
 - **Content Organization**: Split labs into smaller, more feature-specific files for better modularity
 - **Streaming Joins Strategy**: Migrated to snapshot tables + interval joins for reliable CDC processing with hybrid timestamp strategy
 - **Oracle Infrastructure**: Enhanced Terraform configuration with pre-created tables, proper primary key constraints for XStream CDC
