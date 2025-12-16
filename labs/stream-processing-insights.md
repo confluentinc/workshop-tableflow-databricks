@@ -221,6 +221,57 @@ GROUP BY
 );
 ```
 
+<details>
+<summary>Archived: Full Tumbling Window Query (Previously used in LAB5)</summary>
+
+<!-- TODO -->
+
+This was archived because it was returning scant records, only 1 review per hotel per time window maximum.  Needs more work
+
+This query was previously used in LAB5 to compute hotel-level performance metrics with 1-hour tumbling windows:
+
+```sql
+SET 'client.statement-name' = 'hotel-stats';
+
+CREATE TABLE hotel_stats (
+  PRIMARY KEY (window_start, window_end, hotel_id) NOT ENFORCED
+) WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
+SELECT
+  window_start,
+  window_end,
+  COALESCE(hotel_id, 'UNKNOWN_HOTEL') AS hotel_id,
+  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME') AS hotel_name,
+  COALESCE(hotel_description, 'UNKNOWN_HOTEL_DESCRIPTION') AS hotel_description,
+  COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY') AS hotel_category,
+  COALESCE(hotel_city, 'UNKNOWN_HOTEL_CITY') AS hotel_city,
+  COALESCE(hotel_country, 'UNKNOWN_HOTEL_COUNTRY') AS hotel_country,
+  COUNT(*) AS total_bookings_count,
+  SUM(guest_count) AS total_guest_count,
+  SUM(booking_amount) AS total_booking_amount,
+  CAST(AVG(review_rating) AS DECIMAL(10, 2)) AS average_review_rating,
+  SUM(CASE WHEN review_rating IS NOT NULL THEN 1 ELSE 0 END) AS review_count
+FROM TABLE(
+  TUMBLE(TABLE `denormalized_hotel_bookings`, DESCRIPTOR(booking_date), INTERVAL '1' HOUR)
+)
+WHERE hotel_id IS NOT NULL
+GROUP BY
+  window_start,
+  window_end,
+  COALESCE(hotel_id, 'UNKNOWN_HOTEL'),
+  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME'),
+  COALESCE(hotel_description, 'UNKNOWN_HOTEL_DESCRIPTION'),
+  COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY'),
+  COALESCE(hotel_city, 'UNKNOWN_HOTEL_CITY'),
+  COALESCE(hotel_country, 'UNKNOWN_HOTEL_COUNTRY');
+```
+
+**Note:** This approach requires a watermark on `booking_date` and produces one row per (window, hotel_id) combination.
+
+</details>
+
 | Window Type | Use Case |
 |-------------|----------|
 | **TUMBLE** | Fixed periods (daily/hourly stats) |

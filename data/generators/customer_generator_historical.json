@@ -13,14 +13,14 @@
     "row": {
         "customer_id": {
             "_gen": "sequentialString",
-            "startingFrom": 300000000,
+            "startingFrom": 310000000,
             "expr": "C~d",
-            "pgHint": "VARCHAR(50)"
+            "pgHint": "VARCHAR(50) PRIMARY KEY"
         },
         "email": {
             "_gen": "string",
             "expr": "#{Internet.emailAddress}",
-            "pgHint": "VARCHAR(255) PRIMARY KEY"
+            "pgHint": "VARCHAR(255)"
         },
         "first_name": {
             "_gen": "string",

@@ -9,7 +9,7 @@
     "row": {
         "customer_id": {
             "_gen": "sequentialString",
-            "startingFrom": 40000001,
+            "startingFrom": 41000001,
             "expr": "C~d",
             "pgHint": "VARCHAR(50)"
         },

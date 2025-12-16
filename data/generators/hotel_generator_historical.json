@@ -298,7 +298,7 @@
     "row": {
         "hotel_id": {
             "_gen": "sequentialString",
-            "startingFrom": 20000000,
+            "startingFrom": 21000000,
             "expr": "H~d",
             "pgHint": "VARCHAR(50) PRIMARY KEY"
         },

@@ -50,7 +50,7 @@
     "value": {
         "booking_id": {
             "_gen": "sequentialString",
-            "startingFrom": 650000100,
+            "startingFrom": 750000100,
             "expr": "B~d"
         },
         "customer_email": {
