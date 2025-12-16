@@ -2,11 +2,11 @@
     "generators": [
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/customer_generator.json"
+            "file": "/home/data/generators/customer_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/hotel_generator.json"
+            "file": "/home/data/generators/hotel_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
@@ -14,19 +14,23 @@
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/clickstream_generator_streaming.json"
-        },
-        {
-            "_gen": "loadJsonFile",
             "file": "/home/data/generators/booking_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/booking_generator_streaming.json"
+            "file": "/home/data/generators/review_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/review_generator_historical.json"
+            "file": "/home/data/generators/customer_generator_streaming.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/clickstream_generator_streaming.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/booking_generator_streaming.json"
         },
         {
             "_gen": "loadJsonFile",
@@ -37,22 +41,23 @@
         "stages": [
             {
                 "generators": [
-                    "customer_generator",
-                    "hotel_generator"
+                    "customer_generator_historical",
+                    "hotel_generator_historical"
                 ]
             },
             {
                 "generators": [
                     "clickstream_generator_historical",
-                    "booking_generator_historical",
-                    "review_generator_historical"
+                    "booking_generator_historical"
                 ]
             },
             {
                 "generators": [
+                    "review_generator_historical",
                     "clickstream_generator_streaming",
                     "booking_generator_streaming",
-                    "review_generator_streaming"
+                    "review_generator_streaming",
+                    "customer_generator_streaming"
                 ]
             }
         ]

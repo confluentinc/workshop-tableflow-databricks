@@ -1,5 +1,5 @@
 {
-    "name": "hotel_generator",
+    "name": "hotel_generator_historical",
     "table": "cdc.hotel",
     "connection": "postgres",
     "localConfigs": {
@@ -221,6 +221,24 @@
                 "city"
             ]
         },
+        "room_capacity": {
+            "_gen": "normalDistribution",
+            "mean": 250,
+            "sd": 50,
+            "decimals": 0,
+            "clamp": [
+                150,
+                500
+            ]
+        },
+        "occupancy_rate": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                0.5,
+                0.95
+            ],
+            "decimals": 2
+        },
         "hotel_class_info": {
             "_gen": "oneOf",
             "choices": [
@@ -280,7 +298,7 @@
     "row": {
         "hotel_id": {
             "_gen": "sequentialString",
-            "startingFrom": 10000305,
+            "startingFrom": 21000000,
             "expr": "H~d",
             "pgHint": "VARCHAR(50) PRIMARY KEY"
         },
@@ -319,19 +337,31 @@
             "pgHint": "VARCHAR(100)"
         },
         "room_capacity": {
-            "_gen": "normalDistribution",
-            "mean": 250,
-            "sd": 50,
-            "clamp": [
-                150,
-                500
-            ],
+            "_gen": "var",
+            "var": "room_capacity",
+            "pgHint": "INTEGER"
+        },
+        "available_rooms": {
+            "_gen": "math",
+            "expr": "room_capacity * occupancy_rate",
+            "decimals": 0,
             "pgHint": "INTEGER"
         },
         "created_at": {
             "_gen": "math",
             "expr": "currentTimeInMs - 6048000000",
-            "pgHint": "BIGINT"
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMPTZ"
+        },
+        "updated_at": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 6048000000",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMPTZ"
         }
     }
 }

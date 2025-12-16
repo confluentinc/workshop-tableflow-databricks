@@ -8,7 +8,6 @@ This lab transforms your raw data streams into intelligent, enriched data produc
 
 ![Architecture diagram for stream processing](./images/architecture_stream_processing.jpg)
 
-
 By the end of this lab you will have:
 
 1. **Established Intelligent Stream Processing**: Build Flink SQL queries that identify
@@ -109,20 +108,107 @@ SELECT COUNT(*) FROM `bookings` AS `TOTAL_BOOKINGS`;
 
 At this time, your data has normalized topics as tables in Flink. Normalization makes sense for maintaining data, but you're interested in processing it into useful datasets for data analysis use cases.
 
-#### Create Snapshot Tables
+#### Create Snapshot Dimension Tables
 
-First, run these statements to create snapshot tables from the CDC sources, then you can execute the main denormalization query:
+First, create snapshot tables from the CDC sources with explicit primary keys and watermarks. These tables enable [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins) that look up dimension data as it existed at the time of each booking event.
+
+Run this statement to create the snapshot customer table:
+
+```sql
+SET 'client.statement-name' = 'customer-snapshot';
+
+-- Create versioned customer table with watermark for temporal joins
+CREATE TABLE customer_snapshot (
+  PRIMARY KEY (`email`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '30' SECOND
+) DISTRIBUTED BY HASH(`email`) INTO 1 BUCKETS
+WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
+SELECT
+  `email`,
+  `customer_id`,
+  `first_name`,
+  `last_name`,
+  `birth_date`,
+  TO_TIMESTAMP(`created_at`, 'yyyy-MM-dd''T''HH:mm:ss.SSS''Z''') AS `created_at`,
+  TO_TIMESTAMP(`updated_at`, 'yyyy-MM-dd''T''HH:mm:ss.SSS''Z''') AS `updated_at`
+FROM `riverhotel.cdc.customer`;
+```
+
+Run this statement to create the snapshot hotel table:
+
+```sql
+-- Create snapshot hotel table with watermark for temporal joins
+SET 'client.statement-name' = 'hotel-snapshot';
+
+CREATE TABLE hotel_snapshot (
+  PRIMARY KEY (`hotel_id`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '30' SECOND
+) DISTRIBUTED BY HASH(`hotel_id`) INTO 1 BUCKETS
+WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
+SELECT
+  `hotel_id`,
+  `name`,
+  `category`,
+  `description`,
+  `city`,
+  `country`,
+  `room_capacity`,
+  `available_rooms`,
+  TO_TIMESTAMP(`created_at`, 'yyyy-MM-dd''T''HH:mm:ss.SSS''Z''') AS `created_at`,
+  TO_TIMESTAMP(`updated_at`, 'yyyy-MM-dd''T''HH:mm:ss.SSS''Z''') AS `updated_at`
+FROM `riverhotel.cdc.hotel`;
+```
+
+#### Update Watermark to Bookings Table
+
+Temporal joins require an event-time watermark on the probe side (the `bookings` table) to determine which version of the dimension data to look up. By default, Confluent Cloud assigns a system watermark, but we need to explicitly define one based on the `created_at` timestamp.
+
+First, check the current watermark configuration:
+
+```sql
+DESCRIBE EXTENDED `bookings`;
+```
+
+Look for the `WATERMARK` row in the output - it will show the default system-assigned watermark.
+
+Now, modify the watermark to use the `created_at` column with a 30-second tolerance for late-arriving events:
+
+```sql
+-- Modify watermark on bookings table for temporal join probe side
+ALTER TABLE `bookings` MODIFY WATERMARK FOR `created_at` AS `created_at` - INTERVAL '30' SECOND;
+```
+
+Verify the watermark was updated by running `DESCRIBE EXTENDED` again:
+
+```sql
+DESCRIBE EXTENDED `bookings`;
+```
+
+You should now see the watermark defined as `created_at` - INTERVAL '30' SECOND.
 
 #### Create Denormalized Table
 
-The query below creates a denormalized topic/table that combines booking data with customer information, hotel details, and any existing hotel reviews.:
+The query below creates a denormalized topic/table that combines booking data with customer information, hotel details, and any existing hotel reviews using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins):
 
 ```sql
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
 
-CREATE TABLE denormalized_hotel_bookings AS (
-
+CREATE TABLE denormalized_hotel_bookings (
+  PRIMARY KEY (`booking_id`) NOT ENFORCED,
+  WATERMARK FOR `booking_date` AS `booking_date` - INTERVAL '30' SECOND
+) WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
 SELECT
+  b.`booking_id`,
+  h.`hotel_id`,
   h.`name` AS `hotel_name`,
   h.`description` AS `hotel_description`,
   h.`category` AS `hotel_category`,
@@ -130,67 +216,43 @@ SELECT
   h.`country` AS `hotel_country`,
   b.`price` AS `booking_amount`,
   b.`occupants` AS `guest_count`,
-  to_timestamp_ltz(b.`created_at`, 3) AS `booking_date`,
-  to_timestamp_ltz(b.`check_in`, 3) AS `check_in`,
-  to_timestamp_ltz(b.`check_out`, 3) AS `check_out`,
+  b.`created_at` AS `booking_date`,
+  TO_TIMESTAMP_LTZ(b.`check_in`, 3) AS `check_in`,
+  TO_TIMESTAMP_LTZ(b.`check_out`, 3) AS `check_out`,
   c.`email` AS `customer_email`,
   c.`first_name` AS `customer_first_name`,
   hr.`review_rating` AS `review_rating`,
   hr.`review_text` AS `review_text`,
-  to_timestamp_ltz(hr.`created_at`, 3) AS `review_date`,
-  b.`booking_id` AS `booking_id`,
-  h.`hotel_id` AS `hotel_id`
+  hr.`created_at` AS `review_date`
 FROM `bookings` b
-   JOIN `riverhotel.cdc.customer` c
-     ON c.`email` = b.`customer_email`
-     AND c.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
-   JOIN `riverhotel.cdc.hotel` h
-     ON h.`hotel_id` = b.`hotel_id`
-     AND h.`$rowtime` BETWEEN b.`$rowtime` - INTERVAL '7' DAY AND b.`$rowtime` + INTERVAL '7' DAY
+  JOIN `customer_snapshot` FOR SYSTEM_TIME AS OF b.`created_at` AS c
+    ON c.`email` = b.`customer_email`
+  JOIN `hotel_snapshot` FOR SYSTEM_TIME AS OF b.`created_at` AS h
+    ON h.`hotel_id` = b.`hotel_id`
   LEFT JOIN `hotel_reviews` hr
-    ON hr.`booking_id` = b.`booking_id`
-    AND to_timestamp_ltz(hr.`created_at`, 3) BETWEEN
-        to_timestamp_ltz(b.`created_at`, 3) AND
-        to_timestamp_ltz(b.`created_at`, 3) + INTERVAL '90' DAY
-);
-```
-
-Next, run this SQL statement to change the *changelog* mode from `retract` to `append`:
-
-```sql
--- Set append-only mode for Tableflow compatibility
-ALTER TABLE denormalized_hotel_bookings SET ('changelog.mode' = 'append');
+    ON hr.`booking_id` = b.`booking_id`;
 ```
 
 <details>
-<summary>Expand this section for more Flink join details</summary>
+<summary>Expand this section for details on this Flink statement</summary>
 
+This **[CREATE TABLE AS SELECT (CTAS)](https://docs.confluent.io/cloud/current/flink/reference/statements/create-table-as.html)** statement creates a real-time **[denormalized fact table](https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/fact-table-core-concepts/)** by joining streaming tables using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins).
 
-This **[CREATE TABLE AS SELECT (CTAS)](https://docs.confluent.io/cloud/current/flink/reference/statements/create-table-as.html)** statement creates a real-time **[denormalized fact table](https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/fact-table-core-concepts/)** by joining streaming tables using [interval joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#interval-joins).
+##### Understanding Temporal Joins
 
-##### Understanding the Join Strategy
+Temporal joins allow you to join a streaming fact table (bookings) with snapshot dimension tables (customer, hotel) using point-in-time lookups. The `FOR SYSTEM_TIME AS OF` clause retrieves the dimension record as it existed at the time specified by the booking's event timestamp.
 
-This query uses a **hybrid timestamp strategy** combining processing-time and business-time semantics:
+| Component | Purpose |
+|-----------|---------|
+| **Snapshot tables** | Store dimension data with primary keys and watermarks for point-in-time lookups |
+| **Watermarks** | Define event-time progression for temporal semantics |
+| **`FOR SYSTEM_TIME AS OF`** | Looks up dimension state at the exact time of each booking event |
 
-| Join Type | Timestamp | Window | Purpose |
-|-----------|-----------|--------|---------|
-| **Dimension joins** (customer/hotel) | `$rowtime` | 7 days | Ensures data was available when booking was processed |
-| **Event joins** (reviews) | `created_at` | 90 days | Reflects realistic business timing relationships |
+##### Key Requirements for Temporal Joins
 
-
-> [!TIP]
-> **Deep Dive: CDC Join Challenges**
->
-> For a comprehensive exploration of why temporal joins fail with CDC sources and how we arrived at this snapshot + interval join solution, see **[Flink Streaming Joins with CDC Sources](../flink-joins.md)**.
->
-> Additional resources in that guide:
-> - [Schema Definition Approaches](../flink-joins.md#a3-schema-definition-approaches-for-nullable-columns) for handling nullable columns in aggregates
-> - [Hybrid Timestamp Strategy Details](../flink-joins.md#a4-hybrid-timestamp-strategy-for-complex-joins) for production tuning
-
-> [!NOTE]
-> **Workshop vs Production**
->
-> In production, dimension windows can often be smaller (hours) when CDC is properly synchronized, and event windows should match actual business requirements.
+1. **Primary Key**: The snapshot table must have a declared primary key
+2. **Watermark**: Both the probe side (bookings) and snapshot side (dimensions) need watermarks defined
+3. **Upsert Mode**: snapshot tables use `changelog.mode = 'upsert'` to maintain current state
 
 </details>
 
@@ -243,9 +305,11 @@ Now look into the details of the table by reviewing the table schema in the left
 
 With your enriched booking data flowing in real-time, you can now build powerful analytical data products that provide immediate business insights.
 
-This next Flink SQL statement creates a **streaming aggregation table** that transforms individual booking records into comprehensive hotel-level performance metrics:
+This next Flink SQL statement creates a **continuous streaming aggregation table** that computes hotel-level performance metrics in real-time:
 
 ```sql
+SET 'sql.state-ttl' = '1 day';
+
 SET 'client.statement-name' = 'hotel-stats';
 
 CREATE TABLE hotel_stats AS (
@@ -274,25 +338,19 @@ GROUP BY
 );
 ```
 
-> [!NOTE]
-> **Handling Nullable Columns in GROUP BY**
->
-> This query uses `COALESCE()` for all GROUP BY columns to ensure no null values are used in the primary key that Flink auto-infers from the grouping columns. Without this, you may get: `Invalid primary key... Column 'hotel_name' is nullable.`
->
-> For alternative approaches that avoid COALESCE in aggregates, see **[Schema Definition Approaches](../flink-joins.md#a3-schema-definition-approaches-for-nullable-columns)**.
-
-Look through the data by invoking this query:
+Look at some `hotel_stats` data by invoking this query:
 
 ```sql
 SELECT *
   FROM `hotel_stats`
-LIMIT 20;
+LIMIT 30;
 ```
 
 Some observations from the data:
 
-- Fields like `average_review_rating` and `review_count` provide more context and analytical insight into individual hotels
-- `total_bookings_count` and `total_booking_amount` provide a way to easily benchmark hotels performance and determine how an individual hotel, city of hotels, country of hotels, or category of hotels is performing relative to its peers.
+- Each hotel has **one row** that continuously updates as new bookings arrive
+- Fields like `average_review_rating` and `review_count` provide context and analytical insight into individual hotels
+- `total_bookings_count` and `total_booking_amount` allow you to track overall hotel performance
 
 **Time for Analytics:**
 

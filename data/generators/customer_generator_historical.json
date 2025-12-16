@@ -1,0 +1,57 @@
+{
+    "name": "customer_generator_historical",
+    "table": "cdc.customer",
+    "connection": "postgres",
+    "localConfigs": {
+        "maxEvents": 1000
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        }
+    },
+    "row": {
+        "customer_id": {
+            "_gen": "sequentialString",
+            "startingFrom": 310000000,
+            "expr": "C~d",
+            "pgHint": "VARCHAR(50) PRIMARY KEY"
+        },
+        "email": {
+            "_gen": "string",
+            "expr": "#{Internet.emailAddress}",
+            "pgHint": "VARCHAR(255)"
+        },
+        "first_name": {
+            "_gen": "string",
+            "expr": "#{Name.firstName}",
+            "pgHint": "VARCHAR(100)"
+        },
+        "last_name": {
+            "_gen": "string",
+            "expr": "#{Name.lastName}",
+            "pgHint": "VARCHAR(100)"
+        },
+        "birth_date": {
+            "_gen": "string",
+            "expr": "#{Date.birthday 'yyyy-MM-dd'}",
+            "pgHint": "VARCHAR(10)"
+        },
+        "created_at": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 6048000000",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMPTZ"
+        },
+        "updated_at": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 6048000000",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMPTZ"
+        }
+    }
+}

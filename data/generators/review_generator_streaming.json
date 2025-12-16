@@ -6,37 +6,15 @@
         "maxEvents": 40,
         "avroSchemaHint": {
             "value": {
-                "type": "record",
-                "name": "HotelReviewEvent",
-                "fields": [
-                    {
-                        "name": "review_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "booking_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "review_rating",
-                        "type": "int"
-                    },
-                    {
-                        "name": "review_text",
-                        "type": "string"
-                    },
-                    {
-                        "name": "created_at",
-                        "type": "long"
-                    }
-                ]
+                "_gen": "loadJsonFile",
+                "file": "/home/data/schemas/review_schema.avsc"
             }
         },
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                100000,
-                150000
+                300000,
+                400000
             ]
         }
     },
@@ -68,13 +46,16 @@
     "value": {
         "review_id": {
             "_gen": "sequentialString",
-            "startingFrom": 550001000,
+            "startingFrom": 560001000,
             "expr": "R~d"
         },
         "booking_id": {
-            "_gen": "sequentialString",
-            "startingFrom": 600000300,
-            "expr": "B~d"
+            "_gen": "lookup",
+            "name": "booking_generator_streaming",
+            "path": [
+                "value",
+                "booking_id"
+            ]
         },
         "review_rating": {
             "_gen": "weightedOneOf",

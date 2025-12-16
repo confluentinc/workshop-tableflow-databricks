@@ -6,49 +6,15 @@
         "maxEvents": 100,
         "avroSchemaHint": {
             "value": {
-                "type": "record",
-                "name": "BookingEvent",
-                "fields": [
-                    {
-                        "name": "booking_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "customer_email",
-                        "type": "string"
-                    },
-                    {
-                        "name": "hotel_id",
-                        "type": "string"
-                    },
-                    {
-                        "name": "check_in",
-                        "type": "long"
-                    },
-                    {
-                        "name": "check_out",
-                        "type": "long"
-                    },
-                    {
-                        "name": "occupants",
-                        "type": "int"
-                    },
-                    {
-                        "name": "price",
-                        "type": "int"
-                    },
-                    {
-                        "name": "created_at",
-                        "type": "long"
-                    }
-                ]
+                "_gen": "loadJsonFile",
+                "file": "/home/data/schemas/booking_schema.avsc"
             }
         },
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                45000,
-                60000
+                20000,
+                30000
             ]
         }
     },
@@ -84,13 +50,12 @@
     "value": {
         "booking_id": {
             "_gen": "sequentialString",
-            "startingFrom": 650000100,
+            "startingFrom": 750000100,
             "expr": "B~d"
         },
         "customer_email": {
             "_gen": "lookup",
-            "connection": "postgres",
-            "table": "cdc.customer",
+            "name": "customer_generator_historical",
             "path": [
                 "row",
                 "email"
@@ -107,8 +72,7 @@
         },
         "hotel_id": {
             "_gen": "lookup",
-            "connection": "postgres",
-            "table": "cdc.hotel",
+            "name": "hotel_generator_historical",
             "path": [
                 "row",
                 "hotel_id"
