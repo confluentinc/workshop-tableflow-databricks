@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-01-20
+
+### Added
+
+- **Tableflow DLQ Error Handling**: Added optional [Step 3](./labs/LAB4_tableflow/LAB4.md#step-3-configure-error-handling-optional) to LAB4 documenting Dead Letter Queue (DLQ) configuration for handling materialization failures, including comparison with Data Contract DLQ
+
 ## [0.6.0] - 2025-12-16
 
 ### Added
