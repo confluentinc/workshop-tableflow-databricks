@@ -183,6 +183,57 @@ Follow these steps to switch on Tableflow for the `clickstream` topic:
 >
 > It may take several minutes for Tableflow to connect to S3 and begin streaming your topics as tables.
 
+### Step 3: Configure Error Handling (Optional)
+
+<details>
+<summary>Expand to learn about configuring Dead Letter Queue (DLQ) error handling</summary>
+
+Tableflow offers three modes for handling per-record materialization failures:
+
+| Mode | Behavior |
+|------|----------|
+| **Suspend** (default) | Pauses Tableflow when a record can't be materialized |
+| **Skip** | Skips records that fail to materialize |
+| **Log** | Sends failed records to a Dead Letter Queue (DLQ) topic |
+
+The **Log** mode is particularly useful for production environments where you want to capture and analyze problematic records without stopping the entire pipeline.
+
+> [!NOTE]
+> **Tableflow DLQ vs Data Contract DLQ**
+>
+> Tableflow DLQ catches errors during **materialization** (Kafka → Delta Lake), while Data Contract DLQ catches errors during **ingestion** (Producer → Kafka). They're complementary: Data Contracts act as a gatekeeper at the front door, while Tableflow DLQ is a safety net at the back door.
+
+#### Enable DLQ Error Handling
+
+1. Navigate to your `clickstream` topic in Confluent Cloud
+2. Click on the **Tableflow** tab
+3. Open the Tableflow configuration settings
+4. Locate the **Error Handling Mode** setting
+5. Select **Log** from the available options
+6. Leave the log target as the default `error_log` topic
+7. Save your configuration
+
+> [!TIP]
+> **Custom DLQ Topic**
+>
+> If you prefer to use a dedicated DLQ topic instead of the default `error_log`, you can specify a custom topic name in the **Error Handling Log Target** field. The topic must exist and your account must have write permissions on it.
+
+When records fail to materialize, they are sent to the DLQ topic along with error details including:
+
+- Error timestamp, code, and reason
+- Original record data (topic, partition, offset, key, value)
+
+You can monitor the number of skipped/failed records through the `rows_skipped` metric in the Tableflow dashboard.
+
+For more details, see the [Tableflow Error Handling documentation](https://docs.confluent.io/cloud/current/topics/tableflow/operate/configure-tableflow.html#error-handling-mode).
+
+> [!NOTE]
+> **Schema Requirement**
+>
+> Currently **DLQ** log mode is only available for topics configured with **Avro** or **Protobuf** schemas. All topics in this workshop use Avro, so you can use this feature.
+
+</details>
+
 ## 🏁 Conclusion
 
 🎉 **Congratulations!** You've successfully configured the link between Tableflow and Unity Catalog, as well as initiate streaming your `clickstream` topic as a Delta Lake table with Tableflow.
