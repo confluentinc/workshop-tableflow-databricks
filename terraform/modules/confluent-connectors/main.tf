@@ -1,7 +1,7 @@
 # ===============================
 # Confluent Connectors Module
 # ===============================
-# Creates PostgreSQL CDC Source Connector
+# Creates PostgreSQL CDC Source V2 Connector (Debezium)
 
 terraform {
   required_providers {
@@ -111,8 +111,13 @@ resource "null_resource" "wait_for_postgres" {
 }
 
 # ===============================
-# PostgreSQL CDC Source Connector
+# PostgreSQL CDC Source V2 Connector
 # ===============================
+# Using V2 connector with Debezium for improved features:
+# - Only supports pgoutput (no plugin.name needed)
+# - Better schema evolution support
+# - Improved performance and stability
+# Reference: https://docs.confluent.io/cloud/current/connectors/cc-postgresql-cdc-source-v2-debezium/
 
 resource "confluent_connector" "postgres_cdc" {
   count = var.create_connector ? 1 : 0
@@ -131,39 +136,40 @@ resource "confluent_connector" "postgres_cdc" {
 
   config_nonsensitive = {
     "name"                     = "${var.prefix}-postgres-cdc-source"
-    "connector.class"          = "PostgresCdcSource"
+    "connector.class"          = "PostgresCdcSourceV2"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = var.service_account_id
 
     # Database Connection
-    "database.hostname"    = var.postgres_hostname
-    "database.port"        = tostring(var.postgres_port)
-    "database.user"        = var.debezium_username
-    "database.dbname"      = var.database_name
-    "database.server.name" = "riverhotel"
-    "database.sslmode"     = "disable"
+    "database.hostname" = var.postgres_hostname
+    "database.port"     = tostring(var.postgres_port)
+    "database.user"     = var.debezium_username
+    "database.dbname"   = var.database_name
+    "database.sslmode"  = "disable"
 
     # Table Selection
     "table.include.list" = "cdc.customer,cdc.hotel"
 
-    # Logical Replication
-    "plugin.name"               = "pgoutput"
-    "publication.name"          = "dbz_publication"
-    "publication.autocreate.mode" = "filtered"  # Creates publication for specified tables only (no superuser needed)
-    "slot.name"                 = "debezium_slot"
-    "slot.drop.on.stop"         = "false"
+    # Logical Replication (V2 only supports pgoutput, no need to specify plugin.name)
+    "publication.name"            = "dbz_publication"
+    "publication.autocreate.mode" = "filtered"
+    "slot.name"                   = "debezium_slot"
+    "slot.drop.on.stop"           = "false"
 
     # Snapshot Configuration
-    "snapshot.mode"           = "initial"
+    # Use "when_needed" for workshop resilience - auto re-snapshots if WAL is unavailable
+    # (e.g., when PostgreSQL instance is recreated)
+    "snapshot.mode"           = "when_needed"
     "snapshot.isolation.mode" = "READ_COMMITTED"
 
     # Output Configuration
-    "tasks.max"           = "1"
-    "output.data.format"  = "AVRO"
-    "schema.context.name" = "default"
+    "tasks.max"          = "1"
+    "output.data.format" = "AVRO"
+    "output.key.format"  = "AVRO"
+    "after.state.only"   = "false"
 
     # Topic Configuration
-    "topic.prefix"                               = "riverhotel"
+    "topic.prefix"                              = "riverhotel"
     "topic.creation.default.replication.factor" = "3"
     "topic.creation.default.partitions"         = "6"
     "topic.creation.default.cleanup.policy"     = "delete"
@@ -171,31 +177,26 @@ resource "confluent_connector" "postgres_cdc" {
     "topic.creation.enable"                     = "true"
 
     # Change Event Configuration
-    "decimal.handling.mode"   = "double"
-    "time.precision.mode"     = "adaptive_time_microseconds"
-    "include.schema.changes"  = "false"
-    "include.schema.comments" = "true"
-    "tombstones.on.delete"    = "true"
+    "decimal.handling.mode" = "double"
+    "time.precision.mode"   = "adaptive_time_microseconds"
+    "tombstones.on.delete"  = "true"
 
     # Heartbeat
     "heartbeat.interval.ms" = "60000"
 
     # Performance
-    "max.batch.size"    = "2048"
-    "poll.interval.ms"  = "1000"
-    "max.queue.size"    = "8192"
+    "max.batch.size"   = "2048"
+    "poll.interval.ms" = "1000"
 
     # Error Handling
-    "errors.tolerance"            = "none"
-    "errors.log.enable"           = "true"
-    "errors.log.include.messages" = "true"
+    "errors.tolerance" = "none"
 
     # Advanced
-    "unavailable.value.placeholder"  = "__debezium_unavailable_value"
-    "skip.messages.without.change"   = "false"
-    "skipped.operations"             = "t"
-    "status.update.interval.ms"      = "10000"
-    "provide.transaction.metadata"   = "false"
+    "unavailable.value.placeholder" = "__debezium_unavailable_value"
+    "skip.messages.without.change"  = "false"
+    "skipped.operations"            = "t"
+    "status.update.interval.ms"     = "10000"
+    "provide.transaction.metadata"  = "false"
   }
 
   depends_on = [null_resource.wait_for_postgres]
