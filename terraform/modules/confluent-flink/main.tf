@@ -13,7 +13,7 @@ terraform {
 }
 
 data "confluent_flink_region" "main" {
-  cloud  = "AWS"
+  cloud  = upper(var.cloud)
   region = var.cloud_region
 }
 
@@ -23,7 +23,7 @@ data "confluent_flink_region" "main" {
 
 resource "confluent_flink_compute_pool" "main" {
   display_name = "${var.prefix}_flink_compute_pool_${var.resource_suffix}"
-  cloud        = "AWS"
+  cloud        = upper(var.cloud)
   region       = var.cloud_region
   max_cfu      = var.max_cfu
 

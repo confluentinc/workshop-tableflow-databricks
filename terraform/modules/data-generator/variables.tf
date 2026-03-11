@@ -5,7 +5,7 @@
 variable "output_path" {
   description = "Path to output connection configuration files"
   type        = string
-  default     = "../data/connections"
+  default     = "../../data/connections"
 }
 
 # PostgreSQL Configuration

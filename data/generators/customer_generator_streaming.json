@@ -3,8 +3,14 @@
     "table": "cdc.customer",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 240,
-        "throttleMs": 30000
+        "maxEvents": 1280,
+        "throttleMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                60000,
+                75000
+            ]
+        }
     },
     "row": {
         "customer_id": {
@@ -38,14 +44,14 @@
             "serialize": {
                 "type": "postgresTimestamp"
             },
-            "pgHint": "TIMESTAMPTZ"
+            "pgHint": "TIMESTAMP"
         },
         "updated_at": {
             "_gen": "now",
             "serialize": {
                 "type": "postgresTimestamp"
             },
-            "pgHint": "TIMESTAMPTZ"
+            "pgHint": "TIMESTAMP"
         }
     }
 }

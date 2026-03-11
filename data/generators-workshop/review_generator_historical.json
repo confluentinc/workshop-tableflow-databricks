@@ -1,0 +1,163 @@
+{
+    "name": "review_generator_historical",
+    "table": "cdc.hotel_reviews",
+    "connection": "postgres",
+    "localConfigs": {
+        "maxEvents": 200
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        },
+        "baseTimeInMs": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 5184000000"
+        },
+        "oneStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_1_star.json"
+        },
+        "twoStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_2_star.json"
+        },
+        "threeStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_3_star.json"
+        },
+        "fourStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_4_star.json"
+        },
+        "fiveStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/content/review_text_choices_5_star.json"
+        }
+    },
+    "vars": {
+        "eventIndex": {
+            "_gen": "sequentialInteger",
+            "startingFrom": 0
+        },
+        "eventIntervalMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                21600000,
+                28800000
+            ],
+            "decimals": 0
+        },
+        "review_created_at": {
+            "_gen": "math",
+            "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+            "decimals": 0
+        }
+    },
+    "row": {
+        "review_id": {
+            "_gen": "sequentialString",
+            "startingFrom": 510000100,
+            "expr": "R~d",
+            "pgHint": "VARCHAR(50) PRIMARY KEY"
+        },
+        "booking_id": {
+            "_gen": "lookup",
+            "name": "booking_generator_historical",
+            "path": [
+                "row",
+                "booking_id"
+            ],
+            "pgHint": "VARCHAR(50)"
+        },
+        "review_rating": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 10,
+                    "value": 1
+                },
+                {
+                    "weight": 20,
+                    "value": 2
+                },
+                {
+                    "weight": 30,
+                    "value": 3
+                },
+                {
+                    "weight": 25,
+                    "value": 4
+                },
+                {
+                    "weight": 15,
+                    "value": 5
+                }
+            ],
+            "pgHint": "INTEGER"
+        },
+        "review_text": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 10,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "oneStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 20,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "twoStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 30,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "threeStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 25,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "fourStarTexts"
+                        }
+                    }
+                },
+                {
+                    "weight": 15,
+                    "value": {
+                        "_gen": "oneOf",
+                        "choices": {
+                            "_gen": "var",
+                            "var": "fiveStarTexts"
+                        }
+                    }
+                }
+            ],
+            "pgHint": "TEXT"
+        },
+        "created_at": {
+            "_gen": "var",
+            "var": "review_created_at",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMP"
+        }
+    }
+}

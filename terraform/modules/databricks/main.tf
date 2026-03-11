@@ -1,7 +1,7 @@
 # ===============================
 # Databricks Module
 # ===============================
-# Creates Storage Credential, External Location, Catalog, and Grants
+# Creates Storage Credential and Grants (multi-cloud: AWS IAM Role or Azure Managed Identity)
 
 terraform {
   required_providers {
@@ -21,10 +21,20 @@ resource "databricks_storage_credential" "main" {
   provider = databricks.workspace
 
   name    = "${var.prefix}-storage-credential-${var.resource_suffix}"
-  comment = "Storage credential for Unity Catalog S3 access"
+  comment = var.cloud_provider == "aws" ? "Storage credential for Unity Catalog S3 access" : "Storage credential for Unity Catalog ADLS Gen2 access"
 
-  aws_iam_role {
-    role_arn = var.iam_role_arn
+  dynamic "aws_iam_role" {
+    for_each = var.cloud_provider == "aws" ? [1] : []
+    content {
+      role_arn = var.iam_role_arn
+    }
+  }
+
+  dynamic "azure_managed_identity" {
+    for_each = var.cloud_provider == "azure" ? [1] : []
+    content {
+      access_connector_id = var.azure_access_connector_id
+    }
   }
 }
 
@@ -58,19 +68,45 @@ resource "databricks_grants" "storage_credential" {
       "WRITE_FILES"
     ]
   }
+
+  dynamic "grant" {
+    for_each = var.sso_email != "" ? [var.sso_email] : []
+    content {
+      principal = grant.value
+      privileges = [
+        "ALL_PRIVILEGES",
+        "CREATE_EXTERNAL_LOCATION",
+        "CREATE_EXTERNAL_TABLE",
+        "READ_FILES",
+        "WRITE_FILES"
+      ]
+    }
+  }
 }
 
 # ===============================
-# Note: External Location, Catalog, and their Grants
-# are created in root main.tf AFTER the IAM trust policy
-# is updated. This avoids the 403 Forbidden error.
+# Workshop User
 # ===============================
+
+resource "databricks_user" "workshop" {
+  provider  = databricks.workspace
+  user_name = var.user_email
+  force     = true
+}
+
+resource "databricks_user" "sso" {
+  count     = var.sso_email != "" ? 1 : 0
+  provider  = databricks.workspace
+  user_name = var.sso_email
+  force     = true
+}
 
 # ===============================
 # SQL Warehouse Data Source
 # ===============================
 
 data "databricks_sql_warehouse" "main" {
+  count    = var.cloud_provider == "aws" ? 1 : 0
   provider = databricks.workspace
   name     = "Serverless Starter Warehouse"
 }

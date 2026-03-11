@@ -43,7 +43,7 @@
             "serialize": {
                 "type": "postgresTimestamp"
             },
-            "pgHint": "TIMESTAMPTZ"
+            "pgHint": "TIMESTAMP"
         },
         "updated_at": {
             "_gen": "math",
@@ -51,7 +51,7 @@
             "serialize": {
                 "type": "postgresTimestamp"
             },
-            "pgHint": "TIMESTAMPTZ"
+            "pgHint": "TIMESTAMP"
         }
     }
 }

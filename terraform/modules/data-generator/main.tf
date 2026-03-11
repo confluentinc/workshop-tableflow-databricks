@@ -45,15 +45,3 @@ resource "local_file" "kafka_connection" {
   filename = "${var.output_path}/confluent.json"
 }
 
-# ===============================
-# ShadowTraffic License
-# ===============================
-
-data "http" "shadow_traffic_license" {
-  url = "https://raw.githubusercontent.com/ShadowTraffic/shadowtraffic-examples/refs/heads/master/free-trial-license-docker.env"
-}
-
-resource "local_file" "shadow_traffic_license" {
-  content  = data.http.shadow_traffic_license.response_body
-  filename = "${var.output_path}/../shadow-traffic-license.env"
-}

@@ -1,0 +1,47 @@
+# Docker Compose for Terraform Workshop (Azure)
+#
+# Usage:
+#   docker-compose build                                    # Build the container (one-time)
+#   docker-compose run --rm terraform                       # Interactive shell
+#   docker-compose run --rm terraform -c "terraform init"   # Run specific command
+#
+# Azure Credentials (in priority order):
+#   1. Service principal env vars: ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID, ARM_SUBSCRIPTION_ID
+#   2. Host machine's ~/.azure directory (mounted read-only, from `az login`)
+
+services:
+  terraform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: workshop-terraform-azure:latest
+    container_name: workshop-terraform-azure
+    volumes:
+      # Mount repo root so ../../data is accessible for generated files
+      - ../..:/workspace
+      # Mount host's Azure credentials (read-only)
+      - ~/.azure:/root/.azure-host:ro
+    environment:
+      # Azure credentials from environment variables
+      - ARM_CLIENT_ID
+      - ARM_CLIENT_SECRET
+      - ARM_TENANT_ID
+      - ARM_SUBSCRIPTION_ID
+      # Azure host config location (used by entrypoint script)
+      - AZURE_HOST_CONFIG=/root/.azure-host
+      # Terraform variables (alternative to terraform.tfvars)
+      - TF_VAR_confluent_cloud_api_key
+      - TF_VAR_confluent_cloud_api_secret
+      - TF_VAR_azure_subscription_id
+      - TF_VAR_azure_tenant_id
+      - TF_VAR_databricks_host
+      - TF_VAR_databricks_service_principal_client_id
+      - TF_VAR_databricks_service_principal_client_secret
+      - TF_VAR_databricks_account_id
+      - TF_VAR_databricks_user_email
+      - TF_VAR_email
+      - TF_VAR_cloud_region
+      - TF_VAR_prefix
+    working_dir: /workspace/terraform/azure
+    stdin_open: true
+    tty: true

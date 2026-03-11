@@ -12,8 +12,19 @@ variable "resource_suffix" {
   type        = string
 }
 
+variable "cloud" {
+  description = "Cloud provider for the Flink compute pool (AWS, AZURE, GCP)"
+  type        = string
+  default     = "AWS"
+
+  validation {
+    condition     = contains(["AWS", "AZURE", "GCP"], upper(var.cloud))
+    error_message = "Must be one of: AWS, AZURE, GCP."
+  }
+}
+
 variable "cloud_region" {
-  description = "AWS region for the Flink compute pool"
+  description = "Cloud region for the Flink compute pool (e.g., us-east-2, eastus2)"
   type        = string
 }
 

@@ -58,6 +58,25 @@ variable "debezium_password" {
 }
 
 variable "ssh_key_path" {
-  description = "Path to SSH private key for PostgreSQL health check"
+  description = "Path to SSH private key for PostgreSQL health check (empty string to skip SSH)"
   type        = string
+  default     = ""
+}
+
+variable "ssh_username" {
+  description = "SSH username for PostgreSQL host (e.g., ec2-user for AWS, azureuser for Azure)"
+  type        = string
+  default     = "ec2-user"
+}
+
+variable "initial_wait_seconds" {
+  description = "Seconds to wait before first PostgreSQL check (90 for EC2 boot, 0 for managed services)"
+  type        = number
+  default     = 90
+}
+
+variable "table_include_list" {
+  description = "Comma-separated list of PostgreSQL tables to capture via CDC. Workshop mode adds cdc.bookings,cdc.clickstream,cdc.hotel_reviews."
+  type        = string
+  default     = "cdc.customer,cdc.hotel"
 }

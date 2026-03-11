@@ -1,9 +1,6 @@
 # ===============================
 # Databricks Module Outputs
 # ===============================
-# Note: This module only creates the storage credential.
-# External location and catalog are created in root main.tf
-# after the IAM trust policy is updated.
 
 output "storage_credential_name" {
   description = "Storage credential name"
@@ -16,8 +13,8 @@ output "storage_credential_id" {
 }
 
 output "storage_credential_external_id" {
-  description = "Storage credential external ID for IAM trust policy"
-  value       = databricks_storage_credential.main.aws_iam_role[0].external_id
+  description = "Storage credential external ID for IAM trust policy (AWS only)"
+  value       = var.cloud_provider == "aws" ? databricks_storage_credential.main.aws_iam_role[0].external_id : null
 }
 
 output "databricks_schema_name" {
@@ -26,6 +23,6 @@ output "databricks_schema_name" {
 }
 
 output "sql_warehouse_id" {
-  description = "SQL Warehouse ID"
-  value       = data.databricks_sql_warehouse.main.id
+  description = "SQL Warehouse ID (AWS only — Azure uses auto-provisioned warehouse)"
+  value       = var.cloud_provider == "aws" ? data.databricks_sql_warehouse.main[0].id : null
 }
