@@ -1,0 +1,71 @@
+{
+    "generators": [
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/customer_generator_historical.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/hotel_generator_historical.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/clickstream_generator_historical.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/booking_generator_historical.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/review_generator_historical.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators/customer_generator_streaming.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/clickstream_generator_streaming.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/booking_generator_streaming.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/review_generator_streaming.json"
+        }
+    ],
+    "schedule": {
+        "stages": [
+            {
+                "generators": [
+                    "customer_generator_historical",
+                    "hotel_generator_historical"
+                ]
+            },
+            {
+                "generators": [
+                    "clickstream_generator_historical",
+                    "booking_generator_historical"
+                ]
+            },
+            {
+                "generators": [
+                    "review_generator_historical",
+                    "clickstream_generator_streaming",
+                    "booking_generator_streaming",
+                    "review_generator_streaming",
+                    "customer_generator_streaming"
+                ]
+            }
+        ]
+    },
+    "connections": {
+        "postgres": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/connections/postgres.json"
+        }
+    }
+}

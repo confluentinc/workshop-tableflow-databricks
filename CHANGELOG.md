@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-03-11
+
+### Added
+
+- **WSA Orchestration Support**: Added `wsa-spec-aws.yaml` and `wsa-spec-azure.yaml` for automated provisioning of up to 95 workshop accounts via `wsa build`/`wsa clean`
+- **Instructor-Led Lab Track**: Restructured labs into `labs/instructor-led/` (LAB1-LAB7) optimized for guided workshops with pre-provisioned infrastructure
+
+### Changed
+
+- **Notebook Configuration (LAB6)**: Updated `river_hotel_marketing_agent.ipynb` Step 1.2 to direct instructor-led participants to their workshop email for `catalog`, `schema`, and `warehouse_id` values, with `terraform output` fallback for self-service users
+
 ## [0.7.0] - 2026-01-20
 
 ### Added

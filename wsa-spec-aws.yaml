@@ -1,0 +1,215 @@
+# WSA Spec — AWS
+# Workshop spec for Databricks AWS workshops.
+# Usage: op run --env-file=.env.tpl -- wsa build -w workshop-tableflow-databricks/wsa-spec-aws.yaml
+# See also: wsa-spec-azure.yaml for the Azure variant.
+
+# Workshop metadata
+name: tableflow-databricks-aws
+description: Confluent Cloud + Tableflow + Databricks on AWS
+cloud: AWS # Required: AWS or Azure (GCP support coming later)
+
+# Number of workshop accounts to provision (e.g. tmm+wp1 through tmm+wp95)
+account_count: 95
+
+# Email pattern for workshop accounts. {N} is replaced with the account
+# number (1 through account_count). All emails route to the base address
+# via Gmail + aliasing (e.g. tmm@confluent.io).
+email_pattern: "tmm+wp{N}@confluent.io"
+
+# Terraform source — when terraform_repo is set, wsa clones the repo at runtime.
+# When omitted, wsa uses the local terraform directory relative to this spec file.
+# terraform_repo: https://github.com/confluentinc/workshop-tableflow-databricks
+terraform_path: terraform/aws/ # Subdirectory within the repo containing per-account .tf files (aws/ or azure/)
+# terraform_ref: main                    # Branch, tag, or commit SHA to clone
+shared_infra_path: terraform/aws-shared/ # Shared infrastructure Terraform directory (deployed once, outputs injected into per-account runs)
+
+# Data generation — defines the engine and data directory used by shared
+# infrastructure to seed the database. wsa copies data_path into the run
+# directory and injects TF_VAR_data_dir so shared infra Terraform can
+# reference data files without hardcoded relative paths.
+data_generation:
+  engine: shadowtraffic
+  data_path: data/ # copied to run directory (relative to this spec file)
+  config_file: shadow-traffic-configuration-workshop.json # entrypoint config (relative to data_path)
+
+# Monitoring — always-on CloudWatch-based observability for shared infrastructure.
+# wsa deploys a CloudWatch agent, custom metrics cron job, alarms, SNS email
+# alerts, and a dashboard on the shared EC2 instance. Alert email is derived
+# from TF_VAR_owner_email in wsa.env.
+monitoring:
+  enabled: true
+
+# Pre-destroy cleanup actions run before terraform destroy during wsa clean.
+# Each action is best-effort: warnings are logged but failures don't block destroy.
+cleanup:
+  disable_tableflow: true # Disable all Tableflow topics before terraform destroy (prevents 409 Conflict on provider integration)
+
+# Resource isolation — defines how wsa creates per-attendee isolation
+# boundaries before running the workshop Terraform.
+#
+# Each platform section declares the isolation model. wsa build creates
+# the isolation layer (Phase 1), then runs the workshop Terraform (Phase 2).
+# The workshop Terraform receives pre-created isolation resources as
+# input variables (e.g. databricks_schema, aws_account_tag).
+#
+# Omit the isolation section entirely to skip isolation setup and run
+# the workshop Terraform directly (legacy behavior).
+#
+# Supported models:
+#   databricks:
+#     shared-workspace — one workspace, per-user folders + schemas (cost-efficient)
+#     per-user-workspace — one workspace per attendee (strong, expensive)
+#   aws:
+#     shared-account — single AWS account, resources tagged per attendee
+#
+# Note: Confluent Cloud environment creation is handled by the
+# confluent-platform Terraform module, not by wsa isolation.
+isolation:
+  databricks:
+    model: shared-workspace
+    workspace_name: "workshop-tableflow" # Databricks workspace name
+    workspace_create:
+      false # false: workspace already exists (host from 1Password)
+      # false: workspace must already exist
+    folder: per-user # each user gets /Users/<email>/ (Databricks default)
+    #
+    # workspace_create pros and cons:
+    #
+    #   CREATE (true, default):
+    #     + Fully automated — wsa handles the entire lifecycle
+    #     + Reproducible — workspace is created fresh each time
+    #     + Clean teardown — wsa clean can destroy what it created
+    #     - Workspace creation is slow (~5-15 min, provisions VPC + NAT + S3 in AWS)
+    #     - Requires Databricks account admin access
+    #     - First-run delay (subsequent runs reuse if not cleaned)
+    #
+    #   USE EXISTING (false):
+    #     + Fast — no creation delay; workspace already exists
+    #     + Lower permissions needed (workspace admin, not account admin)
+    #     + Good for shared infrastructure that outlives individual workshops
+    #     - Manual setup required — someone must create the workspace first
+    #     - wsa clean will NOT destroy the workspace (only per-user resources)
+    #     - Risk of state drift if workspace is modified outside of wsa
+    #
+    # Recommendation: Use workspace_create: true for workshops where you want
+    # full lifecycle management. Use false when a long-lived workspace is shared
+    # across multiple workshop types or when account admin access is unavailable.
+    #
+    # Compute: defined in workshop Terraform (shared autoscaling cluster recommended
+    # for 95 concurrent users — e.g. m5.xlarge, 4-10 nodes, autoscale).
+    # AWS EC2 instance limits may need a quota increase for the cluster instance type.
+
+  aws:
+    model: shared-account
+    tag_key: "workshop_account" # tag applied to all resources for this account
+
+# Variables passed to the workshop Terraform via -var flags.
+#
+# When set, ONLY these variables are passed — wsa does not inject its
+# internal names (account_email, etc.).
+# When omitted, wsa falls back to its legacy pass-all behavior.
+#
+# Values support template tokens that are expanded per-account:
+#   {email}              — attendee email (from email_pattern)
+#   {N}                  — raw account number (1, 2, ...)
+#   {NNN}                — zero-padded account number (001, 002, ...)
+#   {dbx_workspace_url}  — from isolation: Databricks workspace URL
+#   {aws_account_tag}    — from isolation: AWS account tag value
+#
+# Literal values (no tokens) are passed as-is to every account.
+terraform_vars:
+  email: "{email}"
+  databricks_user_email: "{email}"
+  databricks_sso_email: "wp{N}@tmmconfluentgmail.onmicrosoft.com"
+  environment: "workshop"
+  prefix: "wp{NNN}"
+  # cloud_region is set by wsa from wsa.env (TF_VAR_aws_cloud_region / TF_VAR_azure_cloud_region)
+  # cc_environment_id is intentionally omitted — Terraform creates the CC
+  # environment itself (confluent-platform module, create_environment = true).
+
+# Terraform providers used by this workshop (for validation)
+providers:
+  - name: confluent
+    version: ">= 2.0"
+  - name: databricks
+    version: ">= 1.0"
+  - name: aws
+    version: ">= 5.0"
+
+# CLI tools required on the operator's machine (for validation)
+tools_required:
+  - name: terraform
+    version: ">= 1.7"
+  - name: git
+    version: ">= 2.0"
+  - name: op
+    version: ">= 2.0"
+
+# Environment variables that must be set at runtime.
+# These are passed through to Terraform as TF_VAR_* vars.
+# With `op run`, these are resolved from 1Password references in .env.tpl.
+# Databricks vars: use the set matching your cloud (TF_VAR_databricks_aws_* or TF_VAR_databricks_azure_*).
+env_vars:
+  - TF_VAR_confluent_cloud_api_key
+  - TF_VAR_confluent_cloud_api_secret
+  - TF_VAR_databricks_aws_host
+  - TF_VAR_databricks_aws_account_id
+  - TF_VAR_databricks_aws_service_principal_client_id
+  - TF_VAR_databricks_aws_service_principal_client_secret
+  - TF_VAR_aws_access_key_id
+  - TF_VAR_aws_secret_access_key
+
+# Credential groups — define the columns in the CSV output and the
+# sections in the dispenser email. Each group becomes a set of columns
+# with slash-delimited headers (e.g. "Confluent Cloud / Username").
+#
+# Each field has:
+#   label:  Human-readable name (used in CSV header and email)
+#   source: Where the value comes from:
+#     "terraform"   — read from a Terraform root output after apply
+#     "op"          — read from the credential store (set by wsa reset-account-password)
+#     "spec"        — computed from the spec (supports {email}, {account_number} placeholders)
+#   output: (source: terraform only) Name of the Terraform root output
+#   value:  (source: spec only) Template string with placeholders
+#
+# IMPORTANT: For "terraform" source fields, the workshop's Terraform must
+# define matching `output` blocks in the root module. See infra-builder/README.md.
+credentials:
+  - name: Confluent Cloud
+    fields:
+      - label: URL
+        source: terraform
+        output: cc_environment_url
+      - label: Username
+        source: spec
+        value: "{email}"
+      - label: Password
+        source: op
+  - name: Databricks
+    fields:
+      - label: Workspace URL
+        source: terraform
+        output: dbx_workspace_url
+      - label: Username
+        source: spec
+        value: "wp{N}@tmmconfluentgmail.onmicrosoft.com"
+      - label: Password
+        source: op
+      - label: SP Client ID
+        source: terraform
+        output: dbx_sp_client_id
+      - label: SP Client Secret
+        source: terraform
+        output: dbx_sp_client_secret
+      - label: Unity Catalog Name
+        source: terraform
+        output: dbx_catalog_name
+      - label: Schema Name
+        source: terraform
+        output: dbx_schema_name
+      - label: SQL Warehouse ID
+        source: terraform
+        output: dbx_sql_warehouse_id
+      - label: S3 Bucket Name
+        source: terraform
+        output: s3_bucket_name

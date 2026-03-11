@@ -9,12 +9,12 @@ output "organization_id" {
 
 output "environment_id" {
   description = "Confluent environment ID"
-  value       = confluent_environment.main.id
+  value       = local.effective_environment_id
 }
 
 output "environment_name" {
   description = "Confluent environment display name"
-  value       = confluent_environment.main.display_name
+  value       = local.effective_environment_display_name
 }
 
 output "kafka_cluster_id" {

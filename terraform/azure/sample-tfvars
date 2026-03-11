@@ -1,0 +1,44 @@
+# ===============================
+# General Overrides
+# ===============================
+prefix       = ""
+email        = ""
+cloud_region = "eastus2"
+
+# ===============================
+# Azure Overrides
+# ===============================
+# These default to null and fall back to ARM_SUBSCRIPTION_ID / ARM_TENANT_ID
+# env vars (set via `az login` or service principal env vars). Uncomment and
+# fill in to set them explicitly via tfvars instead.
+# azure_subscription_id = ""
+# azure_tenant_id       = ""
+
+# ===============================
+# Confluent Cloud Overrides
+# ===============================
+confluent_cloud_api_key    = ""
+confluent_cloud_api_secret = ""
+
+# ===============================
+# Databricks Overrides
+# ===============================
+# Leave databricks_host blank to auto-provision a new workspace.
+# Or provide your existing Azure Databricks workspace URL.
+databricks_host                            = ""  # e.g., https://adb-1234567890.12.azuredatabricks.net
+databricks_account_id                      = ""
+databricks_user_email                      = ""
+databricks_service_principal_client_id     = ""
+databricks_service_principal_client_secret = ""
+
+# ===============================
+# Optional: PostgreSQL Overrides
+# ===============================
+# postgres_sku_name  = "B_Standard_B2s"  # Burstable tier (cost-effective for workshop)
+# postgres_storage_mb = 32768
+
+# ===============================
+# Optional: Connector Automation
+# ===============================
+# Set to false if you want to manually create the PostgreSQL CDC connector as a learning exercise
+# create_postgres_cdc_connector = false

@@ -4,7 +4,7 @@
 
 **Difficulty**: Intermediate
 
-**Technical Requirements**: Working knowledge of cloud platforms (AWS), SQL, and basic command-line operations
+**Technical Requirements**: Working knowledge of cloud platforms (AWS or Azure), SQL, and basic command-line operations
 
 **Workshop Type**: This workshop is designed to work for both *self-service* and *instructor-led* scenarios.
 
@@ -17,261 +17,6 @@ This hands-on workshop demonstrates how to build a complete **real-time AI-power
 Watch this ~13 minute [demo video](https://youtu.be/yVLfYe39SKg) to see the solution to a similar use case.
 
 If you have any issues with or feedback for this workshop, Please let us know in this [quick 2-minute survey](https://docs.google.com/forms/d/e/1FAIpQLSfoVUqUFTAxHKJop7t8TvfZ4gItQxJ1RaM4oy72DjtK-HWoJg/viewform?usp=pp_url&entry.179681974=Tableflow+and+Databricks)!
-
-## ✅ Prerequisites
-
-> [!IMPORTANT]
-> **Cloud and Region Compatibility**
->
-> This workshop is currently only compatible with **AWS** and requires the following services to be available in your chosen region:
->
-> - Amazon EC2 (for database hosting)
-> - Amazon S3 (for Delta Lake storage)
-> - Amazon VPC (for networking)
->
-> **Recommended AWS regions**:
->
-> 1. `us-west-2` or `us-east-2`
-> 2. `us-east-1`
->
-> If you are going through this workshop with a presenter from Confluent, they may provide additional guidance/limitations for cloud regions as needed.
-
-You must complete each of these in order to successfully go through this workshop:
-
-### Required Accounts
-
-- **Confluent Cloud account** with admin privileges - [sign up for a free trial](https://www.confluent.io/confluent-cloud/tryfree?utm_campaign=tm.fm-ams_cd.Build-an-A[…]ne_id.701Uz00000fEQeEIAW&utm_source=zoom&utm_medium=workshop)
-- **Databricks account** and existing workspace - paid or [free edition account](https://login.databricks.com/?intent=SIGN_UP&provider=DB_FREE_TIER) are strongly recommended. [Free trial account](https://docs.databricks.com/aws/en/getting-started/express-setup) sometimes experience data syncing issues with this workshop, so we recommend that you use **paid** or **free edition** accounts instead.
-- **AWS account** with permissions to create cloud resources (EC2, S3, VPC, IAM)
-
-> [!IMPORTANT]
-> **Payment Method or Promo Code Required for Confluent Cloud**
->
-> You must either add a [payment method](https://docs.confluent.io/cloud/current/billing/overview.html#manage-your-payment-method) or [redeem a coupon code](https://docs.confluent.io/cloud/current/billing/overview.html#redeem-a-promo-code-or-view-balance) to be able to run this workshop.
-
-### Required Tools
-
-You only need to have these two tools installed on your local machine:
-
-1. **[Git](https://git-scm.com/downloads)**
-2. **[Docker Desktop](https://docs.docker.com/get-started/get-docker/)** installed and running
-
-<details>
-<summary>Install on macOS</summary>
-
-Using [Homebrew](https://brew.sh/):
-
-```sh
-# Install Git
-brew install git
-
-# Install Docker Desktop
-brew install --cask docker
-```
-
-After installation, launch Docker Desktop from Applications and ensure it's running (look for the whale icon in the menu bar).
-
-</details>
-
-<details>
-<summary>Install on Windows</summary>
-
-Using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) (Windows Package Manager):
-
-```powershell
-# Install Git
-winget install --id Git.Git -e --source winget
-
-# Install Docker Desktop
-winget install --id Docker.DockerDesktop -e --source winget
-```
-
-After installation:
-
-1. Restart your terminal
-2. Launch Docker Desktop from the Start menu
-3. Ensure Docker is running (look for the whale icon in the system tray)
-
-</details>
-
-<details>
-<summary>Install on Linux (Ubuntu/Debian)</summary>
-
-```sh
-# Install Git
-sudo apt update && sudo apt install -y git
-
-# Install Docker Engine
-sudo apt install -y ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Add your user to the docker group (logout/login required)
-sudo usermod -aG docker $USER
-```
-
-> **Note**: Log out and back in for the group change to take effect.
-
-</details>
-
-<details>
-<summary>Install on Linux (Fedora/RHEL)</summary>
-
-```sh
-# Install Git
-sudo dnf install -y git
-
-# Install Docker Engine
-sudo dnf -y install dnf-plugins-core
-sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Start Docker
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# Add your user to the docker group (logout/login required)
-sudo usermod -aG docker $USER
-```
-
-> **Note**: Log out and back in for the group change to take effect.
-
-</details>
-
-## Initial Setup Steps
-
-Once you have the required tools installed and configured, then perform these steps:
-
-### Windows Users
-
-> [!IMPORTANT]
-> **Instructions for Windows Users: Use WSL 2 with Ubuntu for Best Results**
->
-> If you're on Windows, please expand the section below to learn what setup we recommend, common pitfalls to avoid, and tips and tricks.
-
-<details>
-<summary>Expand for Windows-specific instructions</summary>
-
-We strongly recommend running this workshop from within **WSL 2** (Windows Subsystem for Linux) with **Ubuntu** rather than PowerShell or Command Prompt. This avoids Docker volume permission issues that can prevent Terraform from writing files.
-
-**Setup Instructions:**
-
-1. Install Ubuntu in WSL 2 (run in PowerShell as Admin):
-
-   ```powershell
-    wsl --install -d Ubuntu
-    ```
-
-2. Restart your computer if prompted, then open **Ubuntu** from the Start menu
-3. Open Docker Desktop → **Settings** → **Resources** → **WSL Integration** → Enable **Ubuntu**
-4. In the Ubuntu terminal, clone the repo and navigate to it:
-
-   ```sh
-   cd ~
-   git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
-   cd workshop-tableflow-databricks/terraform
-   ```
-
-   ⚠️ **Important:** Verify you're in the **Linux filesystem**, not the mounted Windows drive:
-
-   ```sh
-   pwd
-   ```
-
-   - ✅ **Correct:** `/home/<username>/workshop-tableflow-databricks/terraform`
-   - ❌ **Wrong:** `/mnt/c/Users/...` (this will cause permission errors!)
-
-   If you see `/mnt/c/...`, run `cd ~` and clone the repo again.
-
-5. Run all `docker compose` commands from this Ubuntu terminal (use `sudo -E` if you get permission errors):
-
-   ```sh
-   sudo -E docker compose build
-   sudo -E docker compose run --rm terraform
-   ```
-
-   The `-E` flag preserves your environment variables (like AWS credentials) when using sudo.
-
-**Tip:**
-
-To avoid typing `sudo -E` every time, add your user to the docker group:
-
-```sh
-sudo usermod -aG docker $USER
-```
-
-Then close and reopen Ubuntu for the change to take effect.
-
-**Why WSL?** Docker on Windows with WSL 2 has full write permissions to the Linux filesystem (`~/`) but limited permissions to Windows paths (`/mnt/c/...`). Running from within WSL can help avoid "permission denied" errors for some terraform commands, like `terraform init`.
-
-</details>
-
-### Step 1: Clone this Repository
-
-Get started by cloning the workshop repository
-
-1. Open your preferred command-line interface, like *zsh* or *Powershell*
-2. Clone this repository with git:
-
-   ```sh
-   git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
-   ```
-
-### Step 2: Pull and Build Docker Images
-
-You will use a Docker container to run Terraform, ensuring consistent behavior across all operating systems (macOS, Linux, Windows). This container includes Terraform, AWS CLI, and SSH tools needed for infrastructure provisioning.
-
-First, open your terminal and navigate into the workshop directory:
-
-```sh
-cd workshop-tableflow-databricks
-```
-
-Next, navigate into the *terraform* directory
-
-```sh
-cd terraform
-```
-
-Build the Terraform container (this is a one-time setup):
-
-```sh
-docker-compose build
-```
-
-You should see output showing the container being built:
-
-```sh
-[+] Building 45.2s (7/7) FINISHED
- => [terraform internal] load build definition from Dockerfile
- => ...
- => => naming to docker.io/library/workshop-terraform:latest
-```
-
-Next, you need to pull down the data generator (ShadowTraffic) docker image by following these steps:
-
-1. Open a new shell window/tab in the workshop root directory
-2. Pull down the ShadowTraffic docker image
-
-   ```sh
-   docker pull shadowtraffic/shadowtraffic:1.11.13
-   ```
-
-> [!NOTE]
-> **First-Time Build**
->
-> The initial pull and build may take a few minutes. Subsequent uses leverage cached layers and should complete in seconds.
-
-**You can continue on with the workshop while the docker images are pulled down.**
 
 ## 🏨 Use Case
 
@@ -493,26 +238,42 @@ erDiagram
 
 ## 🔬 Workshop Labs
 
-This workshop is organized into seven sequential labs listed below.
+This workshop supports two modes. Choose the path that matches your situation:
 
-Each lab builds upon the previous one, so start with LAB 1 and continue sequentially until completion.
+### 🎓 Instructor-Led
+
+> Your instructor has pre-provisioned all cloud infrastructure and accounts. You will claim a dedicated environment and focus on the hands-on Confluent and Databricks labs.
 
 | Lab | Duration | Details |
 |-----|----------|-------------|
-| [LAB 1: Account Setup](./labs/LAB1_account_setup/LAB1.md) | ~15 min | **Configure cloud platform accounts**: clone repo, set up Confluent Cloud API keys, configure Databricks service principal, establish AWS credentials. ![Required Accounts](./labs/LAB1_account_setup/images/required_accounts.png)|
-| [LAB 2: Cloud Infrastructure](./labs/LAB2_cloud_deployment/LAB2.md) | ~10 min | **Deploy infrastructure with Terraform**: provision AWS, Confluent Cloud, and Databricks resources. |
-| [LAB 3: Data Generation](./labs/LAB3_data_generation/LAB3.md) | ~10 min | **Generate data**: deploy ShadowTraffic for realistic hospitality data, validate Kafka topics, enable Delta Lake sync. ![Architecture diagram for data generation](./labs/LAB3_data_generation/images/architecture_data_generation.jpg)|
-| [LAB 4: Tableflow & Unity Catalog](./labs/LAB4_tableflow/LAB4.md) | ~15 min | **Configure Tableflow**: Connect Tableflow with Unity Catalog, enable Tableflow on Clickstream topic. |
-| [LAB 5: Stream Processing](./labs/LAB5_stream_processing/LAB5.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with interval joins, configure Tableflow sync. ![Architecture diagram for stream processing](./labs/LAB5_stream_processing/images/architecture_stream_processing.jpg) |
-| [LAB 6: Analytics & AI](./labs/LAB6_databricks/LAB6.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. ![Databricks architecture diagram](./labs/LAB6_databricks/images/architecture_databricks.jpg) |
-| [LAB 7: Cleanup](./labs/LAB7_clean_up/LAB7.md) | ~5 min | **Clean up resources**: remove UI-created resources and terraform destroy the remainder. |
+| [LAB 1: Claim Your Account](./labs/instructor-led/LAB1_claim_account/LAB1.md) | ~5 min | **Claim your workshop account**: complete the Google Form, receive credentials, verify access to Confluent Cloud and Databricks. |
+| [LAB 2: Explore Your Environment](./labs/instructor-led/LAB2_explore_environment/LAB2.md) | ~10 min | **Tour your environment**: explore your Kafka cluster, CDC topics, connectors, Flink compute pool, and Databricks workspace. |
+| [LAB 3: Unity Catalog Integration](./labs/instructor-led/LAB3_catalog_integration/LAB3.md) | ~5 min | **Configure catalog**: connect Confluent Cloud Tableflow with Databricks Unity Catalog. |
+| [LAB 4: Stream Processing](./labs/instructor-led/LAB4_stream_processing/LAB4.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with temporal joins, denormalize CDC data. |
+| [LAB 5: Tableflow](./labs/instructor-led/LAB5_tableflow/LAB5.md) | ~10 min | **Enable Tableflow**: stream clickstream, denormalized bookings, and hotel stats topics as Delta Lake tables. |
+| [LAB 6: Analytics & AI](./labs/instructor-led/LAB6_analytics_ai/LAB6.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
+| [LAB 7: Wrap Up](./labs/instructor-led/LAB7_wrap_up/LAB7.md) | ~5 min | **Clean up and recap**: stop Flink statements, review accomplishments, provide feedback. |
+
+### 🛠️ Self-Service
+
+> You will set up your own cloud accounts, deploy infrastructure with Terraform, and run the full workshop independently.
+
+| Lab | Duration | Details |
+|-----|----------|-------------|
+| [LAB 0: Prerequisites](./labs/self-service/LAB0_prerequisites/LAB0.md) | ~10 min | **Set up prerequisites**: create cloud accounts, install Git and Docker, clone the repo, build Docker images. |
+| [LAB 1: Account Setup](./labs/self-service/LAB1_account_setup/LAB1.md) | ~15 min | **Configure cloud platform accounts**: set up Confluent Cloud API keys, configure Databricks service principal, establish AWS credentials. |
+| [LAB 2: Cloud Infrastructure](./labs/self-service/LAB2_cloud_deployment/LAB2.md) | ~10 min | **Deploy infrastructure with Terraform**: provision AWS, Confluent Cloud, and Databricks resources. |
+| [LAB 3: Data Generation](./labs/self-service/LAB3_data_generation/LAB3.md) | ~10 min | **Generate data**: deploy ShadowTraffic for realistic hospitality data, validate Kafka topics, enable Delta Lake sync. |
+| [LAB 4: Tableflow & Unity Catalog](./labs/self-service/LAB4_tableflow/LAB4.md) | ~15 min | **Configure Tableflow**: connect Tableflow with Unity Catalog, enable Tableflow on Clickstream topic. |
+| [LAB 5: Stream Processing](./labs/self-service/LAB5_stream_processing/LAB5.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with temporal joins, configure Tableflow sync. |
+| [LAB 6: Analytics & AI](./labs/self-service/LAB6_databricks/LAB6.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
+| [LAB 7: Cleanup](./labs/self-service/LAB7_clean_up/LAB7.md) | ~5 min | **Clean up resources**: remove UI-created resources and terraform destroy the remainder. |
 
 ### Additional Resources
 
-- **[Recap](./labs/recap.md)**: Summary of accomplishments and business value delivered
-- **[Troubleshooting](./labs/troubleshooting.md)**: Common issues and solutions
-- **[Stream Processing Insights](./labs/stream-processing-insights.md)**: Detailed guide for streaming join patterns and schema management
-<!-- - **[Optional: Bedrock LLM Integration](./labs/optional_bedrock_llm/optional_bedrock_llm.md)**: AWS Bedrock integration for AI-powered review summarization -->
+- **[Recap](./labs/shared/recap.md)**: Summary of accomplishments and business value delivered
+- **[Troubleshooting](./labs/shared/troubleshooting.md)**: Common issues and solutions
+- **[Stream Processing Insights](./labs/shared/stream-processing-insights.md)**: Detailed guide for streaming join patterns and schema management
 
 ## 🏁 Conclusion
 

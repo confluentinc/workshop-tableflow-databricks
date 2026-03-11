@@ -14,16 +14,29 @@ terraform {
 
 data "confluent_organization" "current" {}
 
+locals {
+  create_environment                  = var.environment_id == ""
+  effective_environment_id            = local.create_environment ? confluent_environment.main[0].id : var.environment_id
+  effective_environment_resource_name = local.create_environment ? confluent_environment.main[0].resource_name : data.confluent_environment.existing[0].resource_name
+  effective_environment_display_name  = local.create_environment ? confluent_environment.main[0].display_name : data.confluent_environment.existing[0].display_name
+}
+
 # ===============================
-# Environment
+# Environment (created only when environment_id is not provided)
 # ===============================
 
 resource "confluent_environment" "main" {
+  count        = local.create_environment ? 1 : 0
   display_name = "${var.prefix}-environment-${var.resource_suffix}"
 
   stream_governance {
     package = "ADVANCED"
   }
+}
+
+data "confluent_environment" "existing" {
+  count = local.create_environment ? 0 : 1
+  id    = var.environment_id
 }
 
 # ===============================
@@ -33,12 +46,21 @@ resource "confluent_environment" "main" {
 resource "confluent_kafka_cluster" "main" {
   display_name = "${var.prefix}-cluster-${var.resource_suffix}"
   availability = "SINGLE_ZONE"
-  cloud        = "AWS"
+  cloud        = upper(var.cloud)
   region       = var.cloud_region
-  standard {}
+
+  dynamic "standard" {
+    for_each = var.cluster_type == "standard" ? [1] : []
+    content {}
+  }
+
+  dynamic "enterprise" {
+    for_each = var.cluster_type == "enterprise" ? [1] : []
+    content {}
+  }
 
   environment {
-    id = confluent_environment.main.id
+    id = local.effective_environment_id
   }
 }
 
@@ -48,7 +70,7 @@ resource "confluent_kafka_cluster" "main" {
 
 data "confluent_schema_registry_cluster" "main" {
   environment {
-    id = confluent_environment.main.id
+    id = local.effective_environment_id
   }
 
   depends_on = [confluent_kafka_cluster.main]
@@ -70,7 +92,19 @@ resource "confluent_service_account" "app_manager" {
 resource "confluent_role_binding" "app_manager_admin" {
   principal   = "User:${confluent_service_account.app_manager.id}"
   role_name   = "EnvironmentAdmin"
-  crn_pattern = confluent_environment.main.resource_name
+  crn_pattern = local.effective_environment_resource_name
+}
+
+data "confluent_user" "workshop" {
+  count = var.user_email != "" ? 1 : 0
+  email = var.user_email
+}
+
+resource "confluent_role_binding" "user_env_admin" {
+  count       = var.user_email != "" ? 1 : 0
+  principal   = "User:${data.confluent_user.workshop[0].id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = local.effective_environment_resource_name
 }
 
 # ===============================
@@ -93,7 +127,7 @@ resource "confluent_api_key" "kafka" {
     kind        = confluent_kafka_cluster.main.kind
 
     environment {
-      id = confluent_environment.main.id
+      id = local.effective_environment_id
     }
   }
 
@@ -120,7 +154,7 @@ resource "confluent_api_key" "schema_registry" {
     kind        = data.confluent_schema_registry_cluster.main.kind
 
     environment {
-      id = confluent_environment.main.id
+      id = local.effective_environment_id
     }
   }
 
