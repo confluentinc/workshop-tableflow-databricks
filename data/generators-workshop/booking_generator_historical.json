@@ -3,7 +3,7 @@
     "table": "cdc.bookings",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 400
+        "maxEvents": 200
     },
     "varsOnce": {
         "currentTimeInMs": {
@@ -22,8 +22,8 @@
         "eventIntervalMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                10800000,
-                14400000
+                108000,
+                216000
             ],
             "decimals": 0
         },

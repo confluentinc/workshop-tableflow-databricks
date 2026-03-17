@@ -101,7 +101,6 @@ This query creates a denormalized table combining booking data with customer inf
 
 ```sql
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
-SET 'sql.tables.scan.idle-timeout' = '30 sec';
 
 CREATE TABLE denormalized_hotel_bookings (
   PRIMARY KEY (`booking_id`) NOT ENFORCED,

@@ -42,8 +42,8 @@
         "eventIntervalMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                21600000,
-                28800000
+                108000,
+                216000
             ],
             "decimals": 0
         },
