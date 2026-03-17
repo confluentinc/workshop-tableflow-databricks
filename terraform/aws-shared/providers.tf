@@ -16,6 +16,7 @@ provider "databricks" {
   account_id    = var.databricks_account_id
   client_id     = var.databricks_service_principal_client_id
   client_secret = var.databricks_service_principal_client_secret
+  auth_type     = "oauth-m2m"
 }
 
 provider "databricks" {
@@ -23,4 +24,5 @@ provider "databricks" {
   host          = var.databricks_host
   client_id     = var.databricks_service_principal_client_id
   client_secret = var.databricks_service_principal_client_secret
+  auth_type     = "oauth-m2m"
 }

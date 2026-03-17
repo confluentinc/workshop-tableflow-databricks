@@ -326,3 +326,9 @@ variable "shared_dbx_sp_client_secret" {
   sensitive   = true
   default     = ""
 }
+
+variable "shared_dbx_access_connector_id" {
+  description = "WSA: shared Databricks Access Connector resource ID (skips per-account connector when set)"
+  type        = string
+  default     = ""
+}

@@ -27,7 +27,9 @@ Your instructor will share a **Google Form** link. Fill out the form to claim a 
 2. Enter your **name** and **email address**
 3. Submit the form
 
-You will receive an email within a few minutes containing your workshop credentials.
+You should receive an email within a few minutes containing your workshop credentials.
+
+![Example email with workshop account information](./images/workshop_account_email.png)
 
 > [!NOTE]
 > **No Email**
@@ -53,6 +55,8 @@ Your credentials email will contain the following information:
 | **SP Client Secret** | Service principal OAuth secret |
 | **Unity Catalog Name** | Your Databricks Unity Catalog name |
 | **S3 Bucket Name** | Your dedicated S3 bucket for Tableflow |
+| **Schema Name** | Your Databricks Unity Catalog schema (Kafka cluster ID) |
+| **SQL Warehouse ID** | Your Databricks SQL Warehouse ID |
 
 Keep this email open — you will reference these credentials throughout the workshop.
 

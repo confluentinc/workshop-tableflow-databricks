@@ -114,8 +114,9 @@ resource "null_resource" "wait_for_postgres" {
 # PostgreSQL CDC Source V2 Connector
 # ===============================
 # Upgraded from deprecated PostgresCdcSource (V1) to PostgresCdcSourceV2.
-# V2 includes before-state in change events by default (after.state.only=false),
-# which enables proper UPDATE/DELETE processing in Flink SQL and Tableflow.
+# after.state.only=true produces flat Avro records (no Debezium envelope),
+# enabling direct use with Tableflow and Flink temporal joins without CTAS.
+# Deletes are handled via tombstones (tombstones.on.delete=true).
 
 resource "confluent_connector" "postgres_cdc" {
   count = var.create_connector ? 1 : 0
@@ -162,6 +163,8 @@ resource "confluent_connector" "postgres_cdc" {
     # Output Configuration
     "tasks.max"           = "1"
     "output.data.format"  = "AVRO"
+    "output.key.format"   = "AVRO"
+    "after.state.only"    = "true"
     "schema.context.name" = "default"
 
     # Topic Configuration

@@ -1,4 +1,4 @@
-# LAB 6: Analytics and AI-Powered Marketing Automation
+# LAB 5: Analytics and AI-Powered Marketing Automation
 
 ## Overview
 
@@ -11,11 +11,11 @@ By the end of this lab, you will have:
 1. **AI-Powered Business Intelligence**: Used Databricks Genie to generate natural language insights about customer behavior, booking patterns, and hotel performance
 2. **Intelligent Marketing Automation**: Deployed an AI agent that identifies underperforming hotels with good customer satisfaction, generates social media campaigns based on reviews, and creates targeted customer lists
 
-![Architecture Diagram for Databricks](../../shared/images/architecture_databricks.jpg)
+![Architecture Diagram for Databricks](./images/arch_diagram_databricks.png)
 
 ### Prerequisites
 
-- Completed **[LAB 5: Tableflow](../LAB5_tableflow/LAB5.md)** with enriched data products flowing to Delta Lake tables
+- Completed **[LAB 4: Tableflow](../LAB4_tableflow/LAB4.md)** with enriched data products flowing to Delta Lake tables
 
 ## Steps
 
@@ -77,31 +77,38 @@ Databricks Genie provides a chat interface where you ask questions about your da
 
 #### Generate Business Insights
 
-Toggle the **Agent** mode and prompt Genie with natural language questions:
+Toggle the **Agent** mode and prompt Genie with natural language questions.
 
-Click the **Explain the data set** button to get an overview.
-
-![Databricks Genie prompt to explain data set](../../shared/images/databricks_genie_prompt_explain_dataset.png)
-
-Try these prompts:
+Here are some other prompts you can try:
 
 > Show me customer satisfaction metrics by country
 
 ![Databricks Genie sample user prompt](../../shared/images/databricks_genie_prompt_satisfaction_by_country.png)
 
-> Show me customers who viewed hotels in the most cities
-
-![Table of customers](../../shared/images/databricks_genie_prompt_customers_hotels_viewed.png)
-
-> Which cities had the most interest from customers?
-
-![Table and chart of cities with the most interest](../../shared/images/databricks_genie_prompt_cities_customer_interest.png)
+---
 
 > Which category of hotel had the lowest interest from customers?
 
 ![Result set showing hotel category and corresponding customer interest count](../../shared/images/databricks_genie_prompt_hotel_category.png)
 
 Identify the *Hotel Category* with the lowest customer interest — you will use this in the next section to create a marketing agent.
+
+---
+
+<details>
+<summary>Expand this section for more sample prompts</summary>
+
+> Show me customers who viewed hotels in the most cities
+
+![Table of customers](../../shared/images/databricks_genie_prompt_customers_hotels_viewed.png)
+
+---
+
+> Which cities had the most interest from customers?
+
+![Table and chart of cities with the most interest](../../shared/images/databricks_genie_prompt_cities_customer_interest.png)
+
+</details>
 
 ### Step 3: Create and Deploy Marketing Campaign Agent
 
@@ -140,7 +147,7 @@ Your AI marketing agent is deployed and ready to help River Hotels create data-d
 
 ## What's Next
 
-Continue to **[LAB 7: Wrap Up](../LAB7_wrap_up/LAB7.md)**.
+Continue to **[LAB 6: Wrap Up](../LAB6_wrap_up/LAB6.md)**.
 
 ## Troubleshooting
 

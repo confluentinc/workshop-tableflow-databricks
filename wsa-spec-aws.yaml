@@ -204,12 +204,12 @@ credentials:
       - label: Unity Catalog Name
         source: terraform
         output: dbx_catalog_name
+      - label: S3 Bucket Name
+        source: terraform
+        output: s3_bucket_name
       - label: Schema Name
         source: terraform
         output: dbx_schema_name
       - label: SQL Warehouse ID
         source: terraform
         output: dbx_sql_warehouse_id
-      - label: S3 Bucket Name
-        source: terraform
-        output: s3_bucket_name

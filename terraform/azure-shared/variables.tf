@@ -42,9 +42,9 @@ variable "data_dir" {
 # ---------------------
 
 variable "vm_size" {
-  description = "Azure VM size for shared PostgreSQL (Standard_D8s_v5 ≈ 8 vCPU, 32 GB, comparable to m5.2xlarge)"
+  description = "Azure VM size for shared PostgreSQL (Standard_D4s_v5 ≈ 4 vCPU, 16 GB)"
   type        = string
-  default     = "Standard_D8s_v5"
+  default     = "Standard_D4s_v5"
 }
 
 variable "vm_disk_size_gb" {
@@ -161,6 +161,12 @@ variable "alarm_cpu_threshold" {
   default     = 80
 }
 
+variable "alarm_memory_threshold" {
+  description = "Memory used percentage threshold for alarm"
+  type        = number
+  default     = 90
+}
+
 variable "alarm_disk_threshold" {
   description = "Disk used percentage threshold for alarm"
   type        = number
@@ -182,6 +188,12 @@ variable "alarm_max_connections" {
 # ---------------------
 # Databricks (bridged from TF_VAR_databricks_azure_* by wsa)
 # ---------------------
+
+variable "databricks_host" {
+  description = "Databricks workspace URL (e.g., https://adb-1234567890.12.azuredatabricks.net)"
+  type        = string
+  default     = ""
+}
 
 variable "databricks_service_principal_client_id" {
   description = "Databricks service principal Application (Client) ID"

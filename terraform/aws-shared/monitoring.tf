@@ -217,6 +217,24 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
   tags = local.common_tags
 }
 
+resource "aws_cloudwatch_metric_alarm" "memory_high" {
+  alarm_name          = "${var.prefix}-memory-high-${local.resource_suffix}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "mem_used_percent"
+  namespace           = "CWAgent"
+  period              = 300
+  statistic           = "Average"
+  threshold           = var.alarm_memory_threshold
+  alarm_description   = "Memory usage above ${var.alarm_memory_threshold}% for 5 minutes"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+
+  dimensions = local.instance_dimension
+
+  tags = local.common_tags
+}
+
 resource "aws_cloudwatch_metric_alarm" "disk_high" {
   alarm_name          = "${var.prefix}-disk-high-${local.resource_suffix}"
   comparison_operator = "GreaterThanThreshold"
@@ -541,6 +559,7 @@ resource "aws_cloudwatch_dashboard" "shared_infra" {
           title = "Alarm Status"
           alarms = [
             aws_cloudwatch_metric_alarm.cpu_high.arn,
+            aws_cloudwatch_metric_alarm.memory_high.arn,
             aws_cloudwatch_metric_alarm.disk_high.arn,
             aws_cloudwatch_metric_alarm.instance_status.arn,
             aws_cloudwatch_metric_alarm.replication_lag.arn,

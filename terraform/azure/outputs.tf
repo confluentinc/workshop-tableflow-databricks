@@ -47,7 +47,7 @@ output "databricks_catalog_name" {
 
 output "databricks_external_location" {
   description = "Databricks external location name"
-  value       = databricks_external_location.main.name
+  value       = local.use_shared ? "shared (azure-shared)" : databricks_external_location.main[0].name
 }
 
 output "databricks_storage_credential" {

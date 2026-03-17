@@ -101,6 +101,23 @@ output "dbx_sp_client_secret" {
   sensitive   = true
 }
 
+# --- Databricks Shared External Location ---
+
+output "dbx_storage_credential_name" {
+  description = "Shared Databricks storage credential name"
+  value       = databricks_storage_credential.shared.name
+}
+
+output "dbx_external_location_name" {
+  description = "Shared Databricks external location name"
+  value       = databricks_external_location.shared.name
+}
+
+output "dbx_access_connector_id" {
+  description = "Shared Databricks Access Connector resource ID"
+  value       = azurerm_databricks_access_connector.shared.id
+}
+
 # --- Monitoring ---
 
 output "dashboard_url" {
@@ -113,12 +130,14 @@ output "dashboard_url" {
 output "shared_infra_summary" {
   description = "Summary of shared infrastructure for wsa build"
   value = {
-    resource_group     = azurerm_resource_group.shared.name
-    location           = azurerm_resource_group.shared.location
-    vnet_id            = azurerm_virtual_network.shared.id
-    subnet_id          = azurerm_subnet.shared.id
-    storage_account    = azurerm_storage_account.shared.name
-    postgres_public_ip = azurerm_public_ip.postgres.ip_address
-    ssh_command        = "ssh -i ${local_file.ssh_private_key.filename} ${var.vm_admin_username}@${azurerm_public_ip.postgres.ip_address}"
+    resource_group         = azurerm_resource_group.shared.name
+    location               = azurerm_resource_group.shared.location
+    vnet_id                = azurerm_virtual_network.shared.id
+    subnet_id              = azurerm_subnet.shared.id
+    storage_account        = azurerm_storage_account.shared.name
+    postgres_public_ip     = azurerm_public_ip.postgres.ip_address
+    dbx_external_location  = databricks_external_location.shared.name
+    dbx_storage_credential = databricks_storage_credential.shared.name
+    ssh_command            = "ssh -i ${local_file.ssh_private_key.filename} ${var.vm_admin_username}@${azurerm_public_ip.postgres.ip_address}"
   }
 }

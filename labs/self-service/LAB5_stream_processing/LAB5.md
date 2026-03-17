@@ -48,7 +48,7 @@ earlier with Terraform:
 6. Drill down in the left navigation to see the tables in your environment and
    cluster
 
-   ![Flink file tree](../../shared/images/flink_data_explorer.png)
+   ![Flink file tree](./images/flink_data_explorer.png)
 
 #### Explore Bookings Data
 
