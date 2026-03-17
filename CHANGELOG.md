@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-03-17
+
+### Added
+
+- **Confluent Flink Statements Module**: Terraform-managed ALTER TABLE statements for changelog mode and watermarks on CDC topics, replacing manual CTAS
+- **Hotel Streaming Generator**: Added `hotel_generator_streaming` to workshop config and `shadowtraffic.tf` provisioner for hotel dimension watermark advancement
+
+### Changed
+
+- **Lab Renumbering**: Stream processing → LAB3, Tableflow → LAB4, analytics/AI → LAB5, wrap-up → LAB6; removed former LAB3 catalog integration
+- **Historical Generators**: Compressed time spans (booking: 200 events over ~6–12h; review: 200 events over ~6–12h; hotel streaming: every 25s). Added `min()` cap on `clickstream_created_at`
+
+### Fixed
+
+- **Stalled Temporal Join Watermarks**: Resolved denormalized bookings CTAS watermark stall via reduced backlog and hotel streaming (see `FIXING_STALLED_WATERMARKS.md`)
+
 ## [0.8.0] - 2026-03-11
 
 ### Added
