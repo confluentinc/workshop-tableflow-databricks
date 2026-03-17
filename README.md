@@ -22,13 +22,7 @@ If you have any issues with or feedback for this workshop, Please let us know in
 
 *River Hotels* is at a critical juncture. Despite being a successful hospitality company with properties across multiple continents, they're slowly losing ground to more agile competitors who can respond to market opportunities in real-time. The executive leadership team has identified a fundamental problem: **their data infrastructure is holding back their ability to compete effectively in today's fast-paced hospitality market.**
 
-## 🏛️ Architecture Overview
-
-At a high level, the solution you will build is represented by this diagram:
-
-![Architecture Diagram](./assets/images/tableflow_databricks_architecture_diagram.jpg)
-
-### 🗄 Datasets
+## 🗄 Datasets
 
 There are five normalized interrelated datasets that you will be streaming to Confluent Cloud:
 
@@ -244,19 +238,22 @@ This workshop supports two modes. Choose the path that matches your situation:
 
 > Your instructor has pre-provisioned all cloud infrastructure and accounts. You will claim a dedicated environment and focus on the hands-on Confluent and Databricks labs.
 
+![Architecture Diagram](./assets/images/arch_diagram_full_instructor_led.png)
+
 | Lab | Duration | Details |
 |-----|----------|-------------|
 | [LAB 1: Claim Your Account](./labs/instructor-led/LAB1_claim_account/LAB1.md) | ~5 min | **Claim your workshop account**: complete the Google Form, receive credentials, verify access to Confluent Cloud and Databricks. |
 | [LAB 2: Explore Your Environment](./labs/instructor-led/LAB2_explore_environment/LAB2.md) | ~10 min | **Tour your environment**: explore your Kafka cluster, CDC topics, connectors, Flink compute pool, and Databricks workspace. |
-| [LAB 3: Unity Catalog Integration](./labs/instructor-led/LAB3_catalog_integration/LAB3.md) | ~5 min | **Configure catalog**: connect Confluent Cloud Tableflow with Databricks Unity Catalog. |
-| [LAB 4: Stream Processing](./labs/instructor-led/LAB4_stream_processing/LAB4.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with temporal joins, denormalize CDC data. |
-| [LAB 5: Tableflow](./labs/instructor-led/LAB5_tableflow/LAB5.md) | ~10 min | **Enable Tableflow**: stream clickstream, denormalized bookings, and hotel stats topics as Delta Lake tables. |
-| [LAB 6: Analytics & AI](./labs/instructor-led/LAB6_analytics_ai/LAB6.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
-| [LAB 7: Wrap Up](./labs/instructor-led/LAB7_wrap_up/LAB7.md) | ~5 min | **Clean up and recap**: stop Flink statements, review accomplishments, provide feedback. |
+| [LAB 3: Stream Processing](./labs/instructor-led/LAB3_stream_processing/LAB3.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with temporal joins, denormalize CDC data. |
+| [LAB 4: Tableflow](./labs/instructor-led/LAB4_tableflow/LAB4.md) | ~10 min | **Configure catalog and enable Tableflow**: connect Confluent Cloud Tableflow with Databricks Unity Catalog, stream clickstream, denormalized bookings, and hotel stats topics as Delta Lake tables. |
+| [LAB 5: Analytics & AI](./labs/instructor-led/LAB5_analytics_ai/LAB5.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
+| [LAB 6: Wrap Up](./labs/instructor-led/LAB6_wrap_up/LAB6.md) | ~5 min | **Clean up and recap**: Review accomplishments, provide feedback. |
 
 ### 🛠️ Self-Service
 
 > You will set up your own cloud accounts, deploy infrastructure with Terraform, and run the full workshop independently.
+
+![Architecture Diagram](./assets/images/tableflow_databricks_architecture_diagram.jpg)
 
 | Lab | Duration | Details |
 |-----|----------|-------------|

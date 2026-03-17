@@ -555,6 +555,30 @@ module "connectors" {
 }
 
 # ===============================
+# Confluent Flink Statements (ALTER TABLE on CDC topics)
+# ===============================
+# Configures CDC topics for direct use with Tableflow and temporal joins:
+# - clickstream: append mode
+# - customer/hotel: upsert mode + primary key + watermark
+# - bookings: watermark
+
+module "flink_statements" {
+  source = "../modules/confluent-flink-statements"
+
+  organization_id            = module.confluent_platform.organization_id
+  environment_id             = module.confluent_platform.environment_id
+  environment_name           = module.confluent_platform.environment_name
+  kafka_cluster_display_name = module.confluent_platform.kafka_cluster_display_name
+  compute_pool_id            = module.flink.compute_pool_id
+  service_account_id         = module.confluent_platform.service_account_id
+  flink_api_key              = module.flink.flink_api_key
+  flink_api_secret           = module.flink.flink_api_secret
+  flink_rest_endpoint        = module.flink.flink_rest_endpoint
+
+  depends_on = [module.connectors, module.flink]
+}
+
+# ===============================
 # Data Generator Configuration
 # ===============================
 

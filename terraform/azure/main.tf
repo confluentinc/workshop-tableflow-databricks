@@ -49,6 +49,8 @@ locals {
   create_workspace         = var.databricks_host == ""
   databricks_workspace_url = local.create_workspace ? module.databricks_workspace.workspace_url : var.databricks_host
   databricks_workspace_id  = local.create_workspace ? module.databricks_workspace.workspace_id : null
+
+  effective_access_connector_id = local.use_shared ? var.shared_dbx_access_connector_id : module.databricks_access_connector[0].access_connector_id
 }
 
 # ===============================
@@ -225,8 +227,12 @@ module "databricks_workspace" {
 # ===============================
 # Databricks Access Connector (managed identity → ADLS Gen2)
 # ===============================
+# Skipped in shared mode — azure-shared creates a shared access
+# connector with RBAC roles already assigned. Avoids creating 95
+# redundant connectors and 120s identity propagation waits.
 
 module "databricks_access_connector" {
+  count  = local.use_shared ? 0 : 1
   source = "./modules/azure-databricks-access-connector"
 
   prefix              = local.prefix
@@ -252,12 +258,12 @@ module "databricks_metastore" {
   workspace_id         = local.databricks_workspace_id
   storage_account_name = local.effective_storage_account_name
   container_name       = local.effective_storage_container_name
-  access_connector_id  = module.databricks_access_connector.access_connector_id
+  access_connector_id  = local.effective_access_connector_id
   region               = var.cloud_region
   resource_suffix      = local.resource_suffix
   create_sql_warehouse = local.create_workspace
 
-  depends_on = [module.databricks_workspace, module.databricks_access_connector]
+  depends_on = [module.databricks_workspace]
 }
 
 # ===============================
@@ -274,20 +280,21 @@ module "databricks" {
   prefix                      = local.prefix
   resource_suffix             = local.resource_suffix
   cloud_provider              = "azure"
-  azure_access_connector_id   = module.databricks_access_connector.access_connector_id
+  azure_access_connector_id   = local.effective_access_connector_id
   user_email                  = var.databricks_user_email
   sso_email                   = var.databricks_sso_email
   service_principal_client_id = var.databricks_service_principal_client_id
   kafka_cluster_id            = module.confluent_platform.kafka_cluster_id
-
-  depends_on = [module.databricks_access_connector]
 }
 
 # ===============================
 # Databricks External Location
 # ===============================
+# Skipped in shared mode — azure-shared creates a container-root
+# external location that covers all per-account catalog storage roots.
 
 resource "databricks_external_location" "main" {
+  count    = local.use_shared ? 0 : 1
   provider = databricks.workspace
 
   name            = "${local.prefix}-external-location-${local.resource_suffix}"
@@ -304,9 +311,10 @@ resource "databricks_external_location" "main" {
 # ===============================
 
 resource "databricks_grants" "external_location" {
+  count    = local.use_shared ? 0 : 1
   provider = databricks.workspace
 
-  external_location = databricks_external_location.main.name
+  external_location = databricks_external_location.main[0].name
 
   grant {
     principal = var.databricks_user_email
@@ -350,7 +358,7 @@ resource "databricks_catalog" "main" {
   storage_root  = "${local.effective_abfss_url}${local.prefix}/catalog/"
   force_destroy = true
 
-  depends_on = [databricks_external_location.main]
+  depends_on = [module.databricks]
 }
 
 # ===============================
@@ -400,7 +408,7 @@ resource "databricks_grants" "catalog" {
     }
   }
 
-  depends_on = [databricks_catalog.main, databricks_external_location.main]
+  depends_on = [databricks_catalog.main]
 }
 
 # ===============================
@@ -425,6 +433,30 @@ module "connectors" {
   initial_wait_seconds = local.use_shared ? 0 : 90
 
   depends_on = [module.postgres, module.confluent_platform, confluent_access_point.postgres]
+}
+
+# ===============================
+# Confluent Flink Statements (ALTER TABLE on CDC topics)
+# ===============================
+# Configures CDC topics for direct use with Tableflow and temporal joins:
+# - clickstream: append mode
+# - customer/hotel: upsert mode + primary key + watermark
+# - bookings: watermark
+
+module "flink_statements" {
+  source = "../modules/confluent-flink-statements"
+
+  organization_id            = module.confluent_platform.organization_id
+  environment_id             = module.confluent_platform.environment_id
+  environment_name           = module.confluent_platform.environment_name
+  kafka_cluster_display_name = module.confluent_platform.kafka_cluster_display_name
+  compute_pool_id            = module.flink.compute_pool_id
+  service_account_id         = module.confluent_platform.service_account_id
+  flink_api_key              = module.flink.flink_api_key
+  flink_api_secret           = module.flink.flink_api_secret
+  flink_rest_endpoint        = module.flink.flink_rest_endpoint
+
+  depends_on = [module.connectors, module.flink]
 }
 
 # ===============================

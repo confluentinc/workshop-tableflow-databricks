@@ -1,4 +1,4 @@
-# LAB 7: Wrap Up
+# LAB 6: Wrap Up
 
 ## Overview
 

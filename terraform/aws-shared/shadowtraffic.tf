@@ -141,6 +141,10 @@ resource "null_resource" "shadowtraffic_setup" {
     source      = "${var.data_dir}/generators/hotel_generator_historical.json"
     destination = "/opt/shadowtraffic/data/generators/hotel_generator_historical.json"
   }
+  provisioner "file" {
+    source      = "${var.data_dir}/generators/hotel_generator_streaming.json"
+    destination = "/opt/shadowtraffic/data/generators/hotel_generator_streaming.json"
+  }
 
   # --- Workshop generators (bookings, clickstream, reviews → PostgreSQL) ---
   provisioner "file" {

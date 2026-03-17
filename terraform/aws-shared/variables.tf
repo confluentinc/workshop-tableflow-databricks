@@ -127,6 +127,12 @@ variable "alarm_cpu_threshold" {
   default     = 80
 }
 
+variable "alarm_memory_threshold" {
+  description = "Memory used percentage threshold for alarm"
+  type        = number
+  default     = 90
+}
+
 variable "alarm_disk_threshold" {
   description = "Disk used percentage threshold for alarm"
   type        = number

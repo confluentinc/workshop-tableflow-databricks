@@ -4,8 +4,8 @@
     "connection": "postgres",
     "op": "update",
     "localConfigs": {
-        "maxEvents": 240,
-        "throttleMs": 30000
+        "maxEvents": 3456,
+        "throttleMs": 25000
     },
     "vars": {
         "hotel_data": {

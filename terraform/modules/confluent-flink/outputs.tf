@@ -23,7 +23,7 @@ output "flink_api_secret" {
   sensitive   = true
 }
 
-output "flink_region_id" {
-  description = "Flink region ID"
-  value       = data.confluent_flink_region.main.id
+output "flink_rest_endpoint" {
+  description = "Flink REST endpoint URL for the region"
+  value       = data.confluent_flink_region.main.rest_endpoint
 }

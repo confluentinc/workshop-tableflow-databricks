@@ -22,6 +22,11 @@ output "kafka_cluster_id" {
   value       = confluent_kafka_cluster.main.id
 }
 
+output "kafka_cluster_display_name" {
+  description = "Kafka cluster display name (used as Flink SQL database name)"
+  value       = confluent_kafka_cluster.main.display_name
+}
+
 output "kafka_bootstrap_endpoint" {
   description = "Kafka bootstrap endpoint"
   value       = confluent_kafka_cluster.main.bootstrap_endpoint

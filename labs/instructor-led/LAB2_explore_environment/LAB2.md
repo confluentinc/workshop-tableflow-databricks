@@ -11,6 +11,8 @@ By the end of this lab, you will have:
 1. **Explored Confluent Cloud**: Reviewed your Kafka cluster, topics, and active CDC connectors
 2. **Explored Databricks**: Located your workspace and Unity Catalog
 
+![Topics and connector diagram](./images/arch_diagram_explore_topics_connector.png)
+
 ### Prerequisites
 
 - Completed **[LAB 1: Claim Your Account](../LAB1_claim_account/LAB1.md)**
@@ -34,11 +36,12 @@ By the end of this lab, you will have:
 
    | Topic | Description |
    |---|---|
+   | `riverhotel.cdc.bookings` | Booking transactions from PostgreSQL CDC |
+   | `riverhotel.cdc.clickstream` | Website clickstream events from PostgreSQL CDC |
    | `riverhotel.cdc.customer` | Customer profiles from PostgreSQL CDC |
    | `riverhotel.cdc.hotel` | Hotel property data from PostgreSQL CDC |
-   | `riverhotel.cdc.bookings` | Booking transactions from PostgreSQL CDC |
    | `riverhotel.cdc.hotel_reviews` | Customer reviews from PostgreSQL CDC |
-   | `riverhotel.cdc.clickstream` | Website clickstream events from PostgreSQL CDC |
+
 
 3. Click on any the `riverhotel.cdc.clickstream` topic and select the **Messages** tab
 4. Verify that messages are flowing — you should see new records appearing around every 20-30 seconds.
@@ -46,7 +49,7 @@ By the end of this lab, you will have:
 > [!NOTE]
 > **CDC Prefix**
 >
-> All topics use the `riverhotel.cdc.` prefix because the data flows through PostgreSQL Change Data Capture. Flink SQL automatically unwraps the CDC envelope, so you can query the fields directly.
+> All topics use the `riverhotel.cdc.` prefix because the data originates from PostgreSQL Change Data Capture. The connector is configured with `after.state.only`, so topics contain flat records rather than the full CDC envelope.
 
 #### View CDC Connectors
 
@@ -81,18 +84,13 @@ By the end of this lab, you will have:
 
 ![Accordion panel showing catalogs and schemas](./images/dbx_catalog.png)
 
-> [!TIP]
-> **Catalog Schema**
->
-> The schema you create in future steps will appear under the `workspace` catalog.
-
 ## Conclusion
 
 You have toured your pre-provisioned workshop environment. You now know where to find your Kafka topics (with CDC data flowing), your connectors, your Flink compute pool, and your Databricks workspace.
 
 ## What's Next
 
-Continue to **[LAB 3: Unity Catalog Integration](../LAB3_catalog_integration/LAB3.md)**.
+Continue to **[LAB 3: Stream Processing](../LAB3_stream_processing/LAB3.md)**.
 
 ## Troubleshooting
 

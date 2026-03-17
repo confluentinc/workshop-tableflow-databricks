@@ -158,7 +158,7 @@ output "next_steps" {
   description = "Workshop next steps"
   value = (
     var.create_postgres_cdc_connector
-    ? "🎉 Workshop Infrastructure Deployed!\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Check CDC Connector status in Confluent Console\n3. Run ShadowTraffic to generate data\n4. Proceed to LAB5 (Stream Processing)\n\n📚 Documentation: labs/README.md"
+    ? "🎉 Workshop Infrastructure Deployed!\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Check CDC Connector status in Confluent Console\n3. Run ShadowTraffic to generate data\n4. Proceed to LAB3 (Stream Processing)\n\n📚 Documentation: labs/README.md"
     : "🎉 Infrastructure Deployed!\n\n⚠️  CDC Connector not created (create_postgres_cdc_connector=false)\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Test database connection\n3. Enable connector: set create_postgres_cdc_connector=true\n4. Re-run: terraform apply"
   )
 }

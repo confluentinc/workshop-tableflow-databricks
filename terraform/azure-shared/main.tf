@@ -191,6 +191,10 @@ resource "azurerm_linux_virtual_machine" "postgres" {
 
   network_interface_ids = [azurerm_network_interface.postgres.id]
 
+  identity {
+    type = "SystemAssigned"
+  }
+
   admin_ssh_key {
     username   = var.vm_admin_username
     public_key = tls_private_key.shared.public_key_openssh
@@ -222,4 +226,112 @@ resource "azurerm_linux_virtual_machine" "postgres" {
   tags = merge(local.common_tags, {
     Name = "${var.prefix}-postgres-workshop"
   })
+}
+
+# ===============================
+# Shared Databricks External Location
+# ===============================
+# All workshop accounts share one Databricks workspace and ADLS Gen2
+# storage account. Confluent Tableflow writes Delta files to internal
+# path structures that can't be predicted at provisioning time.
+# A container-root external location created here (once, before
+# per-account runs) covers all paths — including Tableflow data and
+# per-account catalog storage roots.
+#
+# Per-account Terraform skips external location creation in shared
+# mode and relies on this shared location instead.
+
+# --- Access Connector (managed identity → ADLS Gen2) ---
+
+resource "azurerm_databricks_access_connector" "shared" {
+  name                = "${var.prefix}-access-connector-${local.resource_suffix}"
+  resource_group_name = azurerm_resource_group.shared.name
+  location            = azurerm_resource_group.shared.location
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = local.common_tags
+}
+
+resource "azurerm_role_assignment" "blob_data_contributor" {
+  scope                = azurerm_storage_account.shared.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_databricks_access_connector.shared.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "queue_data_contributor" {
+  scope                = azurerm_storage_account.shared.id
+  role_definition_name = "Storage Queue Data Contributor"
+  principal_id         = azurerm_databricks_access_connector.shared.identity[0].principal_id
+}
+
+resource "time_sleep" "wait_for_identity_propagation" {
+  create_duration = "120s"
+
+  triggers = {
+    access_connector_id = azurerm_databricks_access_connector.shared.id
+    blob_role           = azurerm_role_assignment.blob_data_contributor.id
+    queue_role          = azurerm_role_assignment.queue_data_contributor.id
+  }
+
+  depends_on = [
+    azurerm_role_assignment.blob_data_contributor,
+    azurerm_role_assignment.queue_data_contributor
+  ]
+}
+
+# --- Storage Credential ---
+
+resource "databricks_storage_credential" "shared" {
+  provider = databricks.workspace
+
+  name    = "${var.prefix}-storage-credential-${local.resource_suffix}"
+  comment = "Shared storage credential for Unity Catalog ADLS Gen2 access"
+
+  azure_managed_identity {
+    access_connector_id = azurerm_databricks_access_connector.shared.id
+  }
+
+  depends_on = [time_sleep.wait_for_identity_propagation]
+}
+
+# --- External Location ---
+
+resource "databricks_external_location" "shared" {
+  provider = databricks.workspace
+
+  name            = "${var.prefix}-external-location-${local.resource_suffix}"
+  url             = "abfss://${azurerm_storage_container.shared.name}@${azurerm_storage_account.shared.name}.dfs.core.windows.net/"
+  credential_name = databricks_storage_credential.shared.name
+  comment         = "Shared external location for Tableflow and Unity Catalog data"
+  force_destroy   = true
+  skip_validation = true
+
+  depends_on = [databricks_storage_credential.shared]
+}
+
+# --- Grants on Shared External Location ---
+
+resource "databricks_grants" "shared_external_location" {
+  provider = databricks.workspace
+
+  external_location = databricks_external_location.shared.name
+
+  grant {
+    principal = var.databricks_service_principal_client_id
+    privileges = [
+      "ALL_PRIVILEGES",
+      "MANAGE",
+      "CREATE_EXTERNAL_TABLE",
+      "CREATE_EXTERNAL_VOLUME",
+      "READ_FILES",
+      "WRITE_FILES",
+      "CREATE_MANAGED_STORAGE",
+      "EXTERNAL_USE_LOCATION"
+    ]
+  }
+
+  depends_on = [databricks_external_location.shared]
 }

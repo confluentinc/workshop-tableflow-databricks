@@ -90,49 +90,41 @@ Follow these steps to set Genie up:
 
    ![Databricks Genie space](../../shared/images/databricks_genie_space.png)
 
+
 #### Generate Business Insights
 
-Prompt Genie for insights about the data using natural language and following these steps:
+Toggle the **Agent** mode and prompt Genie with natural language questions.
 
-> [!NOTE]
-> **Example Screenshots**
->
-> Throughout these next steps of prompting insights from Genie, the results depicted in the screenshots are **only examples** - the dataset
-> you generate for this lab is different each time, and so these example screenshots will never fully match what you see.
+Here are some other prompts you can try:
 
-Click the **Explain the data set** button to generate an output similar to this:
-
-![Databricks Genie prompt to explain data set](../../shared/images/databricks_genie_prompt_explain_dataset.png)
-
-Now, find out how each country is doing with customer satisfaction with this prompt:
 > Show me customer satisfaction metrics by country
 
-You may see a table and chart similar to this:
 ![Databricks Genie sample user prompt](../../shared/images/databricks_genie_prompt_satisfaction_by_country.png)
 
-You can dive into customer-centric analysis with this prompt:
-> Show me customers who viewed hotels in the most cities
-
-You should see a result similar to this:
-
-![Table of customers](../../shared/images/databricks_genie_prompt_customers_hotels_viewed.png)
-
-Another prompt to try out is this:
-> Which cities had the most interest from customers?
-
-See which cities top your list, it may look similar to this:
-
-![table and chart of cities with the most interest](../../shared/images/databricks_genie_prompt_cities_customer_interest.png)
-
-You may continue with your own prompts or clicking on Genie-suggested ones to further learn from the data.
-
-Executing this final prompt will provide the *category* of hotel that you will use to fulfill the targeted Marketing campaign:
+---
 
 > Which category of hotel had the lowest interest from customers?
 
 ![Result set showing hotel category and corresponding customer interest count](../../shared/images/databricks_genie_prompt_hotel_category.png)
 
-Identify the *Hotel Category* with the lowest customer interest, you will use this in the next section to create an intelligent marketing agent.
+Identify the *Hotel Category* with the lowest customer interest — you will use this in the next section to create a marketing agent.
+
+---
+
+<details>
+<summary>Expand this section for more sample prompts</summary>
+
+> Show me customers who viewed hotels in the most cities
+
+![Table of customers](../../shared/images/databricks_genie_prompt_customers_hotels_viewed.png)
+
+---
+
+> Which cities had the most interest from customers?
+
+![Table and chart of cities with the most interest](../../shared/images/databricks_genie_prompt_cities_customer_interest.png)
+
+</details>
 
 ### Step 3: Create and Deploy Marketing Campaign Agent
 

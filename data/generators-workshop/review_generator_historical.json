@@ -42,15 +42,24 @@
         "eventIntervalMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                21600000,
-                28800000
+                108000,
+                216000
             ],
             "decimals": 0
         },
         "review_created_at": {
-            "_gen": "math",
-            "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
-            "decimals": 0
+            "_gen": "min",
+            "args": [
+                {
+                    "_gen": "math",
+                    "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+                    "decimals": 0
+                },
+                {
+                    "_gen": "var",
+                    "var": "currentTimeInMs"
+                }
+            ]
         }
     },
     "row": {

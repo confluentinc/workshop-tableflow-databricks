@@ -26,6 +26,10 @@
         },
         {
             "_gen": "loadJsonFile",
+            "file": "/home/data/generators/hotel_generator_streaming.json"
+        },
+        {
+            "_gen": "loadJsonFile",
             "file": "/home/data/generators-workshop/clickstream_generator_streaming.json"
         },
         {
@@ -57,7 +61,8 @@
                     "clickstream_generator_streaming",
                     "booking_generator_streaming",
                     "review_generator_streaming",
-                    "customer_generator_streaming"
+                    "customer_generator_streaming",
+                    "hotel_generator_streaming"
                 ]
             }
         ]
