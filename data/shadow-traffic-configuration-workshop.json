@@ -10,6 +10,14 @@
         },
         {
             "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/customer_updates_historical.json"
+        },
+        {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-workshop/hotel_updates_historical.json"
+        },
+        {
+            "_gen": "loadJsonFile",
             "file": "/home/data/generators-workshop/clickstream_generator_historical.json"
         },
         {
@@ -47,6 +55,12 @@
                 "generators": [
                     "customer_generator_historical",
                     "hotel_generator_historical"
+                ]
+            },
+            {
+                "generators": [
+                    "customer_updates_historical",
+                    "hotel_updates_historical"
                 ]
             },
             {

@@ -23,6 +23,16 @@ By the end of this lab you will have:
 ### Navigate to Flink Compute Pool
 
 1. Navigate to your [workshop Flink compute pool](https://confluent.cloud/go/flink)
+
+> [!WARNING]
+> **ERROR: You don't have the required permission**
+>
+> If you see an error like the one below, then close the workspace by clicking on the "x" icon in the top right of the tab.
+>
+> Then navigate back to Flink and open a new SQL workspace.
+>
+> ![Red error](./images/stale_flink_workspace.png)
+
 2. Select your workshop environment
 3. Click **Continue**
 
@@ -31,6 +41,7 @@ By the end of this lab you will have:
 4. Click on the **Open SQL workspace** button in your workshop Flink compute pool
 
    ![Flink Compute Pools](../../shared/images/flink_compute_pool.png)
+
 5. Ensure your workspace environment and cluster are both selected in the `Catalog` and `Database` dropdowns at the top of your compute pool screen
 
 6. Drill down in the left navigation to see the tables in your environment and cluster
@@ -100,6 +111,7 @@ Your CDC topics are already configured with primary keys, watermarks, and change
 This query creates a denormalized table combining booking data with customer information, hotel details, and hotel reviews using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
 
 ```sql
+SET 'sql.state-ttl' = '1 d';
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
 
 CREATE TABLE denormalized_hotel_bookings (
@@ -156,6 +168,11 @@ Temporal joins allow you to join a streaming fact table (bookings) with dimensio
 1. **Primary Key**: The dimension table must have a declared primary key
 2. **Watermark**: Both the probe side (bookings) and dimension side (customer, hotel) need watermarks
 3. **Upsert Mode**: Dimension tables use `changelog.mode = 'upsert'` to maintain current state
+4. **Historical Versions**: The dimension topic must retain historical record versions — compaction cannot remove them before the temporal join reads them. This workshop uses `min.compaction.lag.ms = 7 days` to preserve versions during the workshop window.
+
+**State TTL**
+
+The `SET 'sql.state-ttl' = '1 d'` limits how long Flink retains state for the regular `LEFT JOIN` on hotel reviews. Without it, the join state would grow unbounded. Temporal joins manage their own state lifecycle and are not affected by this setting.
 
 </details>
 

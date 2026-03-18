@@ -58,7 +58,7 @@ Your credentials email will contain the following information:
 | **Schema Name** | Your Databricks Unity Catalog schema (Kafka cluster ID) |
 | **SQL Warehouse ID** | Your Databricks SQL Warehouse ID |
 
-Keep this email open — you will reference these credentials throughout the workshop.
+Keep this email open — you will reference these credentials and IDs throughout the workshop.
 
 ### Step 3: Verify Confluent Cloud Access
 
@@ -72,9 +72,20 @@ You should see an environment with a Kafka cluster already created, along with t
 
 1. Open the **Databricks Host** URL from your credentials email
 2. Log in with the provided **email** and **password**
+
+> [!WARNING]
+> **403 Login Error**
+>
+> ![Login error](./images/dbx_login_error_403.png)
+>
+> If you see this or a similar error upon logging into Databricks, **just refresh the web page and it should load your databricks workspace fine.**
+
 3. Verify that you land on the Databricks workspace home page
 
-> **Tip**: If you are prompted to select a compute resource, you can dismiss this for now — you will use it in a later lab.
+> [!TIP]
+> **Compute Resource Prompt**
+>
+> If you are prompted to select a compute resource, you can dismiss this for now — you will set this up in a later lab.
 
 ## Conclusion
 

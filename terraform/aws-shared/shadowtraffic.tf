@@ -148,6 +148,15 @@ resource "null_resource" "shadowtraffic_setup" {
 
   # --- Workshop generators (bookings, clickstream, reviews → PostgreSQL) ---
   provisioner "file" {
+    source      = "${var.data_dir}/generators-workshop/customer_updates_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-workshop/customer_updates_historical.json"
+  }
+  provisioner "file" {
+    source      = "${var.data_dir}/generators-workshop/hotel_updates_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-workshop/hotel_updates_historical.json"
+  }
+
+  provisioner "file" {
     source      = "${var.data_dir}/generators-workshop/booking_generator_historical.json"
     destination = "/opt/shadowtraffic/data/generators-workshop/booking_generator_historical.json"
   }

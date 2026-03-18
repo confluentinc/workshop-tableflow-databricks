@@ -197,6 +197,7 @@ You should now see the watermark defined as `created_at` - INTERVAL '30' SECOND.
 The query below creates a denormalized topic/table that combines booking data with customer information, hotel details, and any existing hotel reviews using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins):
 
 ```sql
+SET 'sql.state-ttl' = '1 d';
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
 
 CREATE TABLE denormalized_hotel_bookings (

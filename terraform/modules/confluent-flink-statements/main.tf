@@ -95,7 +95,7 @@ resource "confluent_flink_statement" "customer_set_upsert" {
     id = var.service_account_id
   }
 
-  statement     = "ALTER TABLE `riverhotel.cdc.customer` SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');"
+  statement     = "ALTER TABLE `riverhotel.cdc.customer` SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact', 'kafka.compaction.time' = '7 d');"
   properties    = local.flink_properties
   rest_endpoint = var.flink_rest_endpoint
 
@@ -152,7 +152,7 @@ resource "confluent_flink_statement" "hotel_set_upsert" {
     id = var.service_account_id
   }
 
-  statement     = "ALTER TABLE `riverhotel.cdc.hotel` SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact');"
+  statement     = "ALTER TABLE `riverhotel.cdc.hotel` SET ('changelog.mode' = 'upsert', 'kafka.cleanup-policy' = 'compact', 'kafka.compaction.time' = '7 d');"
   properties    = local.flink_properties
   rest_endpoint = var.flink_rest_endpoint
 
