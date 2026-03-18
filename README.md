@@ -63,7 +63,7 @@ As the lead data engineer, you've been called into an urgent cross-departmental 
 
 ### ⚙️ The Engineering Conundrum
 
-> The Engineering Director is supportive but realistic: *"Whatever solution we build needs to integrate with our existing Oracle database infrastructure and can't require a massive operational overhead. We're already stretched thin, and we need something built on proven, enterprise-grade technology that our small team can actually maintain."*
+> The Engineering Director is supportive but realistic: *"Whatever solution we build needs to integrate with our existing PostgreSQL database infrastructure and can't require a massive operational overhead. We're already stretched thin, and we need something built on proven, enterprise-grade technology that our small team can actually maintain."*
 
 ---
 
@@ -96,8 +96,8 @@ Your task is to design and implement a proof-of-concept that transforms River Ho
 
 By the end of this workshop, you will have constructed a sophisticated data pipeline that:
 
-1. **Captures Real-Time Customer Behavior**: Set up Oracle XStream CDC to capture customer and hotel data changes, plus generate realistic clickstream, booking, and review data using ShadowTraffic
-2. **Processes Streaming Data with AI**: Use Apache Flink SQL to identify high-value prospects (customers who clicked but didn't book) and enrich their profiles with hotel reviews summarized by Large Language Models
+1. **Captures Real-Time Customer Behavior**: Set up PostgreSQL CDC to capture customer and hotel data changes, plus generate realistic clickstream, booking, and review data using ShadowTraffic
+2. **Processes Streaming Data with AI**: Use Confluent Cloud for Apache Flink SQL to identify high-value prospects (customers who clicked but didn't book) and enrich their profiles with hotel reviews summarized by Large Language Models
 3. **Streams to Delta Lake**: Leverage Confluent Tableflow to automatically sync processed data streams as Delta tables in AWS S3
 4. **Generates AI-Driven Insights**: Use Databricks Genie to analyze booking patterns, customer preferences, and hotel performance metrics
 5. **Creates Personalized Campaigns**: Deploy AI agents in Databricks that identify underperforming hotels with good customer satisfaction, generate targeted social media content based on customer review analysis, and create lists of potential customers for marketing outreach
@@ -105,7 +105,7 @@ By the end of this workshop, you will have constructed a sophisticated data pipe
 ### 🎓 Key Learning Outcomes
 
 - **Infrastructure as Code**: Deploy complex multi-cloud resources (AWS, Confluent Cloud, Databricks) using Terraform
-- **Change Data Capture**: Implement Oracle XStream for real-time database change streaming
+- **Change Data Capture**: Implement PostgreSQL CDC Connector for real-time database change streaming
 - **Stream Processing**: Build sophisticated Flink SQL queries for real-time data enrichment and AI model integration
 - **Data Lake Integration**: Use Tableflow to seamlessly bridge streaming data and analytics platforms
 - **AI-Powered Analytics**: Apply generative AI for both data summarization and marketing content creation
@@ -178,11 +178,11 @@ erDiagram
 
 1. **Data Sources**
    - **ShadowTraffic**: Realistic synthetic data generation of:
-     - Customer and Hotel data, which is sent to an Oracle database
+     - Customer and Hotel data, which is sent to an PostgreSQL database
      - Bookings, Reviews, and Clickstream events, which are all produced to Kafka topics
 
 2. **Ingestion Layer**
-   - **Oracle XStream CDC Connector**: Real-time change data capture from Oracle
+   - **PostgreSQL CDC Connector**: Real-time change data capture from PostgreSQL
    - **Kafka Producers**: Stream synthetic data directly from ShadowTraffic to Confluent Cloud topics
 
 3. **Processing Layer**
@@ -204,9 +204,8 @@ erDiagram
 ### Core Technologies
 
 - **[Terraform](https://terraform.io/)**: Infrastructure as Code for multi-cloud deployment
-<!-- - **[Oracle XStream](https://docs.oracle.com/en/database/oracle/oracle-database/21/xstrm/)**: Change data capture for real-time data streaming -->
-- **[Apache Kafka](https://kafka.apache.org/)**: Distributed streaming platform via Confluent Cloud
-- **[Apache Flink](https://flink.apache.org/)**: Stream processing and real-time analytics
+- **[Apache Kafka](https://www.confluent.io/apache-kafka/)**: Distributed streaming platform via Confluent Cloud
+- **[Apache Flink](https://www.confluent.io/product/flink/)**: Stream processing and real-time analytics
 - **[Delta Lake](https://delta.io/)**: Open-source storage framework for data lakes
 
 ### Cloud Platforms
@@ -223,7 +222,7 @@ erDiagram
 
 ### Tools
 
-- **[Docker](https://docker.com/)**: Containerization for Oracle database and ShadowTraffic
+- **[Docker](https://docker.com/)**: Containerization for PostgreSQL database and ShadowTraffic
 - **[Git](https://git-scm.com/)**: Version control
 - **[AWS CLI](https://aws.amazon.com/cli/)**: AWS command-line interface
 - **[ShadowTraffic](https://shadowtraffic.io/)**: Realistic synthetic data generation
