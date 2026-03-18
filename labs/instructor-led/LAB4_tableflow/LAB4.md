@@ -149,6 +149,24 @@ Tableflow offers three modes for handling per-record materialization failures:
 
 The **Log** mode is useful for production environments where you want to capture problematic records without stopping the pipeline.
 
+Follow these steps to enable **Log** DLQ for your `denormalized_hotel_booking` topic:
+
+1. Navigate to your `denormalized_hotel_booking` topic
+2. Click on the **Settings** tab
+
+   ![Topic tab navigation](./images/tableflow_dlq_topic_settings.png)
+
+3. Click on the **Edit Settings** button next to the *Tableflow* section
+
+   ![Tableflow Settings](./images/tableflow_dlq_edit_settings.png)
+
+4. Select `Log` from the **Error handling mode** dropdown
+5. Keep the default `error_log` for the **Log destination** field
+
+   ![Form to modify the Tableflow error handling mode](./images/tableflow_dql_log_mode.png)
+
+6. Click **Save changes**
+
 </details>
 
 ## Conclusion

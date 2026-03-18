@@ -172,7 +172,6 @@ LIMIT 20;
 Some observations:
 
 - Because of the **LEFT JOIN** on `riverhotel.cdc.hotel_reviews`, some bookings have no customer reviews yet
-- The `check_in`, `check_out`, `booking_date`, and `review_date` columns are now human readable
 
 You can also verify the table in the left navigation panel:
 
