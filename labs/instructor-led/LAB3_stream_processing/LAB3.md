@@ -9,10 +9,10 @@ This lab transforms your raw CDC data streams into enriched data products using 
 By the end of this lab you will have:
 
 1. **Explored Streaming CDC Data**: Queried real-time CDC topics with Flink SQL
-2. **Created Enriched Data Products**: Built denormalized bookings combining customer, hotel, and review data using temporal joins
-3. **Built Streaming Aggregations**: Created real-time hotel performance metrics
+2. **Created Enriched Data Products**: Built denormalized bookings combining customer and hotel data using temporal joins
+3. **Created AI-Enriched Reviews**: Used `AI_SENTIMENT` to analyze hotel reviews by cleanliness, amenities, and service
 
-![Architecture diagram for stream processing](./images/arch_diagram_flink.png)
+![Architecture diagram for stream processing](./images/arch_diagram_flink.jpg)
 
 ### Prerequisites
 
@@ -38,11 +38,11 @@ By the end of this lab you will have:
 
    ![Environment dropdown in flink navigation modal](../../shared/images/navigate_to_flink.png)
 
-4. Click on the **Open SQL workspace** button in your workshop Flink compute pool
+4. Click on the **SQL Workspace** button in your workshop Flink compute pool
 
    ![Flink Compute Pools](../../shared/images/flink_compute_pool.png)
 
-5. Ensure your workspace environment and cluster are both selected in the `Catalog` and `Database` dropdowns at the top of your compute pool screen
+5. Ensure your workspace environment and cluster are both selected in the `Use catalog` and `Use database` dropdowns at the top of your compute pool screen
 
 6. Drill down in the left navigation to see the tables in your environment and cluster
 
@@ -50,7 +50,7 @@ By the end of this lab you will have:
 
 All of your data comes through PostgreSQL CDC connectors and uses the `riverhotel.cdc.` topic prefix. The connector is configured with `after.state.only = true`, which produces flat Avro records that you can query directly in Flink.
 
-> **Tip**: Click the *+* button in the narrow side panel at the top left of the cell to create new cells. Create ~5 new cells as you will need them throughout this lab. Delete the current cell by clicking the trash icon below the *+*.
+> **Tip**: Click the *+* button in the narrow side panel at the top left of the cell to create new cells. Create ~6 new cells as you will need them throughout this lab. Delete the current cell by clicking the trash icon below the *+*.
 >
 > ![Trash icon to delete cell](../../shared/images/confluent_flink_delete_cell.png)
 
@@ -108,10 +108,9 @@ Your CDC topics are already configured with primary keys, watermarks, and change
 
 ### Create Denormalized Table
 
-This query creates a denormalized table combining booking data with customer information, hotel details, and hotel reviews using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
+This query creates a denormalized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
 
 ```sql
-SET 'sql.state-ttl' = '1 d';
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
 
 CREATE TABLE denormalized_hotel_bookings (
@@ -135,17 +134,12 @@ SELECT
   b.`check_in`,
   b.`check_out`,
   c.`email` AS `customer_email`,
-  c.`first_name` AS `customer_first_name`,
-  hr.`review_rating` AS `review_rating`,
-  hr.`review_text` AS `review_text`,
-  hr.`created_at` AS `review_date`
+  c.`first_name` AS `customer_first_name`
 FROM `riverhotel.cdc.bookings` b
   JOIN `riverhotel.cdc.customer` FOR SYSTEM_TIME AS OF b.`created_at` AS c
     ON c.`email` = b.`customer_email`
   JOIN `riverhotel.cdc.hotel` FOR SYSTEM_TIME AS OF b.`created_at` AS h
-    ON h.`hotel_id` = b.`hotel_id`
-  LEFT JOIN `riverhotel.cdc.hotel_reviews` hr
-    ON hr.`booking_id` = b.`booking_id`;
+    ON h.`hotel_id` = b.`hotel_id`;
 ```
 
 <details>
@@ -170,10 +164,6 @@ Temporal joins allow you to join a streaming fact table (bookings) with dimensio
 3. **Upsert Mode**: Dimension tables use `changelog.mode = 'upsert'` to maintain current state
 4. **Historical Versions**: The dimension topic must retain historical record versions — compaction cannot remove them before the temporal join reads them. This workshop uses `min.compaction.lag.ms = 7 days` to preserve versions during the workshop window.
 
-**State TTL**
-
-The `SET 'sql.state-ttl' = '1 d'` limits how long Flink retains state for the regular `LEFT JOIN` on hotel reviews. Without it, the join state would grow unbounded. Temporal joins manage their own state lifecycle and are not affected by this setting.
-
 </details>
 
 ### Verify Denormalization Results
@@ -188,7 +178,8 @@ LIMIT 20;
 
 Some observations:
 
-- Because of the **LEFT JOIN** on `riverhotel.cdc.hotel_reviews`, some bookings have no customer reviews yet
+- Each booking is enriched with **customer** and **hotel** details via temporal joins
+- The `booking_date` watermark enables downstream analytics and time-based filtering
 
 You can also verify the table in the left navigation panel:
 
@@ -202,65 +193,92 @@ Click on `denormalized_hotel_bookings` to see its schema:
 
 ![Table schema](../../shared/images/confluent_flink_table_schema.png)
 
-### Hotel Stats Data Product
+### Enrich Hotel Reviews with AI Sentiment Analysis
 
-Now that you have a denormalized bookings table with enriched customer and hotel details, you can build higher-level **analytical data products** on top of it.
-
-This next statement creates a **continuous streaming aggregation** — a real-time summary of each hotel's performance metrics. Unlike the denormalized table which has one row per booking, this table maintains **one row per hotel** that updates automatically as new bookings and reviews arrive.
-
-This is a common pattern in streaming architectures: raw events flow into enriched fact tables, which then feed aggregated summary tables. Each layer adds value, and because Flink runs continuously, the aggregations are always current — no batch jobs or scheduled refreshes needed.
-
+Now create a table that enriches hotel reviews with AI-powered sentiment analysis. This table joins reviews with `denormalized_hotel_bookings` to add hotel context, then uses the [`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html) function to analyze each review across three aspects: cleanliness, amenities, and service.
 
 ```sql
-SET 'sql.state-ttl' = '1 day';
+SET 'sql.state-ttl' = '7 d';
+SET 'client.statement-name' = 'hotel-reviews-with-sentiment';
 
-SET 'client.statement-name' = 'hotel-stats';
-
-CREATE TABLE hotel_stats AS (
-
+CREATE TABLE hotel_reviews_with_sentiment (
+  PRIMARY KEY (`review_id`) NOT ENFORCED,
+  WATERMARK FOR `created_at` AS `created_at` - INTERVAL '30' SECOND
+) WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
 SELECT
-  COALESCE(hotel_id, 'UNKNOWN_HOTEL') AS hotel_id,
-  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME') AS hotel_name,
-  COALESCE(hotel_city, 'UNKNOWN_HOTEL_CITY') AS hotel_city,
-  COALESCE(hotel_country, 'UNKNOWN_HOTEL_COUNTRY') AS hotel_country,
-  COALESCE(hotel_description, 'UNKNOWN_HOTEL_DESCRIPTION') AS hotel_description,
-  COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY') AS hotel_category,
-  SUM(1) AS total_bookings_count,
-  SUM(guest_count) AS total_guest_count,
-  SUM(booking_amount) AS total_booking_amount,
-  CAST(AVG(review_rating) AS DECIMAL(10, 2)) AS average_review_rating,
-  SUM(CASE WHEN review_rating IS NOT NULL THEN 1 ELSE 0 END) AS review_count
-FROM `denormalized_hotel_bookings`
-WHERE hotel_id IS NOT NULL
-GROUP BY
-   COALESCE(hotel_id, 'UNKNOWN_HOTEL'),
-   COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME'),
-   COALESCE(hotel_city, 'UNKNOWN_HOTEL_CITY'),
-   COALESCE(hotel_country, 'UNKNOWN_HOTEL_COUNTRY'),
-   COALESCE(hotel_description, 'UNKNOWN_HOTEL_DESCRIPTION'),
-   COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY')
+  review_id,
+  booking_id,
+  hotel_id,
+  hotel_name,
+  review_rating,
+  review_text,
+  created_at,
+  sentiment_result.sentiment[1].label AS cleanliness_label,
+  sentiment_result.sentiment[1].score AS cleanliness_score,
+  sentiment_result.sentiment[2].label AS amenities_label,
+  sentiment_result.sentiment[2].score AS amenities_score,
+  sentiment_result.sentiment[3].label AS service_label,
+  sentiment_result.sentiment[3].score AS service_score
+FROM (
+  SELECT
+    hr.`review_id`,
+    hr.`booking_id`,
+    dhb.`hotel_id`,
+    dhb.`hotel_name`,
+    hr.`review_rating`,
+    hr.`review_text`,
+    hr.`created_at`,
+    AI_SENTIMENT(
+      hr.`review_text`,
+      ARRAY['cleanliness', 'amenities', 'service']
+    ) AS sentiment_result
+  FROM `riverhotel.cdc.hotel_reviews` hr
+  JOIN `denormalized_hotel_bookings` dhb
+    ON dhb.`booking_id` = hr.`booking_id`
 );
 ```
 
-Query the hotel stats:
+<details>
+<summary>Expand for details on AI_SENTIMENT</summary>
+
+**[`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html)** is a built-in Confluent Cloud for Apache Flink function that performs **aspect-based sentiment analysis** using a fine-tuned DeBERTa model. Unlike general sentiment analysis, it evaluates sentiment for each specified aspect independently.
+
+**How it works:**
+
+- Takes a text input and an array of aspects to evaluate
+- Returns a structured result with `sentiment` and `confidence` for each aspect
+- Each aspect gets a `label` (`positive`, `negative`, or `neutral`) and a `score` (0.0 to 1.0)
+
+**Why flatten?** `AI_SENTIMENT` returns a nested `ROW` type with an array of aspect results. The subquery calls `AI_SENTIMENT` once, and the outer query extracts the individual aspect labels and scores into flat columns (`cleanliness_label`, `amenities_label`, `service_label`, etc.). This produces a clean, flat schema in the Kafka topic that maps directly to simple Delta Lake columns via Tableflow — no nested struct navigation needed in Databricks.
+
+**State TTL**: The `SET 'sql.state-ttl' = '7 d'` ensures the join state for matching reviews to bookings is retained for 7 days. This gives reviews time to arrive and match with their corresponding booking records.
+
+</details>
+
+Verify the sentiment-enriched reviews:
 
 ```sql
-SELECT *
-  FROM `hotel_stats`
-LIMIT 30;
+SELECT
+  `review_id`,
+  `hotel_name`,
+  `review_rating`,
+  SUBSTRING(`review_text`, 1, 50) AS `review_preview`,
+  `cleanliness_label`,
+  `amenities_label`,
+  `service_label`,
+  `service_score`
+FROM `hotel_reviews_with_sentiment`
+LIMIT 10;
 ```
-
-Observations:
-
-- Each hotel has **one row** that continuously updates as new bookings arrive
-- Fields like `average_review_rating` and `review_count` provide analytical insight
-- `total_bookings_count` and `total_booking_amount` track overall hotel performance
 
 ## Conclusion
 
 You have built a real-time streaming pipeline that transforms CDC data into enriched data products ready for Tableflow materialization and analytics. Your CDC topics were pre-configured by Terraform with primary keys, watermarks, and changelog modes, enabling direct temporal joins without intermediate snapshot tables.
 
-You created two Flink tables: `denormalized_hotel_bookings` (enriched bookings with customer and hotel details) and `hotel_stats` (aggregated hotel performance metrics). The `riverhotel.cdc.clickstream` topic is also ready for Tableflow in append mode.
+You created two Flink tables: `denormalized_hotel_bookings` (enriched bookings with customer and hotel details) and `hotel_reviews_with_sentiment` (AI-enriched reviews with aspect-based sentiment analysis). The `riverhotel.cdc.clickstream` topic is also ready for Tableflow in append mode.
 
 ## What's Next
 

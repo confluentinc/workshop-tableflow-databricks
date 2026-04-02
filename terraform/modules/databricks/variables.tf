@@ -64,3 +64,27 @@ variable "kafka_cluster_id" {
   description = "Kafka cluster ID (used for expected schema name)"
   type        = string
 }
+
+variable "lookup_sql_warehouse" {
+  description = "Whether to look up a SQL warehouse by name"
+  type        = bool
+  default     = true
+}
+
+variable "sql_warehouse_name" {
+  description = "Name of the SQL warehouse to look up (both AWS and Azure auto-provision one)"
+  type        = string
+  default     = "Serverless Starter Warehouse"
+}
+
+variable "add_user_to_admins" {
+  description = "Add the workshop user to the workspace admins group (true for self-service, false for WSA)"
+  type        = bool
+  default     = true
+}
+
+variable "lookup_existing_users" {
+  description = "If true, look up existing workspace users via data source instead of managing them as resources. Use true for self-service (user already owns workspace), false for WSA (users may not exist yet)."
+  type        = bool
+  default     = true
+}

@@ -50,7 +50,7 @@ output "storage_container_name" {
   value       = azurerm_storage_container.shared.name
 }
 
-output "storage_account_primary_dfs_endpoint" {
+output "storage_dfs_endpoint" {
   description = "ADLS Gen2 DFS endpoint (abfss:// URL base)"
   value       = azurerm_storage_account.shared.primary_dfs_endpoint
 }
@@ -122,7 +122,7 @@ output "dbx_access_connector_id" {
 
 output "dashboard_url" {
   description = "Azure Portal dashboard URL"
-  value       = "https://portal.azure.com/#@/dashboard/arm${azurerm_portal_dashboard.shared_infra.id}"
+  value       = var.enable_monitoring ? "https://portal.azure.com/#@/dashboard/arm${azurerm_portal_dashboard.shared_infra[0].id}" : ""
 }
 
 # --- Summary ---

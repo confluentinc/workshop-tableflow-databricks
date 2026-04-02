@@ -23,6 +23,6 @@ output "databricks_schema_name" {
 }
 
 output "sql_warehouse_id" {
-  description = "SQL Warehouse ID (AWS only — Azure uses auto-provisioned warehouse)"
-  value       = var.cloud_provider == "aws" ? data.databricks_sql_warehouse.main[0].id : null
+  description = "SQL Warehouse ID"
+  value       = var.lookup_sql_warehouse ? data.databricks_sql_warehouse.main[0].id : null
 }

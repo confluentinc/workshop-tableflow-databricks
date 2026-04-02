@@ -2,7 +2,6 @@
 # General Overrides
 # ===============================
 prefix       = ""
-email        = ""
 cloud_region = "eastus2"
 
 # ===============================
@@ -17,6 +16,7 @@ cloud_region = "eastus2"
 # ===============================
 # Confluent Cloud Overrides
 # ===============================
+confluent_cloud_email      = ""  # Your Confluent Cloud account email (must match an existing org user)
 confluent_cloud_api_key    = ""
 confluent_cloud_api_secret = ""
 
@@ -36,9 +36,3 @@ databricks_service_principal_client_secret = ""
 # ===============================
 # postgres_sku_name  = "B_Standard_B2s"  # Burstable tier (cost-effective for workshop)
 # postgres_storage_mb = 32768
-
-# ===============================
-# Optional: Connector Automation
-# ===============================
-# Set to false if you want to manually create the PostgreSQL CDC connector as a learning exercise
-# create_postgres_cdc_connector = false

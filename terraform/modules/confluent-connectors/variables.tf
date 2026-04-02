@@ -7,12 +7,6 @@ variable "prefix" {
   type        = string
 }
 
-variable "create_connector" {
-  description = "Whether to create the PostgreSQL CDC connector"
-  type        = bool
-  default     = true
-}
-
 variable "environment_id" {
   description = "Confluent environment ID"
   type        = string

@@ -29,7 +29,7 @@ output "workshop_summary" {
 
     # Quick Links
     confluent_console = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}"
-    connector_url     = var.create_postgres_cdc_connector ? "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/clusters/${module.confluent_platform.kafka_cluster_id}/connectors" : "N/A"
+    connector_url     = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/clusters/${module.confluent_platform.kafka_cluster_id}/connectors"
   }
 }
 
@@ -115,7 +115,6 @@ output "confluent_tableflow" {
 output "confluent_connector" {
   description = "PostgreSQL CDC connector details"
   value = {
-    enabled        = module.connectors.enabled
     connector_id   = module.connectors.connector_id
     connector_name = module.connectors.connector_name
     topics         = module.connectors.topics
@@ -156,11 +155,7 @@ output "databricks_integration" {
 
 output "next_steps" {
   description = "Workshop next steps"
-  value = (
-    var.create_postgres_cdc_connector
-    ? "🎉 Workshop Infrastructure Deployed!\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Check CDC Connector status in Confluent Console\n3. Run ShadowTraffic to generate data\n4. Proceed to LAB3 (Stream Processing)\n\n📚 Documentation: labs/README.md"
-    : "🎉 Infrastructure Deployed!\n\n⚠️  CDC Connector not created (create_postgres_cdc_connector=false)\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Test database connection\n3. Enable connector: set create_postgres_cdc_connector=true\n4. Re-run: terraform apply"
-  )
+  value       = "🎉 Workshop Infrastructure Deployed!\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Check CDC Connector status in Confluent Console\n3. Run ShadowTraffic to generate data\n4. Proceed to LAB3 (Stream Processing)\n\n📚 Documentation: labs/README.md"
 }
 
 output "databricks_manual_step" {

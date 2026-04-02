@@ -76,8 +76,10 @@ terraform_vars:
   email: "{email}"
   databricks_user_email: "{email}"
   databricks_sso_email: "wp{N}@tmmconfluentgmail.onmicrosoft.com"
+  lookup_existing_users: "false"
   environment: "workshop"
   prefix: "wp{NNN}"
+  table_include_list: "cdc.customer,cdc.hotel,cdc.bookings,cdc.clickstream,cdc.hotel_reviews"
   # cloud_region is set by wsa from wsa.env (TF_VAR_azure_cloud_region)
   # cc_environment_id is intentionally omitted — Terraform creates the CC
   # environment itself (confluent-platform module, create_environment = true).
@@ -153,6 +155,15 @@ credentials:
       - label: Unity Catalog Name
         source: terraform
         output: dbx_catalog_name
+      - label: Storage Account Name
+        source: terraform
+        output: storage_account_name
+      - label: Storage Container Name
+        source: terraform
+        output: storage_container_name
       - label: Schema Name
         source: terraform
         output: dbx_schema_name
+      - label: SQL Warehouse ID
+        source: terraform
+        output: dbx_sql_warehouse_id

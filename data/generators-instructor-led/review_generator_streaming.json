@@ -1,0 +1,115 @@
+{
+    "name": "review_generator_streaming",
+    "table": "cdc.hotel_reviews",
+    "connection": "postgres",
+    "localConfigs": {
+        "maxEvents": 5000,
+        "throttleMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                1200000,
+                1320000
+            ]
+        }
+    },
+    "varsOnce": {
+        "oneStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_1_star.json"
+        },
+        "twoStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_2_star.json"
+        },
+        "threeStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_3_star.json"
+        },
+        "fourStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_4_star.json"
+        },
+        "fiveStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_5_star.json"
+        }
+    },
+    "vars": {
+        "reviewBundle": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 5,
+                    "value": {
+                        "rating": 1,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "oneStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 10,
+                    "value": {
+                        "rating": 2,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "twoStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 20,
+                    "value": {
+                        "rating": 3,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "threeStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 35,
+                    "value": {
+                        "rating": 4,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "fourStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 30,
+                    "value": {
+                        "rating": 5,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "fiveStarTexts" } }
+                    }
+                }
+            ]
+        }
+    },
+    "row": {
+        "review_id": {
+            "_gen": "sequentialString",
+            "startingFrom": 610000100,
+            "expr": "R~d",
+            "pgHint": "VARCHAR(50) PRIMARY KEY"
+        },
+        "booking_id": {
+            "_gen": "lookup",
+            "name": "booking_generator_historical",
+            "path": [
+                "row",
+                "booking_id"
+            ],
+            "pgHint": "VARCHAR(50)"
+        },
+        "review_rating": {
+            "_gen": "var",
+            "var": "reviewBundle",
+            "path": ["rating"],
+            "pgHint": "INTEGER"
+        },
+        "review_text": {
+            "_gen": "var",
+            "var": "reviewBundle",
+            "path": ["text"],
+            "pgHint": "TEXT"
+        },
+        "created_at": {
+            "_gen": "now",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMP"
+        }
+    }
+}

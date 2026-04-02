@@ -9,10 +9,10 @@ Now that you have built your stream processing pipelines and created enriched da
 By the end of this lab, you will have:
 
 1. **Unity Catalog Integration**: Connected Confluent Cloud with Databricks Unity Catalog through Tableflow
-2. **Tableflow-enabled Topics**: Streamed your `riverhotel.cdc.clickstream`, `denormalized_hotel_bookings`, and `hotel_stats` topics as Delta Lake tables
+2. **Tableflow-enabled Topics**: Streamed your `riverhotel.cdc.clickstream`, `denormalized_hotel_bookings`, and `hotel_reviews_with_sentiment` topics as Delta Lake tables
 3. **Verified Unity Catalog Sync**: Confirmed that Tableflow is syncing data to your Databricks Unity Catalog
 
-![Architecture diagram with focus on Tableflow and Delta Lake](./images/arch_diagram_tableflow.png)
+![Architecture diagram with focus on Tableflow and Delta Lake](./images/arch_diagram_tableflow.jpg)
 
 ### Prerequisites
 
@@ -120,9 +120,17 @@ graph LR
 
     ![Tableflow Syncing](./images/clickstream_tableflow_enabled.png)
 
-### Step 3: Enable Tableflow on `denormalized_hotel_bookings` and `hotel_stats`
+### Step 3: Enable Tableflow on `denormalized_hotel_bookings` and `hotel_reviews_with_sentiment`
 
-Repeat the steps you just completed for the `riverhotel.cdc.clickstream` topic above for the `hotel_stats` and `denormalized_hotel_booking` topics.
+Repeat the steps you just completed for the `riverhotel.cdc.clickstream` topic above for the `denormalized_hotel_bookings` and `hotel_reviews_with_sentiment` topics.
+
+When enabling Tableflow, configure the **storage retention** for each topic to control how long historical data is kept in Delta Lake:
+
+| Topic | Storage Retention |
+|---|---|
+| `riverhotel.cdc.clickstream` | 8 weeks |
+| `denormalized_hotel_bookings` | 2 weeks |
+| `hotel_reviews_with_sentiment` | 2 weeks |
 
 > **Important**: It may take a 3-4 minutes for Tableflow to begin syncing each topic. You can enable all three while waiting for the materialization to complete.
 
@@ -149,9 +157,9 @@ Tableflow offers three modes for handling per-record materialization failures:
 
 The **Log** mode is useful for production environments where you want to capture problematic records without stopping the pipeline.
 
-Follow these steps to enable **Log** DLQ for your `denormalized_hotel_booking` topic:
+Follow these steps to enable **Log** DLQ for your `denormalized_hotel_bookings` topic:
 
-1. Navigate to your `denormalized_hotel_booking` topic
+1. Navigate to your `denormalized_hotel_bookings` topic
 2. Click on the **Settings** tab
 
    ![Topic tab navigation](./images/tableflow_dlq_topic_settings.png)
@@ -171,7 +179,7 @@ Follow these steps to enable **Log** DLQ for your `denormalized_hotel_booking` t
 
 ## Conclusion
 
-You have configured the integration between Confluent Cloud Tableflow and Databricks Unity Catalog, enabled Tableflow on three topics — `riverhotel.cdc.clickstream`, `denormalized_hotel_bookings`, and `hotel_stats` — and verified that data is syncing as Delta Lake tables.
+You have configured the integration between Confluent Cloud Tableflow and Databricks Unity Catalog, enabled Tableflow on three topics — `riverhotel.cdc.clickstream`, `denormalized_hotel_bookings`, and `hotel_reviews_with_sentiment` — and verified that data is syncing as Delta Lake tables.
 
 ## What's Next
 

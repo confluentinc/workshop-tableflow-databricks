@@ -47,7 +47,7 @@ Confluent Cloud prevents deletion of provider integrations that are actively bei
 
 **Issue:**
 
-When running `terraform apply` with `create_postgres_cdc_connector = true`, you encounter a timeout error:
+When running `terraform apply`, you encounter a timeout error:
 
 ```
 Error: PostgreSQL did not become ready after 12 minutes
@@ -59,20 +59,11 @@ The EC2 `user_data` script takes time to complete (Docker install, PostgreSQL co
 
 **Resolution:**
 
-1. **Option A: Disable automated connector creation** (recommended):
+1. **Option A: Retry** (recommended):
 
-   ```hcl
-   # terraform.tfvars
-   create_postgres_cdc_connector = false
-   ```
+   Run `docker-compose run --rm terraform -c "terraform apply -auto-approve"` again — the EC2 instance is already running, so PostgreSQL should be ready.
 
-   Then create the connector manually in LAB3 (~5 minutes).
-
-2. **Option B: Increase timeout and retry**:
-
-   Run `docker-compose run --rm terraform -c "terraform apply -auto-approve"` again - the EC2 instance is already running, so PostgreSQL should be ready.
-
-3. **Option C: Verify PostgreSQL manually**:
+2. **Option B: Verify PostgreSQL manually**:
 
    ```bash
    # SSH to the instance
@@ -399,6 +390,88 @@ Since this is a transient error, the IAM configuration is correct - it just need
 ---
 
 ## 🧱 Databricks
+
+### Serverless Starter Warehouse — Not Authorized to Create Clusters
+
+**Issue:**
+
+When attempting to use the Serverless Starter Warehouse in Databricks, it fails to start with:
+
+```
+Clusters are failing to launch. Cluster launch will be retried.
+Request to create a cluster failed with an exception: PERMISSION_DENIED: You are not authorized to create clusters. Please contact your administrator.
+```
+
+You may also be unable to access the Admin Console.
+
+**Why This Happens:**
+
+The workshop Terraform previously created a `databricks_user` resource with `force = true` to ensure the workshop user exists. This could strip workspace entitlements (admin group membership, cluster creation, SQL access) that were previously set automatically for the workspace owner.
+
+> [!NOTE]
+> **New deployments are not affected.** This issue only applies to deployments created with [0.10.0](../../CHANGELOG.md) or earlier, which used a managed `databricks_user` resource. The Databricks module now uses a read-only data source to look up existing users in self-service mode, which does not modify entitlements or group memberships.
+
+**Resolution:**
+
+1. **Re-run `terraform apply`** — The Terraform module now includes `databricks_entitlements` and `databricks_group_member` resources that explicitly restore the required entitlements and admin group membership on every apply.
+
+2. **Manual fix via SCIM API** — If you need to restore access without re-running Terraform, use the Databricks Service Principal (which is in the admins group) to add your user back:
+
+   ```bash
+   # Get an access token using your SP credentials
+   export DATABRICKS_HOST="https://<your-workspace>.cloud.databricks.com"
+   export DATABRICKS_CLIENT_ID="<sp-client-id>"
+   export DATABRICKS_CLIENT_SECRET="<sp-client-secret>"
+
+   export DBX_TOKEN=$(curl -s -X POST "$DATABRICKS_HOST/oidc/v1/token" \
+     -d "grant_type=client_credentials&client_id=$DATABRICKS_CLIENT_ID&client_secret=$DATABRICKS_CLIENT_SECRET&scope=all-apis" \
+     -H "Content-Type: application/x-www-form-urlencoded" | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')
+
+   # Find your user ID
+   curl -s "$DATABRICKS_HOST/api/2.0/preview/scim/v2/Users?filter=userName+eq+%22<your-email>%22" \
+     -H "Authorization: Bearer $DBX_TOKEN"
+
+   # Find the admins group ID
+   curl -s "$DATABRICKS_HOST/api/2.0/preview/scim/v2/Groups?filter=displayName+eq+%22admins%22" \
+     -H "Authorization: Bearer $DBX_TOKEN"
+
+   # Add your user to the admins group
+   curl -s -X PATCH "$DATABRICKS_HOST/api/2.0/preview/scim/v2/Groups/<ADMINS_GROUP_ID>" \
+     -H "Authorization: Bearer $DBX_TOKEN" \
+     -H "Content-Type: application/scim+json" \
+     -d '{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"op":"add","value":{"members":[{"value":"<USER_ID>"}]}}]}'
+   ```
+
+### Terraform Plans to Destroy Databricks User After Upgrade
+
+**Issue:**
+
+After pulling the latest workshop code, `terraform plan` shows it wants to **destroy** `module.databricks.databricks_user.workshop` (and possibly `databricks_user.sso`):
+
+```
+# module.databricks.databricks_user.workshop will be destroyed
+```
+
+**Why This Happens:**
+
+The Databricks module was updated to use a read-only `data` source instead of a managed `resource` for workspace users in self-service mode. If your Terraform state still contains the old `databricks_user` resource, Terraform interprets the removal of that resource block as "delete the user."
+
+**Resolution:**
+
+Remove the old resource from state **without** deleting the actual user:
+
+```bash
+docker-compose run --rm terraform -c "terraform state rm 'module.databricks.databricks_user.workshop'"
+# If SSO user was also configured:
+docker-compose run --rm terraform -c "terraform state rm 'module.databricks.databricks_user.sso'"
+```
+
+Then re-run `terraform apply` — Terraform will use the new `data` source to look up your existing user instead of managing it.
+
+> [!NOTE]
+> This is a one-time migration step for deployments created with [0.10.0](../../CHANGELOG.md) or earlier. New deployments are unaffected.
+
+---
 
 ### External Delta Lake Table Creation Failures
 

@@ -35,6 +35,17 @@ locals {
   effective_postgres_db_password       = coalesce(var.postgres_db_password, random_password.postgres_db.result)
   effective_postgres_debezium_password = coalesce(var.postgres_debezium_password, random_password.postgres_debezium.result)
 
+  # Auto-size VM based on account_count when vm_size is empty.
+  # v7 AMD SKUs are used — available in eastus2 zone 1.
+  # TODO: After upgrading to a paid Azure subscription and increasing the
+  # eastus2 vCPU quota to 8+, restore D8 as the top tier to match AWS m5.2xlarge:
+  #   var.account_count > 60 ? "Standard_D8as_v7"   # 8 vCPU / 32 GB
+  auto_vm_size = (
+    var.account_count <= 30 ? "Standard_D2as_v7" : # 2 vCPU /  8 GB
+                              "Standard_D4as_v7"   # 4 vCPU / 16 GB (capped by free-tier 4 vCPU quota)
+  )
+  effective_vm_size = var.vm_size != "" ? var.vm_size : local.auto_vm_size
+
   common_tags = merge(
     {
       Project     = "Workshop Shared Infrastructure"
@@ -186,7 +197,8 @@ resource "azurerm_linux_virtual_machine" "postgres" {
   name                = "${var.prefix}-postgres-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   location            = azurerm_resource_group.shared.location
-  size                = var.vm_size
+  size                = local.effective_vm_size
+  zone                = var.vm_zone
   admin_username      = var.vm_admin_username
 
   network_interface_ids = [azurerm_network_interface.postgres.id]

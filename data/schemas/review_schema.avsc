@@ -24,7 +24,7 @@
                 "type": "long",
                 "flink.precision": 3,
                 "flink.version": 1,
-                "logicalType": "local-timestamp-millis"
+                "logicalType": "timestamp-millis"
             }
         }
     ]

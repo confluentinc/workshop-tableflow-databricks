@@ -42,7 +42,7 @@ output "databricks_workspace_url" {
 
 output "databricks_catalog_name" {
   description = "Databricks Unity Catalog name"
-  value       = local.use_shared ? var.dbx_catalog_name : databricks_catalog.main[0].name
+  value       = databricks_catalog.main.name
 }
 
 output "databricks_external_location" {
@@ -135,10 +135,15 @@ output "dbx_sp_client_secret" {
 
 output "dbx_catalog_name" {
   description = "WSA: Databricks Unity Catalog name"
-  value       = local.use_shared ? var.dbx_catalog_name : databricks_catalog.main[0].name
+  value       = databricks_catalog.main.name
 }
 
 output "dbx_schema_name" {
   description = "WSA: Databricks schema name (Kafka cluster ID used as schema in Unity Catalog)"
   value       = module.databricks.databricks_schema_name
+}
+
+output "dbx_sql_warehouse_id" {
+  description = "WSA: SQL Warehouse ID for notebook queries"
+  value       = module.databricks.sql_warehouse_id
 }

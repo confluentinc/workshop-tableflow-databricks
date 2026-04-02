@@ -127,14 +127,15 @@ FROM `riverhotel.kafka.bookings`;
 
 The `denormalized_hotel_bookings` table uses `upsert` mode because:
 
-- **Late-arriving data** - Reviews may arrive after the initial booking, and we want to enrich the existing record rather than create duplicates
 - **One row per booking** - Using `booking_id` as primary key ensures a clean data model with exactly one row per booking
+- **Temporal join updates** - If a dimension record (customer, hotel) is updated, the denormalized row reflects the latest enrichment
 - **Downstream simplicity** - Consumers querying by `booking_id` get the latest complete state without needing to deduplicate
 
 ```sql
--- Result table: upsert mode (enriched when reviews arrive)
+-- Result table: upsert mode (one row per booking, enriched with dimensions)
 CREATE TABLE denormalized_hotel_bookings (
-  PRIMARY KEY (`booking_id`) NOT ENFORCED
+  PRIMARY KEY (`booking_id`) NOT ENFORCED,
+  WATERMARK FOR `booking_date` AS `booking_date` - INTERVAL '30' SECOND
 ) WITH (
   'changelog.mode' = 'upsert',
   'kafka.cleanup-policy' = 'compact'
@@ -142,15 +143,11 @@ CREATE TABLE denormalized_hotel_bookings (
 SELECT
   b.`booking_id`,
   -- ... booking, customer, hotel fields ...
-  hr.`review_rating`,  -- May be NULL initially, enriched later
-  hr.`review_text`
 FROM `bookings_with_watermark` b
   JOIN `customer_with_watermark` FOR SYSTEM_TIME AS OF b.`event_time` AS c
     ON c.`email` = b.`customer_email`
   JOIN `hotel_with_watermark` FOR SYSTEM_TIME AS OF b.`event_time` AS h
-    ON h.`hotel_id` = b.`hotel_id`
-  LEFT JOIN `hotel_reviews` hr
-    ON hr.`booking_id` = b.`booking_id`;
+    ON h.`hotel_id` = b.`hotel_id`;
 ```
 
 ---
@@ -163,22 +160,41 @@ When creating aggregate tables in Flink SQL, you may encounter primary key error
 
 This occurs because Flink auto-infers primary keys from `GROUP BY` columns, but cannot create primary keys from nullable columns.
 
-#### Solution: Use COALESCE
+#### Solution: Use MAX() for Functionally Dependent Columns
+
+Instead of using `COALESCE` in `GROUP BY` (which adds noise), only group by the non-nullable key column and use `MAX()` on functionally dependent attributes:
 
 ```sql
-CREATE TABLE hotel_stats AS (
+CREATE TABLE booking_summary (
+  PRIMARY KEY (`hotel_id`) NOT ENFORCED
+) WITH (
+  'changelog.mode' = 'upsert',
+  'kafka.cleanup-policy' = 'compact'
+) AS
 SELECT
-  COALESCE(hotel_id, 'UNKNOWN_HOTEL') AS hotel_id,
-  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME') AS hotel_name,
+  dhb.hotel_id,
+  MAX(dhb.hotel_name) AS hotel_name,    -- functionally dependent on hotel_id
+  MAX(dhb.hotel_city) AS hotel_city,
   COUNT(*) AS total_bookings_count,
-  SUM(booking_amount) AS total_booking_amount
-FROM denormalized_hotel_bookings
-WHERE hotel_id IS NOT NULL
+  SUM(dhb.booking_amount) AS total_booking_amount
+FROM `denormalized_hotel_bookings` dhb
+WHERE dhb.hotel_id IS NOT NULL
+GROUP BY dhb.hotel_id;
+```
+
+Since `hotel_name` and `hotel_city` are functionally determined by `hotel_id`, `MAX()` always returns the correct value. Only `hotel_id` (non-nullable) appears in `GROUP BY`, satisfying Flink's primary key constraint.
+
+#### Alternative: COALESCE (Legacy)
+
+If you must include nullable columns in `GROUP BY`, wrap them with `COALESCE`:
+
+```sql
 GROUP BY
   COALESCE(hotel_id, 'UNKNOWN_HOTEL'),
   COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME')
-);
 ```
+
+This approach is more verbose and adds `UNKNOWN_*` sentinel values to your data.
 
 ---
 
@@ -190,43 +206,21 @@ The CDC connector is configured with `time.precision.mode = connect` and Postgre
 
 ### A4: Windowed Aggregations
 
-For time-based analytics, use tumbling windows:
+For time-based analytics, Flink provides several window types:
+
+| Window Type | Use Case |
+|-------------|----------|
+| **TUMBLE** | Fixed, non-overlapping periods (daily/hourly stats) |
+| **HOP** | Rolling/overlapping windows (always shows a full period of data) |
+| **CUMULATE** | Running totals within period |
+
+#### HOP Windows (Rolling Aggregations)
+
+`HOP(TABLE source, DESCRIPTOR(time_col), slide, size)` creates overlapping windows. A new window starts every `slide` interval, each covering `size` worth of data:
 
 ```sql
-CREATE TABLE hotel_stats AS (
-SELECT
-  window_start,
-  window_end,
-  hotel_id,
-  hotel_name,
-  COUNT(*) AS total_bookings_count,
-  SUM(booking_amount) AS total_booking_amount
-FROM TABLE(
-  TUMBLE(TABLE denormalized_hotel_bookings, DESCRIPTOR(booking_date), INTERVAL '15' MINUTE)
-)
-WHERE hotel_id IS NOT NULL
-GROUP BY
-  window_start,
-  window_end,
-  hotel_id,
-  hotel_name
-);
-```
-
-<details>
-<summary>Archived: Full Tumbling Window Query (Previously used in LAB5)</summary>
-
-<!-- TODO -->
-
-This was archived because it was returning scant records, only 1 review per hotel per time window maximum.  Needs more work
-
-This query was previously used in LAB5 to compute hotel-level performance metrics with 1-hour tumbling windows:
-
-```sql
-SET 'client.statement-name' = 'hotel-stats';
-
-CREATE TABLE hotel_stats (
-  PRIMARY KEY (window_start, window_end, hotel_id) NOT ENFORCED
+CREATE TABLE booking_stats_rolling (
+  PRIMARY KEY (`window_start`, `window_end`, `hotel_id`) NOT ENFORCED
 ) WITH (
   'changelog.mode' = 'upsert',
   'kafka.cleanup-policy' = 'compact'
@@ -234,81 +228,67 @@ CREATE TABLE hotel_stats (
 SELECT
   window_start,
   window_end,
-  COALESCE(hotel_id, 'UNKNOWN_HOTEL') AS hotel_id,
-  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME') AS hotel_name,
-  COALESCE(hotel_description, 'UNKNOWN_HOTEL_DESCRIPTION') AS hotel_description,
-  COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY') AS hotel_category,
-  COALESCE(hotel_city, 'UNKNOWN_HOTEL_CITY') AS hotel_city,
-  COALESCE(hotel_country, 'UNKNOWN_HOTEL_COUNTRY') AS hotel_country,
+  dhb.hotel_id,
+  MAX(dhb.hotel_name) AS hotel_name,
   COUNT(*) AS total_bookings_count,
-  SUM(guest_count) AS total_guest_count,
-  SUM(booking_amount) AS total_booking_amount,
-  CAST(AVG(review_rating) AS DECIMAL(10, 2)) AS average_review_rating,
-  SUM(CASE WHEN review_rating IS NOT NULL THEN 1 ELSE 0 END) AS review_count
+  SUM(dhb.booking_amount) AS total_booking_amount
 FROM TABLE(
-  TUMBLE(TABLE `denormalized_hotel_bookings`, DESCRIPTOR(booking_date), INTERVAL '1' HOUR)
-)
-WHERE hotel_id IS NOT NULL
-GROUP BY
-  window_start,
-  window_end,
-  COALESCE(hotel_id, 'UNKNOWN_HOTEL'),
-  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME'),
-  COALESCE(hotel_description, 'UNKNOWN_HOTEL_DESCRIPTION'),
-  COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY'),
-  COALESCE(hotel_city, 'UNKNOWN_HOTEL_CITY'),
-  COALESCE(hotel_country, 'UNKNOWN_HOTEL_COUNTRY');
+  HOP(TABLE denormalized_hotel_bookings, DESCRIPTOR(booking_date), INTERVAL '1' DAY, INTERVAL '7' DAY)
+) dhb
+WHERE dhb.hotel_id IS NOT NULL
+GROUP BY window_start, window_end, dhb.hotel_id;
 ```
 
-**Note:** This approach requires a watermark on `booking_date` and produces one row per (window, hotel_id) combination.
+With `INTERVAL '1' DAY` slide and `INTERVAL '7' DAY` size, at any point in time the latest window always contains a full 7 days of data. This avoids the "beginning of window" problem where TUMBLE windows start empty.
 
-</details>
+To query the latest window:
 
-| Window Type | Use Case |
-|-------------|----------|
-| **TUMBLE** | Fixed periods (daily/hourly stats) |
-| **HOP** | Overlapping windows (smoothing) |
-| **CUMULATE** | Running totals within period |
+```sql
+SELECT * FROM booking_stats_rolling
+WHERE window_end = (SELECT MAX(window_end) FROM booking_stats_rolling);
+```
+
+> **Note:** In this workshop, rolling hotel stats are computed as a Databricks SQL VIEW rather than a Flink HOP window. This approach is simpler and avoids potential limitations with windowed joins on managed Flink.
+
+#### TUMBLE Windows
+
+For fixed, non-overlapping periods:
+
+```sql
+FROM TABLE(
+  TUMBLE(TABLE denormalized_hotel_bookings, DESCRIPTOR(booking_date), INTERVAL '1' DAY)
+)
+```
 
 #### Alternative: Continuous (Non-Windowed) Aggregation
 
-If you want **one row per key** with running totals instead of per-window snapshots, use a non-windowed aggregation with `upsert` mode:
+If you want **one row per key** with running totals instead of per-window snapshots, use a non-windowed aggregation with `upsert` mode and `sql.state-ttl`:
 
 ```sql
--- Continuous Aggregation (one row per hotel, updated in real-time)
-SET 'sql.state-ttl' = '1 day';
+SET 'sql.state-ttl' = '7 day';
 
-SET 'client.statement-name' = 'hotel-stats';
-
-CREATE TABLE hotel_stats (
+CREATE TABLE booking_summary_continuous (
   PRIMARY KEY (hotel_id) NOT ENFORCED
 ) WITH (
   'changelog.mode' = 'upsert',
   'kafka.cleanup-policy' = 'compact'
 ) AS
 SELECT
-  COALESCE(hotel_id, 'UNKNOWN_HOTEL') AS hotel_id,
-  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME') AS hotel_name,
-  COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY') AS hotel_category,
+  hotel_id,
+  MAX(hotel_name) AS hotel_name,
   COUNT(*) AS total_bookings_count,
-  SUM(guest_count) AS total_guest_count,
-  SUM(booking_amount) AS total_booking_amount,
-  CAST(AVG(review_rating) AS DECIMAL(10, 2)) AS average_review_rating,
-  SUM(CASE WHEN review_rating IS NOT NULL THEN 1 ELSE 0 END) AS review_count
+  SUM(booking_amount) AS total_booking_amount
 FROM `denormalized_hotel_bookings`
 WHERE hotel_id IS NOT NULL
-GROUP BY
-  COALESCE(hotel_id, 'UNKNOWN_HOTEL'),
-  COALESCE(hotel_name, 'UNKNOWN_HOTEL_NAME'),
-  COALESCE(hotel_category, 'UNKNOWN_HOTEL_CATEGORY');
+GROUP BY hotel_id;
 ```
 
 | Approach | Rows Per Key | Changelog Mode | State | Use Case |
 |----------|--------------|----------------|-------|----------|
-| **Windowed (TUMBLE)** | One per window | `append` | Bounded (window closes) | Historical time-series analysis |
+| **Windowed (HOP/TUMBLE)** | One per window | `upsert` | Bounded (window closes) | Historical time-series, rolling analytics |
 | **Non-windowed** | One total | `upsert` | Requires TTL | Real-time dashboards, current totals |
 
-> **Note:** Non-windowed aggregations require `sql.state-ttl` to prevent unbounded state growth. See [A5: State TTL and Kafka Compaction](#a5-state-ttl-and-kafka-compaction) for details.
+> **Note:** Non-windowed aggregations require `sql.state-ttl` to prevent unbounded state growth. The TTL expires state after N time units of **inactivity** — if keys keep receiving events, state grows until events stop for TTL duration. See [A5: State TTL and Kafka Compaction](#a5-state-ttl-and-kafka-compaction) for details.
 
 #### Watermarks Don't Propagate Through CTAS
 
@@ -381,7 +361,7 @@ When building streaming aggregations, it's important to understand the relations
 -- Set state TTL before creating the table
 SET 'sql.state-ttl' = '1 day';
 
-CREATE TABLE hotel_stats (
+CREATE TABLE booking_counts (
   PRIMARY KEY (hotel_id) NOT ENFORCED
 ) WITH (
   'changelog.mode' = 'upsert',

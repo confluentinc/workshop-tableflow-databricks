@@ -8,8 +8,11 @@ Now that you've configured your cloud platform accounts, it's time to deploy the
 
 By the end of this lab, you will have:
 
-1. **Multi-Cloud Infrastructure Deployment**: Use Terraform to automatically provision 40+ cloud resources across AWS, Confluent Cloud, and Databricks with proper security, networking, and integration
-2. **Platform Integration**: Confirm that AWS, Confluent Cloud, and Databricks are properly connected and ready for data streaming
+1. **Multi-Cloud Infrastructure Deployment**: Used Terraform to automatically provision 40+ cloud resources across AWS, Confluent Cloud, and Databricks with proper security, networking, and integration
+2. **Verified Data Generation**: Confirmed that data is streaming to Kafka topics via ShadowTraffic and PostgreSQL CDC
+3. **Platform Integration**: Confirmed that AWS, Confluent Cloud, and Databricks are properly connected and ready for data streaming
+
+![architecture diagram showing data generation into kafka topics](./images/ss_architecture_data_topics.jpg)
 
 ### Prerequisites
 
@@ -120,6 +123,48 @@ docker-compose run --rm terraform -c "terraform output"
 >
 > See [this section](../../shared/troubleshooting.md#transient-500-error-during-external-location-creation) of the Troubleshooting Guide for more details.
 
+### Step 2: Verify Data Generation
+
+With your infrastructure deployed, data generation is already running. During Terraform deployment, [ShadowTraffic](https://shadowtraffic.io/) was automatically started on the PostgreSQL EC2 instance. It generates realistic customer behavior data that flows through your entire pipeline — writing customer and hotel data to PostgreSQL (captured by the CDC connector) and streaming clickstream, booking, and review events directly to Kafka.
+
+#### Review Topics
+
+Follow these steps to see data streaming into Confluent Cloud:
+
+1. Navigate to the [topics UI](https://confluent.cloud/go/topics) in Confluent Cloud
+2. Select your environment and cluster
+3. Verify that you see topics including `bookings`, `clickstream`, `hotel_reviews`, `riverhotel.cdc.customer`, and `riverhotel.cdc.hotel`
+
+#### Review PostgreSQL CDC Connector
+
+Verify that the PostgreSQL CDC connector is capturing real-time changes from your PostgreSQL database:
+
+1. Click on *Connectors* in the left sidebar menu
+2. You should see a PostgreSQL CDC Source connector tile
+3. Click the tile
+4. Verify that the connector is running successfully
+
+> [!TIP]
+> **CDC Events**
+>
+> This change data capture connector will automatically record all *INSERT*, *UPDATE*, and *DELETE* events on the `customer` and `hotel` database tables to the corresponding Kafka topics `riverhotel.cdc.customer` and `riverhotel.cdc.hotel`.
+
+<details>
+<summary>More details about your data pipeline</summary>
+
+You now have a live, streaming data pipeline consisting of:
+
+**Generated Data Streams:**
+
+- **1,000 customer profiles** with realistic contact information and preferences
+- **30 hotel properties** across 9 countries with detailed amenities and descriptions
+- **3,000+ historical clickstream events** showing authentic customer browsing behavior
+- **400+ booking transactions** with realistic customer-hotel relationships
+- **200+ hotel reviews** with ratings and feedback that reflect actual guest experiences
+- **Continuous streaming data** with realistic throttling patterns that simulate real-world usage
+
+</details>
+
 ### Step 3: Verify Infrastructure Deployment (Optional)
 
 You can verify that the cloud resources we created via Terraform are accessible and working as expected by expanding the section below and following the steps:
@@ -190,19 +235,17 @@ Follow these steps in a separate browser tab to verify that your Databricks clou
 5. Click on *Overview* in the left sidebar menu
 6. Click on your workshop Cluster
 7. Click on the *Topics* link in the left sidebar menu
-8. Notice that there no Topics being produced yet
-
-   ![Topic tiles and quickstart links ](images/confluent_cluster_topics_empty.png)
+8. Verify that topics are being produced — you should see `bookings`, `clickstream`, `hotel_reviews`, `riverhotel.cdc.customer`, and `riverhotel.cdc.hotel`
 
 </details>
 
 ## 🏁 Conclusion
 
-🎉 **Congratulations!** You've successfully deployed the complete infrastructure foundation for River Hotels' AI-powered marketing pipeline!
+🎉 **Congratulations!** You've successfully deployed the complete infrastructure foundation for River Hotels' AI-powered marketing pipeline and verified that data is streaming!
 
 ## ➡️ What's Next
 
-Resume your journey in **[LAB 3: Data Generation](../LAB3_data_generation/LAB3.md)**.
+Resume your journey in **[LAB 3: Tableflow and Unity Catalog](../LAB3_tableflow/LAB3.md)**.
 
 ## 🔧 Troubleshooting
 

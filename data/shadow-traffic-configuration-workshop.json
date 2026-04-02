@@ -2,51 +2,51 @@
     "generators": [
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/customer_generator_historical.json"
+            "file": "/home/data/generators-shared/customer_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/hotel_generator_historical.json"
+            "file": "/home/data/generators-shared/hotel_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/customer_updates_historical.json"
+            "file": "/home/data/generators-shared/customer_updates_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/hotel_updates_historical.json"
+            "file": "/home/data/generators-shared/hotel_updates_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/clickstream_generator_historical.json"
+            "file": "/home/data/generators-instructor-led/clickstream_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/booking_generator_historical.json"
+            "file": "/home/data/generators-instructor-led/booking_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/review_generator_historical.json"
+            "file": "/home/data/generators-instructor-led/review_generator_historical.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/customer_generator_streaming.json"
+            "file": "/home/data/generators-shared/customer_generator_streaming.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators/hotel_generator_streaming.json"
+            "file": "/home/data/generators-shared/hotel_generator_streaming.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/clickstream_generator_streaming.json"
+            "file": "/home/data/generators-instructor-led/clickstream_generator_streaming.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/booking_generator_streaming.json"
+            "file": "/home/data/generators-instructor-led/booking_generator_streaming.json"
         },
         {
             "_gen": "loadJsonFile",
-            "file": "/home/data/generators-workshop/review_generator_streaming.json"
+            "file": "/home/data/generators-instructor-led/review_generator_streaming.json"
         }
     ],
     "schedule": {

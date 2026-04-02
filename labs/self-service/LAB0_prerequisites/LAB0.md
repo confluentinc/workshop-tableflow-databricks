@@ -192,7 +192,7 @@ Get started by cloning the workshop repository
    git clone https://github.com/confluentinc/workshop-tableflow-databricks.git
    ```
 
-## Step 2: Pull and Build Docker Images
+## Step 2: Build Terraform Docker Image
 
 You will use a Docker container to run Terraform, ensuring consistent behavior across all operating systems (macOS, Linux, Windows). This container includes Terraform, AWS CLI, and SSH tools needed for infrastructure provisioning.
 
@@ -205,7 +205,7 @@ cd workshop-tableflow-databricks
 Next, navigate into the *terraform* directory
 
 ```sh
-cd terraform
+cd terraform/aws
 ```
 
 Build the Terraform container (this is a one-time setup):
@@ -223,21 +223,10 @@ You should see output showing the container being built:
  => => naming to docker.io/library/workshop-terraform:latest
 ```
 
-Next, you need to pull down the data generator (ShadowTraffic) docker image by following these steps:
-
-1. Open a new shell window/tab in the workshop root directory
-2. Pull down the ShadowTraffic docker image
-
-   ```sh
-   docker pull shadowtraffic/shadowtraffic:1.11.13
-   ```
-
 > [!NOTE]
 > **First-Time Build**
 >
-> The initial pull and build may take a few minutes. Subsequent uses leverage cached layers and should complete in seconds.
-
-**You can continue on with the workshop while the docker images are pulled down.**
+> The initial build may take a few minutes. Subsequent uses leverage cached layers and should complete in seconds.
 
 ## What's Next
 

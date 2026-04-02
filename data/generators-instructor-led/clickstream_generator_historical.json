@@ -1,0 +1,147 @@
+{
+    "name": "clickstream_generator_historical",
+    "table": "cdc.clickstream",
+    "connection": "postgres",
+    "localConfigs": {
+        "maxEvents": 2000
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        },
+        "baseTimeInMs": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 604800000"
+        }
+    },
+    "vars": {
+        "eventIndex": {
+            "_gen": "sequentialInteger",
+            "startingFrom": 0
+        },
+        "eventIntervalMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                272160,
+                332640
+            ],
+            "decimals": 0
+        },
+        "clickstream_created_at": {
+            "_gen": "min",
+            "args": [
+                {
+                    "_gen": "math",
+                    "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+                    "decimals": 0
+                },
+                {
+                    "_gen": "var",
+                    "var": "currentTimeInMs"
+                }
+            ]
+        },
+        "hotel_id": {
+            "_gen": "lookup",
+            "name": "hotel_generator_historical",
+            "path": [
+                "row",
+                "hotel_id"
+            ]
+        },
+        "room_id": {
+            "_gen": "uniformDistribution",
+            "decimals": 0,
+            "bounds": [
+                1,
+                500
+            ]
+        }
+    },
+    "row": {
+        "activity_id": {
+            "_gen": "sequentialString",
+            "startingFrom": 300000100,
+            "expr": "A~d",
+            "pgHint": "VARCHAR(50) PRIMARY KEY"
+        },
+        "customer_email": {
+            "_gen": "lookup",
+            "name": "customer_generator_historical",
+            "path": [
+                "row",
+                "email"
+            ],
+            "histogram": {
+                "_gen": "histogram",
+                "bins": [
+                    {
+                        "bin": 0.8,
+                        "frequency": 1
+                    },
+                    {
+                        "bin": 0.2,
+                        "frequency": 0
+                    }
+                ]
+            },
+            "pgHint": "VARCHAR(255)"
+        },
+        "hotel_id": {
+            "_gen": "var",
+            "var": "hotel_id",
+            "pgHint": "VARCHAR(50)"
+        },
+        "action": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 5,
+                    "value": "page-view"
+                },
+                {
+                    "weight": 3,
+                    "value": "page-click"
+                },
+                {
+                    "weight": 2,
+                    "value": "booking-click"
+                }
+            ],
+            "pgHint": "VARCHAR(50)"
+        },
+        "event_duration": {
+            "_gen": "normalDistribution",
+            "mean": 180,
+            "sd": 30,
+            "decimals": 0,
+            "clamp": [
+                53,
+                592
+            ],
+            "pgHint": "INTEGER"
+        },
+        "url": {
+            "_gen": "oneOf",
+            "choices": [
+                {
+                    "_gen": "string",
+                    "expr": "/hotels/#{hotel_id}"
+                },
+                {
+                    "_gen": "string",
+                    "expr": "/hotels/#{hotel_id}/rooms/#{room_id}"
+                }
+            ],
+            "pgHint": "VARCHAR(500)"
+        },
+        "created_at": {
+            "_gen": "var",
+            "var": "clickstream_created_at",
+            "serialize": {
+                "type": "postgresTimestamp"
+            },
+            "pgHint": "TIMESTAMP"
+        }
+    }
+}
