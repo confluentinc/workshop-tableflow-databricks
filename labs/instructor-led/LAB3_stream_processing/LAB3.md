@@ -111,6 +111,7 @@ Your CDC topics are already configured with primary keys, watermarks, and change
 This query creates a denormalized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
 
 ```sql
+SET 'sql.state-ttl' = '1 d';
 SET 'client.statement-name' = 'denormalized-hotel-bookings';
 
 CREATE TABLE denormalized_hotel_bookings (

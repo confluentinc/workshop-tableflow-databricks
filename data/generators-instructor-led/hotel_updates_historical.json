@@ -1,0 +1,88 @@
+{
+    "name": "hotel_updates_historical",
+    "table": "cdc.hotel",
+    "connection": "postgres",
+    "op": "update",
+    "localConfigs": {
+        "maxEvents": 300
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        },
+        "baseTimeInMs": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 5184000000"
+        }
+    },
+    "vars": {
+        "eventIndex": {
+            "_gen": "sequentialInteger",
+            "startingFrom": 0
+        },
+        "eventIntervalMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                129600000,
+                259200000
+            ],
+            "decimals": 0
+        },
+        "update_time": {
+            "_gen": "min",
+            "args": [
+                {
+                    "_gen": "math",
+                    "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+                    "decimals": 0
+                },
+                {
+                    "_gen": "var",
+                    "var": "currentTimeInMs"
+                }
+            ]
+        },
+        "room_capacity": {
+            "_gen": "normalDistribution",
+            "mean": 250,
+            "sd": 50,
+            "decimals": 0,
+            "clamp": [150, 500]
+        },
+        "occupancy_rate": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                0.40,
+                0.95
+            ],
+            "decimals": 2
+        }
+    },
+    "row": {
+        "updated_at": {
+            "_gen": "var",
+            "var": "update_time",
+            "serialize": {
+                "type": "postgresTimestamp"
+            }
+        },
+        "available_rooms": {
+            "_gen": "math",
+            "expr": "room_capacity * occupancy_rate",
+            "decimals": 0
+        }
+    },
+    "where": {
+        "hotel_id": {
+            "_gen": "oneOf",
+            "choices": [
+                "H21000000", "H21000001", "H21000002", "H21000003", "H21000004",
+                "H21000005", "H21000006", "H21000007", "H21000008", "H21000009",
+                "H21000010", "H21000011", "H21000012", "H21000013", "H21000014",
+                "H21000015", "H21000016", "H21000017", "H21000018", "H21000019",
+                "H21000020", "H21000021", "H21000022", "H21000023", "H21000024",
+                "H21000025", "H21000026", "H21000027", "H21000028", "H21000029"
+            ]
+        }
+    }
+}
