@@ -11,7 +11,7 @@ By the end of this lab, you will have:
 1. **Explored Confluent Cloud**: Reviewed your Kafka cluster, topics, and active CDC connectors
 2. **Explored Databricks**: Located your workspace and Unity Catalog
 
-![Topics and connector diagram](./images/arch_diagram_explore_topics_connector.png)
+![Topics and connector diagram](./images/arch_diagram_explore_topics_connector.jpg)
 
 ### Prerequisites
 

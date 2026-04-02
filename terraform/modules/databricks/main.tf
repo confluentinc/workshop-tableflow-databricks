@@ -87,18 +87,96 @@ resource "databricks_grants" "storage_credential" {
 # ===============================
 # Workshop User
 # ===============================
+# Self-service (lookup_existing_users = true):  data source — user already
+#   owns the workspace. Avoids invitation emails and entitlement stripping.
+# WSA (lookup_existing_users = false):  managed resource with force = true —
+#   user may not exist yet; resource ensures creation and cleanup on destroy.
+
+# --- Data source path (self-service) ---
+
+data "databricks_user" "workshop_existing" {
+  count     = var.lookup_existing_users ? 1 : 0
+  provider  = databricks.workspace
+  user_name = var.user_email
+}
+
+data "databricks_user" "sso_existing" {
+  count     = var.lookup_existing_users && var.sso_email != "" ? 1 : 0
+  provider  = databricks.workspace
+  user_name = var.sso_email
+}
+
+# --- Resource path (WSA) ---
 
 resource "databricks_user" "workshop" {
+  count     = var.lookup_existing_users ? 0 : 1
   provider  = databricks.workspace
   user_name = var.user_email
   force     = true
 }
 
 resource "databricks_user" "sso" {
-  count     = var.sso_email != "" ? 1 : 0
+  count     = !var.lookup_existing_users && var.sso_email != "" ? 1 : 0
   provider  = databricks.workspace
   user_name = var.sso_email
   force     = true
+}
+
+# --- Unified user IDs ---
+
+locals {
+  workshop_user_id = (
+    var.lookup_existing_users
+    ? data.databricks_user.workshop_existing[0].id
+    : databricks_user.workshop[0].id
+  )
+  sso_user_id = (
+    var.sso_email != ""
+    ? (var.lookup_existing_users
+      ? data.databricks_user.sso_existing[0].id
+      : databricks_user.sso[0].id)
+    : null
+  )
+}
+
+# ===============================
+# Workshop User Entitlements
+# ===============================
+
+resource "databricks_entitlements" "workshop" {
+  provider = databricks.workspace
+  user_id  = local.workshop_user_id
+
+  workspace_access      = true
+  databricks_sql_access = true
+  allow_cluster_create  = true
+}
+
+resource "databricks_entitlements" "sso" {
+  count    = var.sso_email != "" ? 1 : 0
+  provider = databricks.workspace
+  user_id  = local.sso_user_id
+
+  workspace_access      = true
+  databricks_sql_access = true
+  allow_cluster_create  = true
+}
+
+# ===============================
+# Workshop User Admin Group Membership
+# ===============================
+
+data "databricks_group" "admins" {
+  count        = var.add_user_to_admins ? 1 : 0
+  provider     = databricks.workspace
+  display_name = "admins"
+}
+
+resource "databricks_group_member" "workshop_admin" {
+  count     = var.add_user_to_admins ? 1 : 0
+  provider  = databricks.workspace
+  group_id  = data.databricks_group.admins[0].id
+  member_id = local.workshop_user_id
 }
 
 # ===============================
@@ -106,7 +184,7 @@ resource "databricks_user" "sso" {
 # ===============================
 
 data "databricks_sql_warehouse" "main" {
-  count    = var.cloud_provider == "aws" ? 1 : 0
+  count    = var.lookup_sql_warehouse ? 1 : 0
   provider = databricks.workspace
-  name     = "Serverless Starter Warehouse"
+  name     = var.sql_warehouse_name
 }

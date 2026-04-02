@@ -90,9 +90,8 @@ resource "null_resource" "shadowtraffic_setup" {
   # Create directory structure on the VM
   provisioner "remote-exec" {
     inline = [
-      "sudo mkdir -p /opt/shadowtraffic/data/generators",
-      "sudo mkdir -p /opt/shadowtraffic/data/generators-workshop",
-      "sudo mkdir -p /opt/shadowtraffic/data/generators/content",
+      "sudo mkdir -p /opt/shadowtraffic/data/generators-shared/content",
+      "sudo mkdir -p /opt/shadowtraffic/data/generators-instructor-led",
       "sudo mkdir -p /opt/shadowtraffic/data/connections",
       "sudo mkdir -p /opt/shadowtraffic/data/schemas",
       "sudo chmod -R 777 /opt/shadowtraffic",
@@ -117,86 +116,97 @@ resource "null_resource" "shadowtraffic_setup" {
     destination = "/opt/shadowtraffic/data/shadow-traffic-configuration-workshop.json"
   }
 
-  # --- Original PostgreSQL generators (customer, hotel) ---
+  # --- Shared generators (used by both paths) ---
   provisioner "file" {
-    source      = "${var.data_dir}/generators/customer_generator_historical.json"
-    destination = "/opt/shadowtraffic/data/generators/customer_generator_historical.json"
+    source      = "${var.data_dir}/generators-shared/customer_generator_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/customer_generator_historical.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/customer_generator_streaming.json"
-    destination = "/opt/shadowtraffic/data/generators/customer_generator_streaming.json"
+    source      = "${var.data_dir}/generators-shared/customer_generator_streaming.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/customer_generator_streaming.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/hotel_generator_historical.json"
-    destination = "/opt/shadowtraffic/data/generators/hotel_generator_historical.json"
-  }
-
-  # --- Workshop generators (bookings, clickstream, reviews → PostgreSQL) ---
-  provisioner "file" {
-    source      = "${var.data_dir}/generators-workshop/booking_generator_historical.json"
-    destination = "/opt/shadowtraffic/data/generators-workshop/booking_generator_historical.json"
+    source      = "${var.data_dir}/generators-shared/hotel_generator_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/hotel_generator_historical.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators-workshop/booking_generator_streaming.json"
-    destination = "/opt/shadowtraffic/data/generators-workshop/booking_generator_streaming.json"
+    source      = "${var.data_dir}/generators-shared/hotel_generator_streaming.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/hotel_generator_streaming.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators-workshop/clickstream_generator_historical.json"
-    destination = "/opt/shadowtraffic/data/generators-workshop/clickstream_generator_historical.json"
+    source      = "${var.data_dir}/generators-shared/customer_updates_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/customer_updates_historical.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators-workshop/clickstream_generator_streaming.json"
-    destination = "/opt/shadowtraffic/data/generators-workshop/clickstream_generator_streaming.json"
+    source      = "${var.data_dir}/generators-shared/hotel_updates_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/hotel_updates_historical.json"
+  }
+  # --- Instructor-led generators (bookings, clickstream, reviews → PostgreSQL) ---
+  provisioner "file" {
+    source      = "${var.data_dir}/generators-instructor-led/booking_generator_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-instructor-led/booking_generator_historical.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators-workshop/review_generator_historical.json"
-    destination = "/opt/shadowtraffic/data/generators-workshop/review_generator_historical.json"
+    source      = "${var.data_dir}/generators-instructor-led/booking_generator_streaming.json"
+    destination = "/opt/shadowtraffic/data/generators-instructor-led/booking_generator_streaming.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators-workshop/review_generator_streaming.json"
-    destination = "/opt/shadowtraffic/data/generators-workshop/review_generator_streaming.json"
+    source      = "${var.data_dir}/generators-instructor-led/clickstream_generator_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-instructor-led/clickstream_generator_historical.json"
+  }
+  provisioner "file" {
+    source      = "${var.data_dir}/generators-instructor-led/clickstream_generator_streaming.json"
+    destination = "/opt/shadowtraffic/data/generators-instructor-led/clickstream_generator_streaming.json"
+  }
+  provisioner "file" {
+    source      = "${var.data_dir}/generators-instructor-led/review_generator_historical.json"
+    destination = "/opt/shadowtraffic/data/generators-instructor-led/review_generator_historical.json"
+  }
+  provisioner "file" {
+    source      = "${var.data_dir}/generators-instructor-led/review_generator_streaming.json"
+    destination = "/opt/shadowtraffic/data/generators-instructor-led/review_generator_streaming.json"
   }
 
   # --- Content files (hotel descriptions, review texts) ---
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/hotel_descriptions_airport.json"
-    destination = "/opt/shadowtraffic/data/generators/content/hotel_descriptions_airport.json"
+    source      = "${var.data_dir}/generators-shared/content/hotel_descriptions_airport.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/hotel_descriptions_airport.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/hotel_descriptions_economy.json"
-    destination = "/opt/shadowtraffic/data/generators/content/hotel_descriptions_economy.json"
+    source      = "${var.data_dir}/generators-shared/content/hotel_descriptions_economy.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/hotel_descriptions_economy.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/hotel_descriptions_extended_stay.json"
-    destination = "/opt/shadowtraffic/data/generators/content/hotel_descriptions_extended_stay.json"
+    source      = "${var.data_dir}/generators-shared/content/hotel_descriptions_extended_stay.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/hotel_descriptions_extended_stay.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/hotel_descriptions_luxury.json"
-    destination = "/opt/shadowtraffic/data/generators/content/hotel_descriptions_luxury.json"
+    source      = "${var.data_dir}/generators-shared/content/hotel_descriptions_luxury.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/hotel_descriptions_luxury.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/hotel_descriptions_resort.json"
-    destination = "/opt/shadowtraffic/data/generators/content/hotel_descriptions_resort.json"
+    source      = "${var.data_dir}/generators-shared/content/hotel_descriptions_resort.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/hotel_descriptions_resort.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/review_text_choices_1_star.json"
-    destination = "/opt/shadowtraffic/data/generators/content/review_text_choices_1_star.json"
+    source      = "${var.data_dir}/generators-shared/content/review_text_choices_1_star.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/review_text_choices_1_star.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/review_text_choices_2_star.json"
-    destination = "/opt/shadowtraffic/data/generators/content/review_text_choices_2_star.json"
+    source      = "${var.data_dir}/generators-shared/content/review_text_choices_2_star.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/review_text_choices_2_star.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/review_text_choices_3_star.json"
-    destination = "/opt/shadowtraffic/data/generators/content/review_text_choices_3_star.json"
+    source      = "${var.data_dir}/generators-shared/content/review_text_choices_3_star.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/review_text_choices_3_star.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/review_text_choices_4_star.json"
-    destination = "/opt/shadowtraffic/data/generators/content/review_text_choices_4_star.json"
+    source      = "${var.data_dir}/generators-shared/content/review_text_choices_4_star.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/review_text_choices_4_star.json"
   }
   provisioner "file" {
-    source      = "${var.data_dir}/generators/content/review_text_choices_5_star.json"
-    destination = "/opt/shadowtraffic/data/generators/content/review_text_choices_5_star.json"
+    source      = "${var.data_dir}/generators-shared/content/review_text_choices_5_star.json"
+    destination = "/opt/shadowtraffic/data/generators-shared/content/review_text_choices_5_star.json"
   }
 
   # --- Wait for PostgreSQL, then start ShadowTraffic ---
@@ -212,7 +222,7 @@ resource "null_resource" "shadowtraffic_setup" {
       MAX_RETRIES=60
       COUNT=0
       while [ $COUNT -lt $MAX_RETRIES ]; do
-        if sudo docker exec postgres-workshop pg_isready -U postgres -d ${var.postgres_db_name} 2>/dev/null; then
+        if sudo docker exec postgres-workshop pg_isready -U ${var.postgres_db_username} -d ${var.postgres_db_name} 2>/dev/null; then
           echo 'PostgreSQL is healthy!'
           break
         fi
@@ -228,7 +238,7 @@ resource "null_resource" "shadowtraffic_setup" {
 
       echo ''
       echo 'Verifying CDC tables...'
-      sudo docker exec postgres-workshop psql -U postgres -d ${var.postgres_db_name} -c '\dt cdc.*'
+      sudo docker exec postgres-workshop psql -U ${var.postgres_db_username} -d ${var.postgres_db_name} -c '\dt cdc.*'
 
       sudo docker stop shadowtraffic 2>/dev/null || true
       sudo docker rm shadowtraffic 2>/dev/null || true
@@ -273,7 +283,7 @@ resource "null_resource" "shadowtraffic_setup" {
 
       echo ''
       echo 'Checking PostgreSQL tables for data...'
-      sudo docker exec postgres-workshop psql -U postgres -d ${var.postgres_db_name} -c "
+      sudo docker exec postgres-workshop psql -U ${var.postgres_db_username} -d ${var.postgres_db_name} -c "
         SELECT 'cdc.customer' as table_name, count(*) FROM cdc.customer
         UNION ALL SELECT 'cdc.hotel', count(*) FROM cdc.hotel
         UNION ALL SELECT 'cdc.bookings', count(*) FROM cdc.bookings

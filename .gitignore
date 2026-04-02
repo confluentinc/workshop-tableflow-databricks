@@ -3,6 +3,7 @@ storyboard.md
 shadow-traffic-license.env
 TODO.txt
 data/connections/*
+terraform/aws/generated/*
 tests
 agent
 

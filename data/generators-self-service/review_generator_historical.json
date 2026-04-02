@@ -1,0 +1,131 @@
+{
+    "name": "review_generator_historical",
+    "topic": "hotel_reviews",
+    "connection": "confluent",
+    "localConfigs": {
+        "maxEvents": 100,
+        "avroSchemaHint": {
+            "value": {
+                "_gen": "loadJsonFile",
+                "file": "/home/data/schemas/review_schema.avsc"
+            }
+        }
+    },
+    "varsOnce": {
+        "currentTimeInMs": {
+            "_gen": "now"
+        },
+        "baseTimeInMs": {
+            "_gen": "math",
+            "expr": "currentTimeInMs - 604800000"
+        },
+        "oneStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_1_star.json"
+        },
+        "twoStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_2_star.json"
+        },
+        "threeStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_3_star.json"
+        },
+        "fourStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_4_star.json"
+        },
+        "fiveStarTexts": {
+            "_gen": "loadJsonFile",
+            "file": "/home/data/generators-shared/content/review_text_choices_5_star.json"
+        }
+    },
+    "vars": {
+        "eventIndex": {
+            "_gen": "sequentialInteger",
+            "startingFrom": 0
+        },
+        "eventIntervalMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                5443200,
+                6652800
+            ],
+            "decimals": 0
+        },
+        "review_created_at": {
+            "_gen": "math",
+            "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+            "decimals": 0
+        },
+        "reviewBundle": {
+            "_gen": "weightedOneOf",
+            "choices": [
+                {
+                    "weight": 5,
+                    "value": {
+                        "rating": 1,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "oneStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 10,
+                    "value": {
+                        "rating": 2,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "twoStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 20,
+                    "value": {
+                        "rating": 3,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "threeStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 35,
+                    "value": {
+                        "rating": 4,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "fourStarTexts" } }
+                    }
+                },
+                {
+                    "weight": 30,
+                    "value": {
+                        "rating": 5,
+                        "text": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "fiveStarTexts" } }
+                    }
+                }
+            ]
+        }
+    },
+    "value": {
+        "review_id": {
+            "_gen": "sequentialString",
+            "startingFrom": 510000100,
+            "expr": "R~d"
+        },
+        "booking_id": {
+            "_gen": "lookup",
+            "name": "booking_generator_historical",
+            "path": [
+                "value",
+                "booking_id"
+            ]
+        },
+        "review_rating": {
+            "_gen": "var",
+            "var": "reviewBundle",
+            "path": ["rating"]
+        },
+        "review_text": {
+            "_gen": "var",
+            "var": "reviewBundle",
+            "path": ["text"]
+        },
+        "created_at": {
+            "_gen": "var",
+            "var": "review_created_at"
+        }
+    }
+}

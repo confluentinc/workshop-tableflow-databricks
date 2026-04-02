@@ -25,7 +25,7 @@ locals {
   resource_suffix = random_id.env_display_id.hex
 
   # WSA: use per-account email when provided, fall back to self-service email
-  effective_email = var.account_email != "" ? var.account_email : var.email
+  effective_email = var.account_email != "" ? var.account_email : var.confluent_cloud_email
 
   # When shared_* vars are set, use them; otherwise use per-account module outputs.
   use_shared = var.shared_vpc_id != ""
@@ -37,8 +37,10 @@ locals {
   effective_s3_bucket_arn  = local.use_shared ? var.shared_s3_bucket_arn : module.s3[0].bucket_arn
   effective_s3_bucket_url  = local.use_shared ? var.shared_s3_bucket_url : module.s3[0].bucket_url
   effective_key_name       = local.use_shared ? var.shared_key_name : module.keypair[0].key_name
-  effective_postgres_dns   = local.use_shared ? var.shared_postgres_hostname : module.postgres[0].public_dns
-  effective_postgres_ip    = local.use_shared ? var.shared_postgres_public_ip : module.postgres[0].public_ip
+  effective_postgres_dns              = local.use_shared ? var.shared_postgres_hostname : module.postgres[0].public_dns
+  effective_postgres_ip               = local.use_shared ? var.shared_postgres_public_ip : module.postgres[0].public_ip
+  effective_postgres_db_password       = local.use_shared && var.shared_postgres_db_password != "" ? var.shared_postgres_db_password : var.postgres_db_password
+  effective_postgres_debezium_password = local.use_shared && var.shared_postgres_debezium_password != "" ? var.shared_postgres_debezium_password : var.postgres_debezium_password
 
   common_tags = merge(
     {
@@ -165,8 +167,8 @@ module "postgres" {
   allowed_cidr_blocks = var.allowed_cidr_blocks
   db_name             = var.postgres_db_name
   db_username         = var.postgres_db_username
-  db_password         = var.postgres_db_password
-  debezium_password   = var.postgres_debezium_password
+  db_password         = local.effective_postgres_db_password
+  debezium_password   = local.effective_postgres_debezium_password
   common_tags         = local.common_tags
 
   depends_on = [module.networking, module.keypair]
@@ -478,7 +480,7 @@ resource "databricks_catalog" "main" {
   storage_root  = "${local.effective_s3_bucket_url}${local.prefix}/catalog/"
   force_destroy = true
 
-  depends_on = [module.databricks]
+  depends_on = [module.databricks, databricks_external_location.main]
 }
 
 # ===============================
@@ -538,7 +540,6 @@ module "connectors" {
   source = "../modules/confluent-connectors"
 
   prefix               = local.prefix
-  create_connector     = var.create_postgres_cdc_connector
   environment_id       = module.confluent_platform.environment_id
   kafka_cluster_id     = module.confluent_platform.kafka_cluster_id
   service_account_id   = module.confluent_platform.service_account_id
@@ -546,12 +547,12 @@ module "connectors" {
   postgres_port        = var.postgres_db_port
   database_name        = var.postgres_db_name
   debezium_username    = var.postgres_debezium_username
-  debezium_password    = var.postgres_debezium_password
+  debezium_password    = local.effective_postgres_debezium_password
   table_include_list   = var.table_include_list
   ssh_key_path         = local.use_shared ? "" : module.keypair[0].private_key_path
   initial_wait_seconds = local.use_shared ? 0 : 90
 
-  depends_on = [module.postgres, module.confluent_platform, module.keypair]
+  depends_on = [module.postgres, module.confluent_platform, module.keypair, null_resource.shadowtraffic_setup]
 }
 
 # ===============================
@@ -575,6 +576,10 @@ module "flink_statements" {
   flink_api_secret           = module.flink.flink_api_secret
   flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
+  clickstream_topic   = local.use_shared ? "riverhotel.cdc.clickstream" : "clickstream"
+  bookings_topic      = local.use_shared ? "riverhotel.cdc.bookings" : "bookings"
+  hotel_reviews_topic = local.use_shared ? "riverhotel.cdc.hotel_reviews" : "hotel_reviews"
+
   depends_on = [module.connectors, module.flink]
 }
 
@@ -589,7 +594,7 @@ module "data_generator" {
   postgres_hostname          = local.effective_postgres_ip
   postgres_port              = var.postgres_db_port
   postgres_username          = var.postgres_db_username
-  postgres_password          = var.postgres_db_password
+  postgres_password          = local.effective_postgres_db_password
   postgres_database          = var.postgres_db_name
   kafka_bootstrap_endpoint   = module.confluent_platform.bootstrap_endpoint_url
   kafka_api_key              = module.confluent_platform.kafka_api_key

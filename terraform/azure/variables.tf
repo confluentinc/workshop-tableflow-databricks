@@ -2,12 +2,12 @@
 # General Variables
 # ===============================
 
-variable "email" {
-  description = "Your email to tag all resources"
+variable "confluent_cloud_email" {
+  description = "Your Confluent Cloud account email — used for EnvironmentAdmin RBAC and resource tagging"
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.email))
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.confluent_cloud_email))
     error_message = "Must be a valid email address (e.g., user@example.com)."
   }
 }
@@ -154,12 +154,6 @@ variable "postgres_storage_mb" {
   default     = 32768
 }
 
-variable "create_postgres_cdc_connector" {
-  description = "Whether to auto-create the PostgreSQL CDC connector"
-  type        = bool
-  default     = true
-}
-
 # ===============================
 # Databricks Variables
 # ===============================
@@ -302,10 +296,24 @@ variable "shared_postgres_public_ip" {
   default     = ""
 }
 
-variable "cluster_type" {
-  description = "Confluent Cloud cluster type (enterprise when self-service, standard when shared)"
+variable "shared_postgres_db_password" {
+  description = "WSA: shared PostgreSQL admin password (from shared infra output)"
   type        = string
-  default     = "enterprise"
+  sensitive   = true
+  default     = ""
+}
+
+variable "shared_postgres_debezium_password" {
+  description = "WSA: shared PostgreSQL debezium password (from shared infra output)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "cluster_type" {
+  description = "Confluent Cloud cluster type (standard for WSA/instructor-led, enterprise for self-service)"
+  type        = string
+  default     = "standard"
 }
 
 variable "table_include_list" {

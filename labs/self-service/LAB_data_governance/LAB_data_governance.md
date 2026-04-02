@@ -298,5 +298,5 @@ In production environments, these concepts scale to hundreds or thousands of dat
 This is an optional lab, so you can return to wherever you came from in the main workshop flow, most likely one of these:
 
 - [LAB 2: Cloud Resource Deployment](../LAB2_cloud_deployment/LAB2.md)
-- [LAB 5: Stream Processing](../LAB5_stream_processing/LAB5.md)
-- [LAB 6: Data Analysis in Databricks](../LAB6_databricks/LAB6.md)
+- [LAB 4: Stream Processing](../LAB4_stream_processing/LAB4.md)
+- [LAB 5: Analytics & AI](../LAB5_databricks/LAB5.md)

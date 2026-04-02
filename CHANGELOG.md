@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-04-02
+
+### Changed
+
+- **Data Generation**: Made updates to how data is generated so that more relevant yet still hopefully realistic data shows up in the Flink statements and downstream data analysis.
+- **AI sentiment aspects**: Added `AI_SENTIMENT` function invocation in Confluent Flink with aspects `['cleanliness', 'amenities', 'service']` and replaced the `hotel_stats` table in the stream processing with `hotel_reviews_with_sentiment`
+- **Architecture diagrams**: Updated all diagrams to reflect the changes in data generation and enriched data products (`hotel_review_with_sentiment`)
+
+### Fixed
+
+- **Databricks user management**: Self-service Terraform now uses a read-only `data` source for workspace users instead of `databricks_user` with `force = true`, preventing invitation emails and entitlement stripping
+
 ## [0.10.0] - 2026-03-17
 
 ### Changed

@@ -144,7 +144,7 @@ services:
       - "-c"
       - "max_connections=${max_connections}"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${db_username}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -187,13 +187,13 @@ echo "================================================"
 
 # Verify setup
 echo "Verifying PostgreSQL setup..."
-docker exec postgres-workshop psql -U postgres -d ${db_name} -c "SELECT version();"
-docker exec postgres-workshop psql -U postgres -d ${db_name} -c "SHOW wal_level;"
-docker exec postgres-workshop psql -U postgres -d ${db_name} -c "SELECT * FROM pg_publication;"
-docker exec postgres-workshop psql -U postgres -d ${db_name} -c "\dn"
+docker exec postgres-workshop psql -U ${db_username} -d ${db_name} -c "SELECT version();"
+docker exec postgres-workshop psql -U ${db_username} -d ${db_name} -c "SHOW wal_level;"
+docker exec postgres-workshop psql -U ${db_username} -d ${db_name} -c "SELECT * FROM pg_publication;"
+docker exec postgres-workshop psql -U ${db_username} -d ${db_name} -c "\dn"
 
 echo "Verifying Debezium CDC user..."
-docker exec postgres-workshop psql -U postgres -d ${db_name} -c "\du debezium"
+docker exec postgres-workshop psql -U ${db_username} -d ${db_name} -c "\du debezium"
 
 # Mark setup as complete
 touch /opt/postgres/.setup-complete

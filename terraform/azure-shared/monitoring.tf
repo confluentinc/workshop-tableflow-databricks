@@ -25,6 +25,7 @@ locals {
 # ===============================
 
 resource "azurerm_role_assignment" "monitoring_metrics_publisher" {
+  count                = var.enable_monitoring ? 1 : 0
   scope                = azurerm_resource_group.shared.id
   role_definition_name = "Monitoring Metrics Publisher"
   principal_id         = azurerm_linux_virtual_machine.postgres.identity[0].principal_id
@@ -35,6 +36,7 @@ resource "azurerm_role_assignment" "monitoring_metrics_publisher" {
 # ===============================
 
 resource "azurerm_monitor_action_group" "shared" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-alerts-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   short_name          = "wsaalerts"
@@ -52,6 +54,7 @@ resource "azurerm_monitor_action_group" "shared" {
 # ===============================
 
 resource "azurerm_monitor_metric_alert" "cpu" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-cpu-high-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -69,13 +72,14 @@ resource "azurerm_monitor_metric_alert" "cpu" {
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
 }
 
 resource "azurerm_monitor_metric_alert" "vm_availability" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-vm-availability-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -93,7 +97,7 @@ resource "azurerm_monitor_metric_alert" "vm_availability" {
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
@@ -106,6 +110,7 @@ resource "azurerm_monitor_metric_alert" "vm_availability" {
 # via the Azure Monitor custom metrics API.
 
 resource "azurerm_monitor_metric_alert" "memory_high" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-memory-high-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -115,21 +120,23 @@ resource "azurerm_monitor_metric_alert" "memory_high" {
   window_size         = "PT15M"
 
   criteria {
-    metric_namespace = local.custom_metric_namespace
-    metric_name      = "MemoryUsedPercent"
-    aggregation      = "Average"
-    operator         = "GreaterThan"
-    threshold        = var.alarm_memory_threshold
+    metric_namespace       = local.custom_metric_namespace
+    metric_name            = "MemoryUsedPercent"
+    aggregation            = "Average"
+    operator               = "GreaterThan"
+    threshold              = var.alarm_memory_threshold
+    skip_metric_validation = true
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
 }
 
 resource "azurerm_monitor_metric_alert" "disk_high" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-disk-high-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -139,21 +146,23 @@ resource "azurerm_monitor_metric_alert" "disk_high" {
   window_size         = "PT15M"
 
   criteria {
-    metric_namespace = local.custom_metric_namespace
-    metric_name      = "DiskUsedPercent"
-    aggregation      = "Maximum"
-    operator         = "GreaterThan"
-    threshold        = var.alarm_disk_threshold
+    metric_namespace       = local.custom_metric_namespace
+    metric_name            = "DiskUsedPercent"
+    aggregation            = "Maximum"
+    operator               = "GreaterThan"
+    threshold              = var.alarm_disk_threshold
+    skip_metric_validation = true
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
 }
 
 resource "azurerm_monitor_metric_alert" "replication_lag" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-replication-lag-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -164,21 +173,23 @@ resource "azurerm_monitor_metric_alert" "replication_lag" {
   auto_mitigate       = true
 
   criteria {
-    metric_namespace = local.custom_metric_namespace
-    metric_name      = "ReplicationLagBytes"
-    aggregation      = "Maximum"
-    operator         = "GreaterThan"
-    threshold        = var.alarm_replication_lag_bytes
+    metric_namespace       = local.custom_metric_namespace
+    metric_name            = "ReplicationLagBytes"
+    aggregation            = "Maximum"
+    operator               = "GreaterThan"
+    threshold              = var.alarm_replication_lag_bytes
+    skip_metric_validation = true
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
 }
 
 resource "azurerm_monitor_metric_alert" "connections_high" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-connections-high-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -189,21 +200,23 @@ resource "azurerm_monitor_metric_alert" "connections_high" {
   auto_mitigate       = true
 
   criteria {
-    metric_namespace = local.custom_metric_namespace
-    metric_name      = "ActiveConnections"
-    aggregation      = "Maximum"
-    operator         = "GreaterThan"
-    threshold        = var.alarm_max_connections
+    metric_namespace       = local.custom_metric_namespace
+    metric_name            = "ActiveConnections"
+    aggregation            = "Maximum"
+    operator               = "GreaterThan"
+    threshold              = var.alarm_max_connections
+    skip_metric_validation = true
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
 }
 
 resource "azurerm_monitor_metric_alert" "shadowtraffic_unhealthy" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-shadowtraffic-unhealthy-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -213,21 +226,23 @@ resource "azurerm_monitor_metric_alert" "shadowtraffic_unhealthy" {
   window_size         = "PT5M"
 
   criteria {
-    metric_namespace = local.custom_metric_namespace
-    metric_name      = "ContainerHealthy_shadowtraffic"
-    aggregation      = "Minimum"
-    operator         = "LessThan"
-    threshold        = 1
+    metric_namespace       = local.custom_metric_namespace
+    metric_name            = "ContainerHealthy_shadowtraffic"
+    aggregation            = "Minimum"
+    operator               = "LessThan"
+    threshold              = 1
+    skip_metric_validation = true
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
 }
 
 resource "azurerm_monitor_metric_alert" "postgres_down" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-postgres-down-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -237,21 +252,23 @@ resource "azurerm_monitor_metric_alert" "postgres_down" {
   window_size         = "PT5M"
 
   criteria {
-    metric_namespace = local.custom_metric_namespace
-    metric_name      = "ContainerRunning_postgres"
-    aggregation      = "Minimum"
-    operator         = "LessThan"
-    threshold        = 1
+    metric_namespace       = local.custom_metric_namespace
+    metric_name            = "ContainerRunning_postgres"
+    aggregation            = "Minimum"
+    operator               = "LessThan"
+    threshold              = 1
+    skip_metric_validation = true
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
 }
 
 resource "azurerm_monitor_metric_alert" "shadowtraffic_errors" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = "${var.prefix}-shadowtraffic-errors-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
@@ -262,15 +279,16 @@ resource "azurerm_monitor_metric_alert" "shadowtraffic_errors" {
   auto_mitigate       = true
 
   criteria {
-    metric_namespace = local.custom_metric_namespace
-    metric_name      = "ShadowTrafficWriteErrors"
-    aggregation      = "Total"
-    operator         = "GreaterThan"
-    threshold        = 0
+    metric_namespace       = local.custom_metric_namespace
+    metric_name            = "ShadowTrafficWriteErrors"
+    aggregation            = "Total"
+    operator               = "GreaterThan"
+    threshold              = 0
+    skip_metric_validation = true
   }
 
   action {
-    action_group_id = azurerm_monitor_action_group.shared.id
+    action_group_id = azurerm_monitor_action_group.shared[0].id
   }
 
   tags = local.common_tags
@@ -285,6 +303,8 @@ resource "azurerm_monitor_metric_alert" "shadowtraffic_errors" {
 # The VM authenticates using its system-assigned managed identity (IMDS).
 
 resource "null_resource" "monitoring_setup" {
+  count = var.enable_monitoring ? 1 : 0
+
   triggers = {
     vm_id = azurerm_linux_virtual_machine.postgres.id
   }
@@ -363,6 +383,7 @@ resource "null_resource" "monitoring_setup" {
 # ===============================
 
 resource "azurerm_portal_dashboard" "shared_infra" {
+  count               = var.enable_monitoring ? 1 : 0
   name                = local.dashboard_name
   resource_group_name = azurerm_resource_group.shared.name
   location            = azurerm_resource_group.shared.location

@@ -14,7 +14,7 @@ provider "aws" {
     tags = {
       Created_by  = "terraform"
       Project     = "River Hotels Hospitality AI Insights"
-      owner_email = var.email
+      owner_email = var.confluent_cloud_email
       Environment = var.environment
     }
   }

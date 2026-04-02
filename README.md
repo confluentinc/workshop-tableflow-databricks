@@ -237,14 +237,14 @@ This workshop supports two modes. Choose the path that matches your situation:
 
 > Your instructor has pre-provisioned all cloud infrastructure and accounts. You will claim a dedicated environment and focus on the hands-on Confluent and Databricks labs.
 
-![Architecture Diagram](./assets/images/arch_diagram_full_instructor_led.png)
+![Architecture Diagram](./assets/images/arch_diagram_full_instructor_led.jpg)
 
 | Lab | Duration | Details |
 |-----|----------|-------------|
 | [LAB 1: Claim Your Account](./labs/instructor-led/LAB1_claim_account/LAB1.md) | ~5 min | **Claim your workshop account**: complete the Google Form, receive credentials, verify access to Confluent Cloud and Databricks. |
 | [LAB 2: Explore Your Environment](./labs/instructor-led/LAB2_explore_environment/LAB2.md) | ~10 min | **Tour your environment**: explore your Kafka cluster, CDC topics, connectors, Flink compute pool, and Databricks workspace. |
-| [LAB 3: Stream Processing](./labs/instructor-led/LAB3_stream_processing/LAB3.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with temporal joins, denormalize CDC data. |
-| [LAB 4: Tableflow](./labs/instructor-led/LAB4_tableflow/LAB4.md) | ~10 min | **Configure catalog and enable Tableflow**: connect Confluent Cloud Tableflow with Databricks Unity Catalog, stream clickstream, denormalized bookings, and hotel stats topics as Delta Lake tables. |
+| [LAB 3: Stream Processing](./labs/instructor-led/LAB3_stream_processing/LAB3.md) | ~15 min | **Transform streams**: build Flink SQL queries with temporal joins, denormalize CDC data, enrich reviews with AI sentiment. |
+| [LAB 4: Tableflow](./labs/instructor-led/LAB4_tableflow/LAB4.md) | ~10 min | **Configure catalog and enable Tableflow**: connect Confluent Cloud Tableflow with Databricks Unity Catalog, stream clickstream, denormalized bookings, and sentiment-enriched reviews as Delta Lake tables. |
 | [LAB 5: Analytics & AI](./labs/instructor-led/LAB5_analytics_ai/LAB5.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
 | [LAB 6: Wrap Up](./labs/instructor-led/LAB6_wrap_up/LAB6.md) | ~5 min | **Clean up and recap**: Review accomplishments, provide feedback. |
 
@@ -252,18 +252,17 @@ This workshop supports two modes. Choose the path that matches your situation:
 
 > You will set up your own cloud accounts, deploy infrastructure with Terraform, and run the full workshop independently.
 
-![Architecture Diagram](./assets/images/tableflow_databricks_architecture_diagram.jpg)
+![Architecture Diagram](./assets/images/arch_diagram_full_self_service.jpg)
 
 | Lab | Duration | Details |
 |-----|----------|-------------|
 | [LAB 0: Prerequisites](./labs/self-service/LAB0_prerequisites/LAB0.md) | ~10 min | **Set up prerequisites**: create cloud accounts, install Git and Docker, clone the repo, build Docker images. |
 | [LAB 1: Account Setup](./labs/self-service/LAB1_account_setup/LAB1.md) | ~15 min | **Configure cloud platform accounts**: set up Confluent Cloud API keys, configure Databricks service principal, establish AWS credentials. |
-| [LAB 2: Cloud Infrastructure](./labs/self-service/LAB2_cloud_deployment/LAB2.md) | ~10 min | **Deploy infrastructure with Terraform**: provision AWS, Confluent Cloud, and Databricks resources. |
-| [LAB 3: Data Generation](./labs/self-service/LAB3_data_generation/LAB3.md) | ~10 min | **Generate data**: deploy ShadowTraffic for realistic hospitality data, validate Kafka topics, enable Delta Lake sync. |
-| [LAB 4: Tableflow & Unity Catalog](./labs/self-service/LAB4_tableflow/LAB4.md) | ~15 min | **Configure Tableflow**: connect Tableflow with Unity Catalog, enable Tableflow on Clickstream topic. |
-| [LAB 5: Stream Processing](./labs/self-service/LAB5_stream_processing/LAB5.md) | ~15 min | **Transform streams**: build Flink SQL queries, create snapshot tables with temporal joins, configure Tableflow sync. |
-| [LAB 6: Analytics & AI](./labs/self-service/LAB6_databricks/LAB6.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
-| [LAB 7: Cleanup](./labs/self-service/LAB7_clean_up/LAB7.md) | ~5 min | **Clean up resources**: remove UI-created resources and terraform destroy the remainder. |
+| [LAB 2: Cloud Infrastructure](./labs/self-service/LAB2_cloud_deployment/LAB2.md) | ~15 min | **Deploy infrastructure with Terraform**: provision AWS, Confluent Cloud, and Databricks resources. Verify data generation and CDC connector. |
+| [LAB 3: Tableflow & Unity Catalog](./labs/self-service/LAB3_tableflow/LAB3.md) | ~15 min | **Configure Tableflow**: connect Tableflow with Unity Catalog, enable Tableflow on clickstream topic. |
+| [LAB 4: Stream Processing](./labs/self-service/LAB4_stream_processing/LAB4.md) | ~15 min | **Transform streams**: build Flink SQL queries with temporal joins on pre-configured CDC topics, configure Tableflow sync. |
+| [LAB 5: Analytics & AI](./labs/self-service/LAB5_databricks/LAB5.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
+| [LAB 6: Cleanup](./labs/self-service/LAB6_clean_up/LAB6.md) | ~5 min | **Clean up resources**: remove UI-created resources and terraform destroy the remainder. |
 
 ### Additional Resources
 

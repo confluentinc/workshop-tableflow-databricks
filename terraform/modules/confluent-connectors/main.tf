@@ -20,7 +20,6 @@ terraform {
 # 2. SSH + pg_isready for full verification (if SSH key available)
 
 resource "null_resource" "wait_for_postgres" {
-  count = var.create_connector ? 1 : 0
 
   triggers = {
     postgres_hostname = var.postgres_hostname
@@ -119,7 +118,6 @@ resource "null_resource" "wait_for_postgres" {
 # Deletes are handled via tombstones (tombstones.on.delete=true).
 
 resource "confluent_connector" "postgres_cdc" {
-  count = var.create_connector ? 1 : 0
 
   environment {
     id = var.environment_id

@@ -4,17 +4,17 @@
 
 output "connector_id" {
   description = "PostgreSQL CDC connector ID"
-  value       = var.create_connector ? confluent_connector.postgres_cdc[0].id : null
+  value       = confluent_connector.postgres_cdc.id
 }
 
 output "connector_name" {
   description = "PostgreSQL CDC connector name"
-  value       = var.create_connector ? confluent_connector.postgres_cdc[0].config_nonsensitive["name"] : null
+  value       = confluent_connector.postgres_cdc.config_nonsensitive["name"]
 }
 
 output "connector_status" {
   description = "PostgreSQL CDC connector status"
-  value       = var.create_connector ? confluent_connector.postgres_cdc[0].status : null
+  value       = confluent_connector.postgres_cdc.status
 }
 
 output "topics" {
@@ -24,9 +24,4 @@ output "topics" {
     hotel_topic     = "riverhotel.cdc.hotel"
     heartbeat_topic = "__debezium-heartbeat-riverhotel"
   }
-}
-
-output "enabled" {
-  description = "Whether the connector was created"
-  value       = var.create_connector
 }

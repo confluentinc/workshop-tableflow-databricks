@@ -25,7 +25,7 @@ locals {
   resource_suffix = random_id.env_display_id.hex
 
   # WSA: use per-account email when provided, fall back to self-service email
-  effective_email = var.account_email != "" ? var.account_email : var.email
+  effective_email = var.account_email != "" ? var.account_email : var.confluent_cloud_email
 
   # When shared_* vars are set, use them; otherwise use per-account module outputs.
   use_shared = var.shared_resource_group_name != ""
@@ -35,8 +35,10 @@ locals {
   effective_storage_account_id     = local.use_shared ? var.shared_storage_account_id : module.storage[0].storage_account_id
   effective_storage_container_name = local.use_shared ? var.shared_storage_container_name : module.storage[0].container_name
   effective_abfss_url              = local.use_shared ? "abfss://${var.shared_storage_container_name}@${var.shared_storage_account_name}.dfs.core.windows.net/" : module.storage[0].abfss_url
-  effective_postgres_host          = local.use_shared ? var.shared_postgres_public_ip : module.postgres[0].fqdn
-  effective_resource_group_id      = local.use_shared ? var.shared_resource_group_id : azurerm_resource_group.main[0].id
+  effective_postgres_host              = local.use_shared ? var.shared_postgres_public_ip : module.postgres[0].fqdn
+  effective_postgres_db_password       = local.use_shared && var.shared_postgres_db_password != "" ? var.shared_postgres_db_password : var.postgres_db_password
+  effective_postgres_debezium_password = local.use_shared && var.shared_postgres_debezium_password != "" ? var.shared_postgres_debezium_password : var.postgres_debezium_password
+  effective_resource_group_id          = local.use_shared ? var.shared_resource_group_id : azurerm_resource_group.main[0].id
 
   common_tags = {
     Project     = "Hospitality AI Agent"
@@ -81,7 +83,7 @@ module "storage" {
 }
 
 # ===============================
-# Confluent Platform (Enterprise cluster for Azure Private Link)
+# Confluent Platform
 # ===============================
 
 module "confluent_platform" {
@@ -160,20 +162,18 @@ module "postgres" {
   sku_name            = var.postgres_sku_name
   storage_mb          = var.postgres_storage_mb
   admin_username      = var.postgres_db_username
-  admin_password      = var.postgres_db_password
+  admin_password      = local.effective_postgres_db_password
   db_name             = var.postgres_db_name
   debezium_username   = var.postgres_debezium_username
-  debezium_password   = var.postgres_debezium_password
+  debezium_password   = local.effective_postgres_debezium_password
   common_tags         = local.common_tags
 
   depends_on = [azurerm_resource_group.main]
 }
 
 # ===============================
-# Enterprise Cluster Networking (Private Link to PostgreSQL)
+# Cluster Networking (Private Link to PostgreSQL)
 # ===============================
-# Enterprise clusters auto-create a network with an outgoing gateway.
-# The access point connects the gateway to PostgreSQL via Azure Private Link.
 
 resource "confluent_network" "azure_egress" {
   count            = local.use_shared ? 0 : 1
@@ -350,7 +350,6 @@ resource "databricks_grants" "external_location" {
 # ===============================
 
 resource "databricks_catalog" "main" {
-  count    = local.use_shared ? 0 : 1
   provider = databricks.workspace
 
   name          = "${local.prefix}-${local.resource_suffix}"
@@ -366,10 +365,9 @@ resource "databricks_catalog" "main" {
 # ===============================
 
 resource "databricks_grants" "catalog" {
-  count    = local.use_shared ? 0 : 1
   provider = databricks.workspace
 
-  catalog = databricks_catalog.main[0].name
+  catalog = databricks_catalog.main.name
 
   grant {
     principal = var.databricks_user_email
@@ -419,7 +417,6 @@ module "connectors" {
   source = "../modules/confluent-connectors"
 
   prefix               = local.prefix
-  create_connector     = var.create_postgres_cdc_connector
   environment_id       = module.confluent_platform.environment_id
   kafka_cluster_id     = module.confluent_platform.kafka_cluster_id
   service_account_id   = module.confluent_platform.service_account_id
@@ -427,7 +424,7 @@ module "connectors" {
   postgres_port        = var.postgres_db_port
   database_name        = var.postgres_db_name
   debezium_username    = var.postgres_debezium_username
-  debezium_password    = var.postgres_debezium_password
+  debezium_password    = local.effective_postgres_debezium_password
   table_include_list   = var.table_include_list
   ssh_key_path         = ""
   initial_wait_seconds = local.use_shared ? 0 : 90
@@ -456,35 +453,11 @@ module "flink_statements" {
   flink_api_secret           = module.flink.flink_api_secret
   flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
+  clickstream_topic   = local.use_shared ? "riverhotel.cdc.clickstream" : "clickstream"
+  bookings_topic      = local.use_shared ? "riverhotel.cdc.bookings" : "bookings"
+  hotel_reviews_topic = local.use_shared ? "riverhotel.cdc.hotel_reviews" : "hotel_reviews"
+
   depends_on = [module.connectors, module.flink]
-}
-
-# ===============================
-# Confluent Tableflow Topic
-# ===============================
-
-resource "confluent_tableflow_topic" "main" {
-  environment {
-    id = module.confluent_platform.environment_id
-  }
-  kafka_cluster {
-    id = module.confluent_platform.kafka_cluster_id
-  }
-  display_name  = "hotel_customers"
-  table_formats = ["DELTA", "ICEBERG"]
-
-  azure_data_lake_storage_gen_2 {
-    container_name          = local.effective_storage_container_name
-    storage_account_name    = local.effective_storage_account_name
-    provider_integration_id = module.tableflow.integration_id
-  }
-
-  credentials {
-    key    = module.confluent_platform.kafka_api_key
-    secret = module.confluent_platform.kafka_api_secret
-  }
-
-  depends_on = [module.identity, module.tableflow, module.connectors]
 }
 
 # ===============================
@@ -499,7 +472,7 @@ module "data_generator" {
   postgres_hostname          = local.effective_postgres_host
   postgres_port              = var.postgres_db_port
   postgres_username          = var.postgres_db_username
-  postgres_password          = var.postgres_db_password
+  postgres_password          = local.effective_postgres_db_password
   postgres_database          = var.postgres_db_name
   kafka_bootstrap_endpoint   = module.confluent_platform.bootstrap_endpoint_url
   kafka_api_key              = module.confluent_platform.kafka_api_key

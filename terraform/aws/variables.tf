@@ -1,9 +1,9 @@
-variable "email" {
-  description = "Your email to tag all AWS resources"
+variable "confluent_cloud_email" {
+  description = "Your Confluent Cloud account email — used for EnvironmentAdmin RBAC and AWS resource tagging"
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.email))
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.confluent_cloud_email))
     error_message = "Must be a valid email address (e.g., user@example.com)."
   }
 }
@@ -222,12 +222,6 @@ variable "postgres_debezium_password" {
   sensitive   = true
 }
 
-variable "create_postgres_cdc_connector" {
-  description = "Whether to automatically create the PostgreSQL CDC connector (set to false for manual LAB exercise)"
-  type        = bool
-  default     = true
-}
-
 # ---------------------
 # Databricks variables
 # ---------------------
@@ -403,6 +397,20 @@ variable "shared_postgres_hostname" {
 variable "shared_postgres_public_ip" {
   description = "WSA: shared PostgreSQL public IP (skips postgres module when set)"
   type        = string
+  default     = ""
+}
+
+variable "shared_postgres_db_password" {
+  description = "WSA: shared PostgreSQL admin password (from shared infra output)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "shared_postgres_debezium_password" {
+  description = "WSA: shared PostgreSQL debezium password (from shared infra output)"
+  type        = string
+  sensitive   = true
   default     = ""
 }
 

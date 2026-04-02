@@ -41,10 +41,22 @@ variable "data_dir" {
 # Virtual Machine (PostgreSQL + ShadowTraffic)
 # ---------------------
 
+variable "account_count" {
+  description = "Number of workshop accounts (used for VM auto-sizing). Passed by wsa from the spec."
+  type        = number
+  default     = 95
+}
+
 variable "vm_size" {
-  description = "Azure VM size for shared PostgreSQL (Standard_D4s_v5 ≈ 4 vCPU, 16 GB)"
+  description = "Azure VM size override. Leave empty to auto-size based on account_count."
   type        = string
-  default     = "Standard_D4s_v5"
+  default     = ""
+}
+
+variable "vm_zone" {
+  description = "Azure availability zone for the VM (v7 SKUs in eastus2 require zone 1)"
+  type        = string
+  default     = "1"
 }
 
 variable "vm_disk_size_gb" {
@@ -72,7 +84,7 @@ variable "postgres_db_name" {
 variable "postgres_db_username" {
   description = "PostgreSQL admin username"
   type        = string
-  default     = "postgres"
+  default     = "pgadmin"
 }
 
 variable "postgres_db_password" {
@@ -148,6 +160,12 @@ variable "storage_container_name" {
 # ---------------------
 # Monitoring
 # ---------------------
+
+variable "enable_monitoring" {
+  description = "Enable Azure Monitor alerts and dashboard. Set to false during dev/testing to suppress email alerts."
+  type        = bool
+  default     = true
+}
 
 variable "alert_email" {
   description = "Email address for Azure Monitor alert notifications (defaults to owner_email)"

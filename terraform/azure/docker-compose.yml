@@ -39,7 +39,7 @@ services:
       - TF_VAR_databricks_service_principal_client_secret
       - TF_VAR_databricks_account_id
       - TF_VAR_databricks_user_email
-      - TF_VAR_email
+      - TF_VAR_confluent_cloud_email
       - TF_VAR_cloud_region
       - TF_VAR_prefix
     working_dir: /workspace/terraform/azure

@@ -22,7 +22,7 @@ Complete **[LAB 0: Prerequisites](../LAB0_prerequisites/LAB0.md)** before starti
 
 ### Step 1: Create Terraform Variables File
 
-1. Navigate to the `terraform` directory
+1. Ensure you are in the `terraform/aws` directory
 2. Rename the `sample-tfvars` file to `terraform.tfvars`
 3. Open `terraform.tfvars` in your preferred editor
 
@@ -33,13 +33,12 @@ Now you can configure each cloud platform's credentials and settings. It should 
 # General Overrides
 # ===============================
 prefix       = ""
-email        = ""
 cloud_region = ""
-
 
 # ===============================
 # Confluent Cloud Overrides
 # ===============================
+confluent_cloud_email      = ""
 confluent_cloud_api_key    = ""
 confluent_cloud_api_secret = ""
 
@@ -61,12 +60,6 @@ databricks_service_principal_client_secret = ""  # Service Principal OAuth Secre
 
 # AWS Free Tier now allows for c7i-flex.large and m7i-flex.large for accounts created after July 15, 2025
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/LaunchingAndUsingInstances.html
-
-# ===============================
-# Optional: Connector Automation
-# ===============================
-# Set to false if you want to manually create the PostgreSQL CDC connector as a learning exercise
-# create_postgres_cdc_connector = false
 ```
 
 Terraform requires API keys and configuration values to create resources across multiple cloud platforms. You'll configure these values in a `terraform.tfvars` file in the following steps.
@@ -109,10 +102,13 @@ Follow this next section of steps to create a Confluent *Cloud resource manageme
 10. Add a useful description
 11. Click the *Create API Key* button
 
-#### Add API Key and Secret to Terraform
+#### Add Confluent Cloud Credentials to Terraform
 
-1. In your code editor of choice, open your `terraform.tfvars` file and enter in the `confluent_cloud_api_key` and `confluent_cloud_api_secret` values from your newly-created **Key** and **Secret**. Save the `terraform.tfvars` file.
-2. Back in Confluent Cloud, click the *Complete* button
+1. In your code editor of choice, open your `terraform.tfvars` file
+2. Enter the email address you use to log into Confluent Cloud as the `confluent_cloud_email` value
+3. Enter the `confluent_cloud_api_key` and `confluent_cloud_api_secret` values from your newly-created **Key** and **Secret**
+4. Save the `terraform.tfvars` file
+5. Back in Confluent Cloud, click the *Complete* button
 
 ### Step 4: Configure Databricks Account
 
@@ -165,8 +161,7 @@ Navigate to [Databricks](https://login.databricks.com/) and login with your acco
    ![Databricks Account ID](images/databricks_user_profile.png)
 
 4. Copy your account's email address and paste it into your `terraform.tfvars` for the `databricks_user_email` variable override
-5. You can paste the same email address in the `email` variable override in `terraform.tfvars`, or you can paste a different one
-6. Copy the *URL* from your browser address bar and paste it into your `terraform.tfvars` for the `databricks_host` variable override. Erase everything after the *databricks.com*. It should look similar to this: `https://dbc-12f34e56-123e.cloud.databricks.com`
+5. Copy the *URL* from your browser address bar and paste it into your `terraform.tfvars` for the `databricks_host` variable override. Erase everything after the *databricks.com*. It should look similar to this: `https://dbc-12f34e56-123e.cloud.databricks.com`
 
 #### Create Service Principal
 
