@@ -1,13 +1,13 @@
 {
     "type": "record",
-    "name": "HotelReviewEvent",
+    "name": "ReviewEvent",
     "fields": [
         {
             "name": "review_id",
             "type": "string"
         },
         {
-            "name": "booking_id",
+            "name": "hotel_id",
             "type": "string"
         },
         {

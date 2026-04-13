@@ -12,6 +12,10 @@ By the end of this lab, you will have:
 2. **Received your credentials** via email
 3. **Verified access** to Confluent Cloud and Databricks
 
+You will verify that the data generation and ingestion portion of this lab is set up:
+
+![Data generation and ingestion diagram](./images/arch_data_generation.jpg)
+
 ### Prerequisites
 
 - A web browser

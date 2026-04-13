@@ -3,7 +3,7 @@
 # ===============================
 # Runs ONCE before `wsa build`. Provisions resources shared across all
 # 95 workshop accounts: Resource Group, VNet, Storage Account, SSH key,
-# and an Azure VM running PostgreSQL + ShadowTraffic via Docker.
+# and an Azure VM running PostgreSQL + the data generator via Docker.
 #
 # Per-account Terraform (terraform/azure/) receives these outputs as
 # input variables (shared_resource_group_name, shared_storage_account_name, etc.).

@@ -533,6 +533,31 @@ resource "databricks_grants" "catalog" {
 }
 
 # ===============================
+# Data Quality Rules (Data Contracts)
+# ===============================
+# Pre-registers schemas with CEL rules and creates DLQ topic.
+# Self-service path: all schemas registered (auto.register.schemas=false).
+
+module "data_contracts" {
+  source = "../modules/confluent-data-contracts"
+
+  environment_id             = module.confluent_platform.environment_id
+  kafka_cluster_id           = module.confluent_platform.kafka_cluster_id
+  kafka_rest_endpoint        = module.confluent_platform.kafka_rest_endpoint
+  kafka_api_key              = module.confluent_platform.kafka_api_key
+  kafka_api_secret           = module.confluent_platform.kafka_api_secret
+  schema_registry_id         = module.confluent_platform.schema_registry_id
+  schema_registry_endpoint   = module.confluent_platform.schema_registry_endpoint
+  schema_registry_api_key    = module.confluent_platform.schema_registry_api_key
+  schema_registry_api_secret = module.confluent_platform.schema_registry_api_secret
+  schemas_dir                = "${path.module}/../../data/schemas"
+  topic_prefix               = ""
+  register_all_schemas       = true
+
+  depends_on = [module.confluent_platform]
+}
+
+# ===============================
 # Confluent PostgreSQL CDC Connector
 # ===============================
 
@@ -552,7 +577,7 @@ module "connectors" {
   ssh_key_path         = local.use_shared ? "" : module.keypair[0].private_key_path
   initial_wait_seconds = local.use_shared ? 0 : 90
 
-  depends_on = [module.postgres, module.confluent_platform, module.keypair, null_resource.shadowtraffic_setup]
+  depends_on = [module.postgres, module.confluent_platform, module.keypair, module.data_contracts, null_resource.datagen_setup]
 }
 
 # ===============================
@@ -576,9 +601,9 @@ module "flink_statements" {
   flink_api_secret           = module.flink.flink_api_secret
   flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
-  clickstream_topic   = local.use_shared ? "riverhotel.cdc.clickstream" : "clickstream"
-  bookings_topic      = local.use_shared ? "riverhotel.cdc.bookings" : "bookings"
-  hotel_reviews_topic = local.use_shared ? "riverhotel.cdc.hotel_reviews" : "hotel_reviews"
+  clickstream_topic   = "clickstream"
+  bookings_topic      = "bookings"
+  reviews_topic       = "reviews"
 
   depends_on = [module.connectors, module.flink]
 }

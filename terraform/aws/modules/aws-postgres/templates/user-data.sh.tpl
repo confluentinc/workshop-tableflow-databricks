@@ -53,7 +53,7 @@ cat > /opt/postgres/init-scripts/01-init.sql <<'INIT_SQL'
 -- Create CDC schema (lowercase for PostgreSQL case-folding compatibility)
 CREATE SCHEMA IF NOT EXISTS cdc;
 
--- Create tables for CDC (matching ShadowTraffic generator schema)
+-- Create tables for CDC (matching data generator schema)
 -- Tables must exist before Debezium connector can start
 CREATE TABLE IF NOT EXISTS cdc.customer (
     customer_id VARCHAR(50),
@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS cdc.customer (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     birth_date VARCHAR(10),
+    rewards_points INTEGER,
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
@@ -99,9 +100,9 @@ CREATE TABLE IF NOT EXISTS cdc.clickstream (
     created_at TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS cdc.hotel_reviews (
+CREATE TABLE IF NOT EXISTS cdc.reviews (
     review_id VARCHAR(50) PRIMARY KEY,
-    booking_id VARCHAR(50),
+    hotel_id VARCHAR(50),
     review_rating INTEGER,
     review_text TEXT,
     created_at TIMESTAMP
@@ -126,7 +127,7 @@ ALTER TABLE cdc.customer OWNER TO debezium;
 ALTER TABLE cdc.hotel OWNER TO debezium;
 ALTER TABLE cdc.bookings OWNER TO debezium;
 ALTER TABLE cdc.clickstream OWNER TO debezium;
-ALTER TABLE cdc.hotel_reviews OWNER TO debezium;
+ALTER TABLE cdc.reviews OWNER TO debezium;
 
 -- Grant public schema access (needed for some Debezium operations)
 GRANT USAGE ON SCHEMA public TO debezium;
@@ -135,7 +136,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO debezium;
 -- Ensure replication privileges
 ALTER USER debezium WITH REPLICATION;
 
--- Note: Tables will be created by ShadowTraffic with tablePolicy: dropAndCreate
+-- Note: Tables will be created by the data generator with tablePolicy: create
 -- This ensures table schemas always match generator configurations
 
 -- Create publication for ALL tables in cdc schema
@@ -146,7 +147,7 @@ CREATE PUBLICATION dbz_publication FOR ALL TABLES IN SCHEMA cdc;
 \echo 'PostgreSQL initialization complete'
 \echo 'Database: ${db_name}'
 \echo 'Schema: cdc'
-\echo 'Tables: (created by ShadowTraffic)'
+\echo 'Tables: (created by data generator)'
 \echo 'CDC User: debezium'
 \echo 'Publication: dbz_publication (FOR ALL TABLES IN SCHEMA cdc)'
 INIT_SQL
@@ -223,7 +224,7 @@ docker exec postgres-workshop psql -U postgres -d ${db_name} -c "SELECT datname,
 echo "Debezium user verification complete."
 
 echo ""
-echo "Note: Tables will be created by ShadowTraffic on first data generation run"
+echo "Note: Tables will be created by the data generator on first run"
 
 # Set up a welcome message
 PUBLIC_HOSTNAME=$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)
@@ -249,7 +250,7 @@ Tables:
   - cdc.hotel
   - cdc.bookings
   - cdc.clickstream
-  - cdc.hotel_reviews
+  - cdc.reviews
 
 Container Management:
   Status:     docker ps

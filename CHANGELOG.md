@@ -5,12 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-04-13
+
+### Added
+
+- **Java Data Generator**: Custom Java datagen replaces existing datagen with new `data-generator/` module, `java-datagen-configuration` configs, and per-cloud `datagen.tf` Terraform resources
+- **Stream Lineage Lab (LAB5)**: New lab for both instructor-led and self-service paths
+- **Demo Lab Track**: Added `labs/demo/` with analytics/AI and cleanup labs
+- **New Terraform Modules**: `confluent-catalog-integration`, `confluent-data-contracts`, `confluent-flink-ctas`, `confluent-tableflow-topics`
+
+### Changed
+
+- **Lab Renumbering**: Inserted stream lineage as LAB5; analytics/AI → LAB6, wrap-up/clean-up → LAB7 for both paths
+- **Architecture Diagrams**: Unified instructor-led and self-service diagrams into single `architecture_diagram_full.jpg`; added shared stream processing and topics diagrams
+- **Data Generators**: Updated booking, clickstream, review, customer, and hotel generators; consolidated customer/hotel update generators into streaming variants
+- **Infrastructure**: Updated AWS and Azure shared monitoring, VM provisioning scripts, and dashboard templates for Java Datagen
+- **WSA Specs**: Updated `wsa-spec-aws.yaml` and `wsa-spec-azure.yaml` for new data generation pipeline
+
+### Removed
+
+- **ShadowTraffic**: Removed all ShadowTraffic Terraform modules (`shadowtraffic.tf`) and configuration files, replaced by Java Datagen
+- **Obsolete Assets**: Removed separate per-path architecture diagrams and outdated images
+
 ## [0.11.0] - 2026-04-02
 
 ### Changed
 
 - **Data Generation**: Made updates to how data is generated so that more relevant yet still hopefully realistic data shows up in the Flink statements and downstream data analysis.
-- **AI sentiment aspects**: Added `AI_SENTIMENT` function invocation in Confluent Flink with aspects `['cleanliness', 'amenities', 'service']` and replaced the `hotel_stats` table in the stream processing with `hotel_reviews_with_sentiment`
+- **AI sentiment aspects**: Added `AI_SENTIMENT` function invocation in Confluent Flink with aspects `['cleanliness', 'amenities', 'service']` and replaced the `hotel_stats` table in the stream processing with `reviews_with_sentiment`
 - **Architecture diagrams**: Updated all diagrams to reflect the changes in data generation and enriched data products (`hotel_review_with_sentiment`)
 
 ### Fixed

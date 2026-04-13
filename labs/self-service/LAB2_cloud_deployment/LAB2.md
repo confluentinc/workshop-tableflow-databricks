@@ -9,10 +9,10 @@ Now that you've configured your cloud platform accounts, it's time to deploy the
 By the end of this lab, you will have:
 
 1. **Multi-Cloud Infrastructure Deployment**: Used Terraform to automatically provision 40+ cloud resources across AWS, Confluent Cloud, and Databricks with proper security, networking, and integration
-2. **Verified Data Generation**: Confirmed that data is streaming to Kafka topics via ShadowTraffic and PostgreSQL CDC
+2. **Verified Data Generation**: Confirmed that data is streaming to Kafka topics via Java Datagen and PostgreSQL CDC
 3. **Platform Integration**: Confirmed that AWS, Confluent Cloud, and Databricks are properly connected and ready for data streaming
 
-![architecture diagram showing data generation into kafka topics](./images/ss_architecture_data_topics.jpg)
+![architecture diagram showing data generation into kafka topics](../../shared/images/arch_diagram_2_topics.jpg)
 
 ### Prerequisites
 
@@ -125,7 +125,7 @@ docker-compose run --rm terraform -c "terraform output"
 
 ### Step 2: Verify Data Generation
 
-With your infrastructure deployed, data generation is already running. During Terraform deployment, [ShadowTraffic](https://shadowtraffic.io/) was automatically started on the PostgreSQL EC2 instance. It generates realistic customer behavior data that flows through your entire pipeline — writing customer and hotel data to PostgreSQL (captured by the CDC connector) and streaming clickstream, booking, and review events directly to Kafka.
+With your infrastructure deployed, data generation is already running. During Terraform deployment, Java Datagen was automatically started on the PostgreSQL EC2 instance. It generates realistic customer behavior data that flows through your entire pipeline — writing customer and hotel data to PostgreSQL (captured by the CDC connector) and streaming clickstream, booking, and review events directly to Kafka.
 
 #### Review Topics
 
@@ -133,7 +133,7 @@ Follow these steps to see data streaming into Confluent Cloud:
 
 1. Navigate to the [topics UI](https://confluent.cloud/go/topics) in Confluent Cloud
 2. Select your environment and cluster
-3. Verify that you see topics including `bookings`, `clickstream`, `hotel_reviews`, `riverhotel.cdc.customer`, and `riverhotel.cdc.hotel`
+3. Verify that you see topics including `bookings`, `clickstream`, `reviews`, `riverhotel.cdc.customer`, and `riverhotel.cdc.hotel`
 
 #### Review PostgreSQL CDC Connector
 
@@ -235,7 +235,7 @@ Follow these steps in a separate browser tab to verify that your Databricks clou
 5. Click on *Overview* in the left sidebar menu
 6. Click on your workshop Cluster
 7. Click on the *Topics* link in the left sidebar menu
-8. Verify that topics are being produced — you should see `bookings`, `clickstream`, `hotel_reviews`, `riverhotel.cdc.customer`, and `riverhotel.cdc.hotel`
+8. Verify that topics are being produced — you should see `bookings`, `clickstream`, `reviews`, `riverhotel.cdc.customer`, and `riverhotel.cdc.hotel`
 
 </details>
 
@@ -246,6 +246,8 @@ Follow these steps in a separate browser tab to verify that your Databricks clou
 ## ➡️ What's Next
 
 Resume your journey in **[LAB 3: Tableflow and Unity Catalog](../LAB3_tableflow/LAB3.md)**.
+
+> **Optional**: Your infrastructure was deployed with data quality rules that enforce a CEL validation on the clickstream topic. Explore this in the optional **[Data Governance Lab](../LAB_data_governance/LAB_data_governance.md)**.
 
 ## 🔧 Troubleshooting
 

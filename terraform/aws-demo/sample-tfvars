@@ -1,0 +1,21 @@
+# ===============================
+# Demo Mode — Terraform Variables
+# ===============================
+# Copy this file to terraform.tfvars and fill in your values.
+# See labs/demo/LAB1_account_setup/LAB1.md for instructions.
+
+# --- Your identity ---
+confluent_cloud_email = ""
+prefix                = "neo"
+cloud_region          = "us-east-1"
+
+# --- Confluent Cloud ---
+confluent_cloud_api_key    = ""
+confluent_cloud_api_secret = ""
+
+# --- Databricks ---
+databricks_host                            = ""  # e.g., https://your-workspace.cloud.databricks.com
+databricks_account_id                      = ""  # Required for IAM trust policy (external ID)
+databricks_user_email                      = ""  # Your Databricks user email for granting permissions
+databricks_service_principal_client_id     = ""  # Service Principal Application ID (created manually - see LAB1.md)
+databricks_service_principal_client_secret = ""  # Service Principal OAuth Secret (created manually - see LAB1.md)

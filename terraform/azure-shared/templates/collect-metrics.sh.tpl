@@ -1,7 +1,7 @@
 #!/bin/bash
 # Custom metrics collection for WSA shared infrastructure (Azure).
 # Pushes PostgreSQL stats, Docker container health, disk usage, and
-# ShadowTraffic Prometheus metrics to Azure Monitor every 60 seconds via cron.
+# data generator Prometheus metrics to Azure Monitor every 60 seconds via cron.
 #
 # Authenticates using the VM's system-assigned managed identity (IMDS).
 
@@ -104,7 +104,7 @@ if [ "$PG_RUNNING" = "true" ]; then
 fi
 push_metric "ContainerRunning_postgres" "$PG_VALUE"
 
-ST_CONTAINER="shadowtraffic"
+ST_CONTAINER="datagen"
 ST_HEALTH=$(sudo docker inspect --format '{{.State.Health.Status}}' $ST_CONTAINER 2>/dev/null || echo "none")
 ST_VALUE=0
 if [ "$ST_HEALTH" = "healthy" ]; then
@@ -115,20 +115,20 @@ elif [ "$ST_HEALTH" = "none" ]; then
     ST_VALUE=1
   fi
 fi
-push_metric "ContainerHealthy_shadowtraffic" "$ST_VALUE"
+push_metric "ContainerHealthy_datagen" "$ST_VALUE"
 
-# --- ShadowTraffic Prometheus metrics ---
+# --- Data generator Prometheus metrics ---
 
 WRITE_ERRORS="0"
 EVENTS_TOTAL="0"
 PROM_RESPONSE=$(curl -sf http://localhost:9400 2>/dev/null || echo "")
 
 if [ -n "$PROM_RESPONSE" ]; then
-  WRITE_ERRORS=$(echo "$PROM_RESPONSE" | grep '^shadowtraffic_events_failed_total' | awk '{sum += $2} END {print sum+0}')
-  push_metric "ShadowTrafficWriteErrors" "$${WRITE_ERRORS:-0}"
+  WRITE_ERRORS=$(echo "$PROM_RESPONSE" | grep '^datagen_events_failed_total' | awk '{sum += $2} END {print sum+0}')
+  push_metric "DatagenWriteErrors" "$${WRITE_ERRORS:-0}"
 
-  EVENTS_TOTAL=$(echo "$PROM_RESPONSE" | grep '^shadowtraffic_events_succeeded_total' | awk '{sum += $2} END {print sum+0}')
-  push_metric "ShadowTrafficEventsTotal" "$${EVENTS_TOTAL:-0}"
+  EVENTS_TOTAL=$(echo "$PROM_RESPONSE" | grep '^datagen_events_sent_total' | awk '{sum += $2} END {print sum+0}')
+  push_metric "DatagenEventsTotal" "$${EVENTS_TOTAL:-0}"
 fi
 
 echo "[$TIMESTAMP] Metrics pushed: mem=$MEM_USED_PCT% disk=$DISK_USED_PCT% connections=$CONNECTIONS slots=$SLOT_COUNT lag=$MAX_LAG pg=$PG_VALUE st=$ST_VALUE errors=$WRITE_ERRORS events=$EVENTS_TOTAL"

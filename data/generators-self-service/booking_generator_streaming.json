@@ -3,7 +3,7 @@
     "topic": "bookings",
     "connection": "confluent",
     "localConfigs": {
-        "maxEvents": 100,
+        "partitions": 1,
         "avroSchemaHint": {
             "value": {
                 "_gen": "loadJsonFile",
@@ -13,8 +13,8 @@
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                180000,
-                300000
+                20000,
+                40000
             ]
         }
     },

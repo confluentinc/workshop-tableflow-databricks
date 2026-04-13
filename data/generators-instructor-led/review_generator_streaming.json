@@ -1,14 +1,13 @@
 {
     "name": "review_generator_streaming",
-    "table": "cdc.hotel_reviews",
+    "table": "cdc.reviews",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 5000,
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                1200000,
-                1320000
+                20000,
+                40000
             ]
         }
     },
@@ -83,12 +82,12 @@
             "expr": "R~d",
             "pgHint": "VARCHAR(50) PRIMARY KEY"
         },
-        "booking_id": {
+        "hotel_id": {
             "_gen": "lookup",
-            "name": "booking_generator_historical",
+            "name": "hotel_generator_historical",
             "path": [
                 "row",
-                "booking_id"
+                "hotel_id"
             ],
             "pgHint": "VARCHAR(50)"
         },

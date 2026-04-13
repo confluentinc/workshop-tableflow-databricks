@@ -1,0 +1,1 @@
+{"kind":"postgres","tablePolicy":"create","connectionConfigs":{"host":"host.docker.internal","port":15432,"username":"postgres","password":"postgres","db":"workshop"}}

@@ -68,7 +68,7 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Allow all IPs for workshop access (ShadowTraffic, participant debugging)
+# Allow all IPs for workshop access (data generator, participant debugging)
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_all" {
   name             = "AllowAll"
   server_id        = azurerm_postgresql_flexible_server.main.id

@@ -1,12 +1,12 @@
 # Workshop: Streamlining Agentic AI with Confluent and Databricks
 
-**Duration**: ~1.5 hours
+**Duration**: ~1 hour
 
 **Difficulty**: Intermediate
 
 **Technical Requirements**: Working knowledge of cloud platforms (AWS or Azure), SQL, and basic command-line operations
 
-**Workshop Type**: This workshop is designed to work for both *self-service* and *instructor-led* scenarios.
+**Workshop Type**: This workshop is designed to work in three modes: *[instructor-led](#-instructor-led)*, *[self-service](#️-self-service)*, and *[demo](#-demo)*.
 
 ## 📖 Overview
 
@@ -96,8 +96,8 @@ Your task is to design and implement a proof-of-concept that transforms River Ho
 
 By the end of this workshop, you will have constructed a sophisticated data pipeline that:
 
-1. **Captures Real-Time Customer Behavior**: Set up PostgreSQL CDC to capture customer and hotel data changes, plus generate realistic clickstream, booking, and review data using ShadowTraffic
-2. **Processes Streaming Data with AI**: Use Confluent Cloud for Apache Flink SQL to identify high-value prospects (customers who clicked but didn't book) and enrich their profiles with hotel reviews summarized by Large Language Models
+1. **Captures Real-Time Customer Behavior**: Set up PostgreSQL CDC to capture customer and hotel data changes, plus generate realistic clickstream, booking, and review data using Java Datagen
+2. **Processes Streaming Data with AI**: Use Confluent Cloud for Apache Flink SQL to denormalize bookings with temporal joins and enrich hotel reviews with aspect-based sentiment analysis (`AI_SENTIMENT` for cleanliness, amenities, and service)
 3. **Streams to Delta Lake**: Leverage Confluent Tableflow to automatically sync processed data streams as Delta tables in AWS S3
 4. **Generates AI-Driven Insights**: Use Databricks Genie to analyze booking patterns, customer preferences, and hotel performance metrics
 5. **Creates Personalized Campaigns**: Deploy AI agents in Databricks that identify underperforming hotels with good customer satisfaction, generate targeted social media content based on customer review analysis, and create lists of potential customers for marketing outreach
@@ -123,6 +123,7 @@ erDiagram
         string FIRST_NAME
         string LAST_NAME
         string BIRTH_DATE
+        int REWARDS_POINTS
         long CREATED_AT
     }
 
@@ -177,13 +178,13 @@ erDiagram
 ### 🧩 Key Components
 
 1. **Data Sources**
-   - **ShadowTraffic**: Realistic synthetic data generation of:
+   - **Java Datagen**: Realistic synthetic data generation of:
      - Customer and Hotel data, which is sent to an PostgreSQL database
      - Bookings, Reviews, and Clickstream events, which are all produced to Kafka topics
 
 2. **Ingestion Layer**
    - **PostgreSQL CDC Connector**: Real-time change data capture from PostgreSQL
-   - **Kafka Producers**: Stream synthetic data directly from ShadowTraffic to Confluent Cloud topics
+   - **Kafka Producers**: Stream synthetic data directly from Java Datagen to Confluent Cloud topics
 
 3. **Processing Layer**
    - **Apache Flink SQL**: Real-time stream processing and data enrichment
@@ -222,37 +223,41 @@ erDiagram
 
 ### Tools
 
-- **[Docker](https://docker.com/)**: Containerization for PostgreSQL database and ShadowTraffic
+- **[Docker](https://docker.com/)**: Containerization for PostgreSQL database and Java Datagen
 - **[Git](https://git-scm.com/)**: Version control
 - **[AWS CLI](https://aws.amazon.com/cli/)**: AWS command-line interface
-- **[ShadowTraffic](https://shadowtraffic.io/)**: Realistic synthetic data generation
+- **Java Datagen**: Realistic synthetic data generation via the workshop's custom Java application (this workshop previously referenced a third-party hosted data generator; that component has been replaced in-repo).
 
 </details>
 
 ## 🔬 Workshop Labs
 
-This workshop supports two modes. Choose the path that matches your situation:
+![Architecture Diagram](./assets/images/architecture_diagram_full.jpg)
+
+This workshop supports three modes. Choose the path that matches your situation:
 
 ### 🎓 Instructor-Led
 
-> Your instructor has pre-provisioned all cloud infrastructure and accounts. You will claim a dedicated environment and focus on the hands-on Confluent and Databricks labs.
-
-![Architecture Diagram](./assets/images/arch_diagram_full_instructor_led.jpg)
+> This mode is hands-on with the Confluent Cloud and Databricks products to build out an AI marketing agent, but you will use cloud accounts and infrastructure that will have already been pre-provisioned for you.
+>
+> Use it only when instructed to by your workshop instructor/leader.
 
 | Lab | Duration | Details |
 |-----|----------|-------------|
 | [LAB 1: Claim Your Account](./labs/instructor-led/LAB1_claim_account/LAB1.md) | ~5 min | **Claim your workshop account**: complete the Google Form, receive credentials, verify access to Confluent Cloud and Databricks. |
 | [LAB 2: Explore Your Environment](./labs/instructor-led/LAB2_explore_environment/LAB2.md) | ~10 min | **Tour your environment**: explore your Kafka cluster, CDC topics, connectors, Flink compute pool, and Databricks workspace. |
-| [LAB 3: Stream Processing](./labs/instructor-led/LAB3_stream_processing/LAB3.md) | ~15 min | **Transform streams**: build Flink SQL queries with temporal joins, denormalize CDC data, enrich reviews with AI sentiment. |
+| [LAB 3: Stream Processing](./labs/instructor-led/LAB3_stream_processing/LAB3.md) | ~15 min | **Transform streams**: build Flink SQL queries with temporal joins, denormalize booking data with CDC dimensions, enrich reviews with AI aspect-based sentiment analysis. |
 | [LAB 4: Tableflow](./labs/instructor-led/LAB4_tableflow/LAB4.md) | ~10 min | **Configure catalog and enable Tableflow**: connect Confluent Cloud Tableflow with Databricks Unity Catalog, stream clickstream, denormalized bookings, and sentiment-enriched reviews as Delta Lake tables. |
-| [LAB 5: Analytics & AI](./labs/instructor-led/LAB5_analytics_ai/LAB5.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
-| [LAB 6: Wrap Up](./labs/instructor-led/LAB6_wrap_up/LAB6.md) | ~5 min | **Clean up and recap**: Review accomplishments, provide feedback. |
+| [LAB 5: Stream Lineage](./labs/instructor-led/LAB5_stream_lineage/LAB5.md) | ~10 min | **Visualize data flow**: explore Stream Lineage to trace data through CDC, Flink, and Tableflow. |
+| [LAB 6: Analytics & AI](./labs/instructor-led/LAB6_analytics_ai/LAB6.md) | ~25 min | **Generate insights**: explore hotel performance and sentiment analytics, use Databricks Genie, deploy AI agent for personalized marketing automation. |
+| [LAB 7: Wrap Up](./labs/instructor-led/LAB7_wrap_up/LAB7.md) | ~5 min | **Clean up and recap**: Review accomplishments, provide feedback. |
+| [Optional: Data Governance](./labs/instructor-led/LAB_data_governance/LAB_data_governance.md) | ~10 min | **Explore data quality rules**: observe pre-deployed CEL rules, live DQR demo with `/test-dqr`, governance tags and business metadata. |
 
 ### 🛠️ Self-Service
 
-> You will set up your own cloud accounts, deploy infrastructure with Terraform, and run the full workshop independently.
-
-![Architecture Diagram](./assets/images/arch_diagram_full_self_service.jpg)
+> This mode is very hands-on, where you will set up your own cloud accounts, deploy infrastructure with Terraform, and execute some steps manually to build out the AI marketing pipeline.
+>
+> Use it to become more familiar and learn how you could do something similar within Confluent Cloud and Databricks.
 
 | Lab | Duration | Details |
 |-----|----------|-------------|
@@ -261,8 +266,25 @@ This workshop supports two modes. Choose the path that matches your situation:
 | [LAB 2: Cloud Infrastructure](./labs/self-service/LAB2_cloud_deployment/LAB2.md) | ~15 min | **Deploy infrastructure with Terraform**: provision AWS, Confluent Cloud, and Databricks resources. Verify data generation and CDC connector. |
 | [LAB 3: Tableflow & Unity Catalog](./labs/self-service/LAB3_tableflow/LAB3.md) | ~15 min | **Configure Tableflow**: connect Tableflow with Unity Catalog, enable Tableflow on clickstream topic. |
 | [LAB 4: Stream Processing](./labs/self-service/LAB4_stream_processing/LAB4.md) | ~15 min | **Transform streams**: build Flink SQL queries with temporal joins on pre-configured CDC topics, configure Tableflow sync. |
-| [LAB 5: Analytics & AI](./labs/self-service/LAB5_databricks/LAB5.md) | ~25 min | **Generate insights**: use Databricks Genie for analytics, deploy AI agent for personalized marketing automation. |
-| [LAB 6: Cleanup](./labs/self-service/LAB6_clean_up/LAB6.md) | ~5 min | **Clean up resources**: remove UI-created resources and terraform destroy the remainder. |
+| [LAB 5: Stream Lineage](./labs/self-service/LAB5_stream_lineage/LAB5.md) | ~10 min | **Visualize data flow**: explore Stream Lineage to trace data through CDC, Flink, and Tableflow. |
+| [LAB 6: Analytics & AI](./labs/self-service/LAB6_databricks/LAB6.md) | ~25 min | **Generate insights**: explore hotel performance and sentiment analytics, use Databricks Genie, deploy AI agent for personalized marketing automation. |
+| [LAB 7: Cleanup](./labs/self-service/LAB7_clean_up/LAB7.md) | ~5 min | **Clean up resources**: remove UI-created resources and terraform destroy the remainder. |
+| [Optional: Data Governance](./labs/self-service/LAB_data_governance/LAB_data_governance.md) | ~15 min | **Explore data quality rules**: observe pre-deployed CEL rules and DLQ routing, governance tags, business metadata, create your own rule. |
+
+### 🚀 Demo
+
+> This builds on the self-service mode by automating almost all of the manual steps that enable the real-time AI marketing pipeline. This **demo** mode can be used for short-term, long-term, and even "always-on" demos.
+>
+> Use it to show quick and immediate value with minimal in-product (Confluent Cloud, Databricks) set up.
+
+| Lab | Duration | Details |
+|-----|----------|-------------|
+| [LAB 0: Prerequisites](./labs/demo/LAB0_prerequisites/LAB0.md) | ~10 min | **Set up prerequisites**: create cloud accounts, install Git and Docker, clone the repo, build Docker images. |
+| [LAB 1: Account Setup](./labs/demo/LAB1_account_setup/LAB1.md) | ~15 min | **Configure cloud platform accounts**: set up Confluent Cloud API keys, configure Databricks service principal, establish AWS credentials. |
+| [LAB 2: Deploy and Observe](./labs/demo/LAB2_deploy_and_observe/LAB2.md) | ~25 min | **Deploy everything with Terraform**: one `terraform apply` provisions AWS, Confluent Cloud, Flink CTAS, Tableflow, Unity Catalog integration, and Databricks notebook. Guided tour of the pipeline. |
+| [LAB 3: Analytics & AI](./labs/demo/LAB3_analytics_ai/LAB3.md) | ~30 min | **Generate insights**: explore pre-created hotel performance and sentiment analytics, use Databricks Genie, run the pre-imported marketing agent notebook. |
+| [LAB 4: Cleanup](./labs/demo/LAB4_cleanup/LAB4.md) | ~5 min | **Clean up resources**: `terraform destroy` handles everything including Tableflow. |
+| [Optional: Data Governance](./labs/demo/LAB_data_governance/LAB_data_governance.md) | ~10 min | **Demonstrate data quality rules**: observe pre-deployed CEL rules, live DQR demo with `/test-dqr` on EC2, DLQ observation. |
 
 ### Additional Resources
 

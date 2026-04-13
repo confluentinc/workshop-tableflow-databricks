@@ -9,7 +9,7 @@ Now that you have built your stream processing pipelines and created enriched da
 By the end of this lab, you will have:
 
 1. **Unity Catalog Integration**: Connected Confluent Cloud with Databricks Unity Catalog through Tableflow
-2. **Tableflow-enabled Topics**: Streamed your `riverhotel.cdc.clickstream`, `denormalized_hotel_bookings`, and `hotel_reviews_with_sentiment` topics as Delta Lake tables
+2. **Tableflow-enabled Topics**: Streamed your `clickstream`, `denormalized_hotel_bookings`, and `reviews_with_sentiment` topics as Delta Lake tables
 3. **Verified Unity Catalog Sync**: Confirmed that Tableflow is syncing data to your Databricks Unity Catalog
 
 ![Architecture diagram with focus on Tableflow and Delta Lake](./images/arch_diagram_tableflow.jpg)
@@ -96,11 +96,11 @@ graph LR
 
 </details>
 
-### Step 2: Enable Tableflow on `riverhotel.cdc.clickstream`
+### Step 2: Enable Tableflow on `clickstream`
 
 1. Navigate to [your workshop topics](https://confluent.cloud/go/topics)
 2. Select your workshop environment and cluster
-3. Click on the `riverhotel.cdc.clickstream` topic
+3. Click on the `clickstream` topic
 4. Click on the **Enable Tableflow** button in the top right of your screen
 5. Deselect the **Iceberg** tile
 6. Select the **Delta** tile
@@ -120,17 +120,17 @@ graph LR
 
     ![Tableflow Syncing](./images/clickstream_tableflow_enabled.png)
 
-### Step 3: Enable Tableflow on `denormalized_hotel_bookings` and `hotel_reviews_with_sentiment`
+### Step 3: Enable Tableflow on `denormalized_hotel_bookings` and `reviews_with_sentiment`
 
-Repeat the steps you just completed for the `riverhotel.cdc.clickstream` topic above for the `denormalized_hotel_bookings` and `hotel_reviews_with_sentiment` topics.
+Repeat the steps you just completed for the `clickstream` topic above for the `denormalized_hotel_bookings` and `reviews_with_sentiment` topics.
 
 When enabling Tableflow, configure the **storage retention** for each topic to control how long historical data is kept in Delta Lake:
 
 | Topic | Storage Retention |
 |---|---|
-| `riverhotel.cdc.clickstream` | 8 weeks |
+| `clickstream` | 8 weeks |
 | `denormalized_hotel_bookings` | 2 weeks |
-| `hotel_reviews_with_sentiment` | 2 weeks |
+| `reviews_with_sentiment` | 2 weeks |
 
 > **Important**: It may take a 3-4 minutes for Tableflow to begin syncing each topic. You can enable all three while waiting for the materialization to complete.
 
@@ -179,11 +179,11 @@ Follow these steps to enable **Log** DLQ for your `denormalized_hotel_bookings` 
 
 ## Conclusion
 
-You have configured the integration between Confluent Cloud Tableflow and Databricks Unity Catalog, enabled Tableflow on three topics — `riverhotel.cdc.clickstream`, `denormalized_hotel_bookings`, and `hotel_reviews_with_sentiment` — and verified that data is syncing as Delta Lake tables.
+You have configured the integration between Confluent Cloud Tableflow and Databricks Unity Catalog, enabled Tableflow on three topics — `clickstream`, `denormalized_hotel_bookings`, and `reviews_with_sentiment` — and verified that data is syncing as Delta Lake tables.
 
 ## What's Next
 
-Continue to **[LAB 5: Analytics and AI-Powered Marketing](../LAB5_analytics_ai/LAB5.md)**.
+Continue to **[LAB 5: Stream Lineage](../LAB5_stream_lineage/LAB5.md)**.
 
 ## Troubleshooting
 

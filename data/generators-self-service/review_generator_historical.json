@@ -1,9 +1,10 @@
 {
     "name": "review_generator_historical",
-    "topic": "hotel_reviews",
+    "topic": "reviews",
     "connection": "confluent",
     "localConfigs": {
-        "maxEvents": 100,
+        "maxEvents": 300,
+        "partitions": 1,
         "avroSchemaHint": {
             "value": {
                 "_gen": "loadJsonFile",
@@ -54,9 +55,18 @@
             "decimals": 0
         },
         "review_created_at": {
-            "_gen": "math",
-            "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
-            "decimals": 0
+            "_gen": "min",
+            "args": [
+                {
+                    "_gen": "math",
+                    "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+                    "decimals": 0
+                },
+                {
+                    "_gen": "var",
+                    "var": "currentTimeInMs"
+                }
+            ]
         },
         "reviewBundle": {
             "_gen": "weightedOneOf",
@@ -105,12 +115,12 @@
             "startingFrom": 510000100,
             "expr": "R~d"
         },
-        "booking_id": {
+        "hotel_id": {
             "_gen": "lookup",
-            "name": "booking_generator_historical",
+            "name": "hotel_generator_historical",
             "path": [
-                "value",
-                "booking_id"
+                "row",
+                "hotel_id"
             ]
         },
         "review_rating": {

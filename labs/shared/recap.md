@@ -7,7 +7,7 @@ Congratulations! By completing all of the labs in this workshop, you should have
 Through this workshop, you have:
 
 - ✅ **Deployed Production-Ready Infrastructure**: Used Terraform to provision and configure resources across AWS, Confluent Cloud, and Databricks with proper security and networking
-- ✅ **Implemented Real-Time Data Capture**: Set up PostgreSQL CDC and Shadow Traffic to generate realistic customer interaction data streams
+- ✅ **Implemented Real-Time Data Capture**: Set up PostgreSQL CDC and Java Datagen to generate realistic customer interaction data streams
 - ✅ **Built Intelligent Stream Processing**: Created sophisticated Flink SQL queries that identify high-value prospects and enrich customer profiles using AI-powered review summarization
 - ✅ **Established Seamless Data Integration**: Used Confluent Tableflow to automatically sync streaming data as Delta tables, bridging real-time processing and analytics
 - ✅ **Generated AI-Driven Business Insights**: Leveraged Databricks Genie to uncover booking patterns, customer preferences, and hotel performance metrics
