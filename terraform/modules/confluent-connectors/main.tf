@@ -169,9 +169,9 @@ resource "confluent_connector" "postgres_cdc" {
     "topic.prefix"                              = "riverhotel"
     "topic.heartbeat.prefix"                    = "__debezium-heartbeat"
     "topic.creation.default.replication.factor" = "3"
-    "topic.creation.default.partitions"         = "6"
+    "topic.creation.default.partitions"         = "1"
     "topic.creation.default.cleanup.policy"     = "delete"
-    "topic.creation.default.retention.ms"       = "604800000"
+    "topic.creation.default.retention.ms"       = "-1"
     "topic.creation.enable"                     = "true"
 
     # Change Event Configuration

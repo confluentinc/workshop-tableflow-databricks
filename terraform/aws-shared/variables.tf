@@ -27,7 +27,7 @@ variable "run_id" {
 # ---------------------
 
 variable "data_dir" {
-  description = "Absolute path to the data directory containing ShadowTraffic configs (injected by wsa via TF_VAR_data_dir)"
+  description = "Absolute path to the data directory containing data generator configs (injected by wsa via TF_VAR_data_dir)"
   type        = string
 }
 

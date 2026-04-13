@@ -90,9 +90,9 @@ When attempting to connect to the Oracle database, you encounter this type of er
 
 ![TNS Listener not listening](../../assets/images/confluent_oracle_connector_listener.png)
 
-**ORA-12514 Error in Shadow Traffic:**
+**ORA-12514 Error in Java Datagen:**
 
-![Shadow Traffic Oracle Error](../../assets/images/shadowtraffic_oracle_not_spun_up_yet.png)
+![Java Datagen Oracle Error](../../assets/images/datagen_oracle_not_spun_up_yet.png)
 
 ```sh
 Caused by: oracle.net.ns.NetException: ORA-12514: Cannot connect to database. Service XEPDB1 is not registered with the listener at host 18.221.129.77 port 1521. (CONNECTION_ID=iRbDfISmRYSBvxFTxgCb8Q==)

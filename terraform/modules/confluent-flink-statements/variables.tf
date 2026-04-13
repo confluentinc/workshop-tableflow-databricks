@@ -52,14 +52,13 @@ variable "flink_rest_endpoint" {
 # Topic Names
 # ===============================
 # Defaults use the CDC prefix (instructor-led/WSA mode where all data
-# goes through PostgreSQL CDC). Self-service mode overrides clickstream,
-# bookings, and hotel_reviews with plain topic names since those are
-# written directly to Kafka by ShadowTraffic.
+# goes through PostgreSQL CDC). Clickstream, bookings, and reviews
+# are written directly to Kafka by the data generator (not CDC).
 
 variable "clickstream_topic" {
   description = "Flink table name for clickstream data"
   type        = string
-  default     = "riverhotel.cdc.clickstream"
+  default     = "clickstream"
 }
 
 variable "customer_topic" {
@@ -77,11 +76,11 @@ variable "hotel_topic" {
 variable "bookings_topic" {
   description = "Flink table name for bookings data"
   type        = string
-  default     = "riverhotel.cdc.bookings"
+  default     = "bookings"
 }
 
-variable "hotel_reviews_topic" {
-  description = "Flink table name for hotel reviews data"
+variable "reviews_topic" {
+  description = "Flink table name for reviews data"
   type        = string
-  default     = "riverhotel.cdc.hotel_reviews"
+  default     = "reviews"
 }

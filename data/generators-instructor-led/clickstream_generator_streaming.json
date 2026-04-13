@@ -3,7 +3,6 @@
     "table": "cdc.clickstream",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 10000,
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
@@ -68,16 +67,24 @@
             "_gen": "weightedOneOf",
             "choices": [
                 {
-                    "weight": 5,
+                    "weight": 47,
                     "value": "page-view"
                 },
                 {
-                    "weight": 3,
+                    "weight": 29,
                     "value": "page-click"
                 },
                 {
-                    "weight": 2,
+                    "weight": 19,
                     "value": "booking-click"
+                },
+                {
+                    "weight": 3,
+                    "value": "admin-access"
+                },
+                {
+                    "weight": 2,
+                    "value": "page-scroll"
                 }
             ],
             "pgHint": "VARCHAR(50)"

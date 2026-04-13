@@ -1,7 +1,7 @@
 # ===============================
 # Data Generator Module
 # ===============================
-# Creates configuration files for ShadowTraffic data generation
+# Creates connection configuration files for the custom data generator
 
 # ===============================
 # PostgreSQL Connection Config
@@ -35,11 +35,13 @@ resource "local_file" "kafka_connection" {
       "schema.registry.url" : var.schema_registry_endpoint
       "basic.auth.user.info" : "${var.schema_registry_api_key}:${var.schema_registry_api_secret}"
       "basic.auth.credentials.source" : "USER_INFO"
-      "key.serializer" : "io.shadowtraffic.kafka.serdes.JsonSerializer"
+      "key.serializer" : "org.apache.kafka.common.serialization.StringSerializer"
       "value.serializer" : "io.confluent.kafka.serializers.KafkaAvroSerializer"
       "sasl.jaas.config" : "org.apache.kafka.common.security.plain.PlainLoginModule required username='${var.kafka_api_key}' password='${var.kafka_api_secret}';"
       "sasl.mechanism" : "PLAIN"
       "security.protocol" : "SASL_SSL"
+      "auto.register.schemas" : "false"
+      "use.latest.version" : "true"
     }
   })
   filename = "${var.output_path}/confluent.json"

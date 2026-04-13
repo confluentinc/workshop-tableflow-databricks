@@ -34,9 +34,18 @@
             "decimals": 0
         },
         "clickstream_created_at": {
-            "_gen": "math",
-            "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
-            "decimals": 0
+            "_gen": "min",
+            "args": [
+                {
+                    "_gen": "math",
+                    "expr": "baseTimeInMs + (eventIndex * eventIntervalMs)",
+                    "decimals": 0
+                },
+                {
+                    "_gen": "var",
+                    "var": "currentTimeInMs"
+                }
+            ]
         },
         "hotel_id": {
             "_gen": "lookup",
@@ -90,16 +99,24 @@
             "_gen": "weightedOneOf",
             "choices": [
                 {
-                    "weight": 5,
+                    "weight": 47,
                     "value": "page-view"
                 },
                 {
-                    "weight": 3,
+                    "weight": 29,
                     "value": "page-click"
                 },
                 {
-                    "weight": 2,
+                    "weight": 19,
                     "value": "booking-click"
+                },
+                {
+                    "weight": 3,
+                    "value": "admin-access"
+                },
+                {
+                    "weight": 2,
+                    "value": "page-scroll"
                 }
             ]
         },

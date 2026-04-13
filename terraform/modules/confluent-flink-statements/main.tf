@@ -229,7 +229,7 @@ resource "confluent_flink_statement" "bookings_set_retention" {
 }
 
 # ===============================
-# Clickstream: set 8-week retention
+# Clickstream: set 2-week retention
 # ===============================
 
 resource "confluent_flink_statement" "clickstream_set_retention" {
@@ -246,7 +246,7 @@ resource "confluent_flink_statement" "clickstream_set_retention" {
     id = var.service_account_id
   }
 
-  statement     = "ALTER TABLE `${var.clickstream_topic}` SET ('kafka.retention.time' = '56 d');"
+  statement     = "ALTER TABLE `${var.clickstream_topic}` SET ('kafka.retention.time' = '14 d');"
   properties    = local.flink_properties
   rest_endpoint = var.flink_rest_endpoint
 
@@ -259,11 +259,11 @@ resource "confluent_flink_statement" "clickstream_set_retention" {
 }
 
 # ===============================
-# Hotel Reviews: watermark + 2-week retention
+# Reviews: watermark + 2-week retention
 # ===============================
-# Watermark required for hotel_reviews_with_sentiment CTAS.
+# Watermark required for reviews_with_sentiment CTAS.
 
-resource "confluent_flink_statement" "hotel_reviews_add_watermark" {
+resource "confluent_flink_statement" "reviews_add_watermark" {
   organization {
     id = var.organization_id
   }
@@ -277,7 +277,7 @@ resource "confluent_flink_statement" "hotel_reviews_add_watermark" {
     id = var.service_account_id
   }
 
-  statement     = "ALTER TABLE `${var.hotel_reviews_topic}` MODIFY WATERMARK FOR `created_at` AS `created_at` - INTERVAL '30' SECOND;"
+  statement     = "ALTER TABLE `${var.reviews_topic}` MODIFY WATERMARK FOR `created_at` AS `created_at` - INTERVAL '30' SECOND;"
   properties    = local.flink_properties
   rest_endpoint = var.flink_rest_endpoint
 
@@ -288,7 +288,7 @@ resource "confluent_flink_statement" "hotel_reviews_add_watermark" {
 
 }
 
-resource "confluent_flink_statement" "hotel_reviews_set_retention" {
+resource "confluent_flink_statement" "reviews_set_retention" {
   organization {
     id = var.organization_id
   }
@@ -302,7 +302,7 @@ resource "confluent_flink_statement" "hotel_reviews_set_retention" {
     id = var.service_account_id
   }
 
-  statement     = "ALTER TABLE `${var.hotel_reviews_topic}` SET ('kafka.retention.time' = '14 d');"
+  statement     = "ALTER TABLE `${var.reviews_topic}` SET ('kafka.retention.time' = '14 d');"
   properties    = local.flink_properties
   rest_endpoint = var.flink_rest_endpoint
 
@@ -311,5 +311,5 @@ resource "confluent_flink_statement" "hotel_reviews_set_retention" {
     secret = var.flink_api_secret
   }
 
-  depends_on = [confluent_flink_statement.hotel_reviews_add_watermark]
+  depends_on = [confluent_flink_statement.reviews_add_watermark]
 }

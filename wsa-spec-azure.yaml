@@ -28,9 +28,9 @@ shared_infra_path: terraform/azure-shared/ # Shared infrastructure Terraform dir
 # directory and injects TF_VAR_data_dir so shared infra Terraform can
 # reference data files without hardcoded relative paths.
 data_generation:
-  engine: shadowtraffic
+  engine: datagen
   data_path: data/ # copied to run directory (relative to this spec file)
-  config_file: shadow-traffic-configuration-workshop.json # entrypoint config (relative to data_path)
+  config_file: java-datagen-configuration-workshop.json # entrypoint config (relative to data_path)
 
 # Monitoring — Azure Monitor-based observability for shared infrastructure.
 # wsa deploys a monitoring agent, custom metrics cron job, alerts, and a
@@ -79,7 +79,7 @@ terraform_vars:
   lookup_existing_users: "false"
   environment: "workshop"
   prefix: "wp{NNN}"
-  table_include_list: "cdc.customer,cdc.hotel,cdc.bookings,cdc.clickstream,cdc.hotel_reviews"
+  table_include_list: "cdc.customer,cdc.hotel,cdc.bookings,cdc.clickstream,cdc.reviews"
   # cloud_region is set by wsa from wsa.env (TF_VAR_azure_cloud_region)
   # cc_environment_id is intentionally omitted — Terraform creates the CC
   # environment itself (confluent-platform module, create_environment = true).

@@ -32,24 +32,24 @@ By the end of this lab, you will have:
 #### View Topics and Data
 
 1. Click on **Topics** in the left menu
-2. You should see several topics that are already receiving data from the PostgreSQL CDC connectors:
+2. You should see several topics receiving data:
 
-   | Topic | Description |
-   |---|---|
-   | `riverhotel.cdc.bookings` | Booking transactions from PostgreSQL CDC |
-   | `riverhotel.cdc.clickstream` | Website clickstream events from PostgreSQL CDC |
-   | `riverhotel.cdc.customer` | Customer profiles from PostgreSQL CDC |
-   | `riverhotel.cdc.hotel` | Hotel property data from PostgreSQL CDC |
-   | `riverhotel.cdc.hotel_reviews` | Customer reviews from PostgreSQL CDC |
+   | Topic | Source | Description |
+   |---|---|---|
+   | `bookings` | Java Data Generator | Booking transactions produced directly to Kafka |
+   | `clickstream` | Java Data Generator | Website clickstream events produced directly to Kafka |
+   | `riverhotel.cdc.customer` | PostgreSQL CDC | Customer profiles from PostgreSQL Change Data Capture |
+   | `riverhotel.cdc.hotel` | PostgreSQL CDC | Hotel property data from PostgreSQL Change Data Capture |
+   | `reviews` | Java Data Generator | Customer reviews produced directly to Kafka |
 
 
-3. Click on any the `riverhotel.cdc.clickstream` topic and select the **Messages** tab
-4. Verify that messages are flowing — you should see new records appearing around every 20-30 seconds.
+3. Click on the `clickstream` topic and select the **Messages** tab
+4. Verify that messages are flowing — you should see new records appearing around every 10-20 seconds.
 
 > [!NOTE]
-> **CDC Prefix**
+> **Topic Naming**
 >
-> All topics use the `riverhotel.cdc.` prefix because the data originates from PostgreSQL Change Data Capture. The connector is configured with `after.state.only`, so topics contain flat records rather than the full CDC envelope.
+> Topics with the `riverhotel.cdc.` prefix (`customer`, `hotel`) are populated via PostgreSQL CDC connectors configured with `after.state.only`, producing flat Avro records. The remaining topics (`bookings`, `clickstream`, `reviews`) are written directly to Kafka by the Java data generator.
 
 #### View CDC Connectors
 
@@ -91,6 +91,8 @@ You have toured your pre-provisioned workshop environment. You now know where to
 ## What's Next
 
 Continue to **[LAB 3: Stream Processing](../LAB3_stream_processing/LAB3.md)**.
+
+> **Optional**: Your environment includes pre-deployed data quality rules with a CEL validation on the clickstream topic. Explore this in the optional **[Data Governance Lab](../LAB_data_governance/LAB_data_governance.md)**.
 
 ## Troubleshooting
 

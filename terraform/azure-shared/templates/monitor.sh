@@ -12,7 +12,7 @@ PG_WAL_SIZE=$(sudo docker exec postgres-workshop psql -U postgres -d workshop -t
 
 # Docker health
 PG_STATUS=$(sudo docker inspect -f '{{.State.Health.Status}}' postgres-workshop 2>/dev/null || echo "unknown")
-ST_STATUS=$(sudo docker inspect -f '{{.State.Status}}' shadowtraffic 2>/dev/null || echo "unknown")
+ST_STATUS=$(sudo docker inspect -f '{{.State.Status}}' datagen 2>/dev/null || echo "unknown")
 
 # Disk usage
 DISK_USED_PCT=$(df / --output=pcent | tail -1 | tr -d ' %')

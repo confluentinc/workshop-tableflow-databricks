@@ -3,7 +3,7 @@
     "table": "cdc.bookings",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 300
+        "maxEvents": 1000
     },
     "varsOnce": {
         "currentTimeInMs": {

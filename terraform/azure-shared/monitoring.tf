@@ -2,7 +2,7 @@
 # Shared Infrastructure Monitoring (Azure Monitor)
 # ===============================
 # Azure Monitor-based observability for the shared VM running PostgreSQL
-# and ShadowTraffic. Always enabled — shared infra should always be
+# and the data generator. Always enabled — shared infra should always be
 # monitored, especially during production workshops.
 #
 # Components:
@@ -10,7 +10,7 @@
 #   - Monitoring Metrics Publisher RBAC role
 #   - Action group for email alerts
 #   - Platform metric alerts (CPU, VM availability)
-#   - Custom metrics cron script (disk, PostgreSQL stats, Docker health, ShadowTraffic)
+#   - Custom metrics cron script (disk, PostgreSQL stats, Docker health, data generator)
 #   - Custom metric alerts (disk, replication lag, connections, container health, write errors)
 #   - Azure Portal dashboard
 
@@ -215,19 +215,19 @@ resource "azurerm_monitor_metric_alert" "connections_high" {
   tags = local.common_tags
 }
 
-resource "azurerm_monitor_metric_alert" "shadowtraffic_unhealthy" {
+resource "azurerm_monitor_metric_alert" "datagen_unhealthy" {
   count               = var.enable_monitoring ? 1 : 0
-  name                = "${var.prefix}-shadowtraffic-unhealthy-${local.resource_suffix}"
+  name                = "${var.prefix}-datagen-unhealthy-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
-  description         = "ShadowTraffic container is unhealthy or stopped for 2+ minutes"
+  description         = "Data generator container is unhealthy or stopped for 2+ minutes"
   severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
 
   criteria {
     metric_namespace       = local.custom_metric_namespace
-    metric_name            = "ContainerHealthy_shadowtraffic"
+    metric_name            = "ContainerHealthy_datagen"
     aggregation            = "Minimum"
     operator               = "LessThan"
     threshold              = 1
@@ -267,12 +267,12 @@ resource "azurerm_monitor_metric_alert" "postgres_down" {
   tags = local.common_tags
 }
 
-resource "azurerm_monitor_metric_alert" "shadowtraffic_errors" {
+resource "azurerm_monitor_metric_alert" "datagen_errors" {
   count               = var.enable_monitoring ? 1 : 0
-  name                = "${var.prefix}-shadowtraffic-errors-${local.resource_suffix}"
+  name                = "${var.prefix}-datagen-errors-${local.resource_suffix}"
   resource_group_name = azurerm_resource_group.shared.name
   scopes              = [azurerm_linux_virtual_machine.postgres.id]
-  description         = "ShadowTraffic write errors detected in the last 5 minutes"
+  description         = "Data generator write errors detected in the last 5 minutes"
   severity            = 2
   frequency           = "PT5M"
   window_size         = "PT15M"
@@ -280,7 +280,7 @@ resource "azurerm_monitor_metric_alert" "shadowtraffic_errors" {
 
   criteria {
     metric_namespace       = local.custom_metric_namespace
-    metric_name            = "ShadowTrafficWriteErrors"
+    metric_name            = "DatagenWriteErrors"
     aggregation            = "Total"
     operator               = "GreaterThan"
     threshold              = 0
@@ -298,7 +298,7 @@ resource "azurerm_monitor_metric_alert" "shadowtraffic_errors" {
 # Custom Metrics Script (deployed via SSH)
 # ===============================
 # Installs a cron job on the VM that collects PostgreSQL stats, Docker
-# container health, disk usage, and ShadowTraffic Prometheus metrics,
+# container health, disk usage, and data generator Prometheus metrics,
 # then pushes them to Azure Monitor via the custom metrics REST API.
 # The VM authenticates using its system-assigned managed identity (IMDS).
 

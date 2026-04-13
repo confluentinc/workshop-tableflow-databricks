@@ -253,7 +253,7 @@
             "settings": {
               "content": {
                 "settings": {
-                  "content": "PostgreSQL and ShadowTraffic metrics (connections, replication slots, WAL size, Docker health) are collected by a cron job on the VM. SSH in to view: `cat /var/log/wsa-monitor.log`",
+                  "content": "PostgreSQL and data generator metrics (connections, replication slots, WAL size, Docker health) are collected by a cron job on the VM. SSH in to view: `cat /var/log/wsa-monitor.log`",
                   "title": "",
                   "subtitle": "",
                   "markdownSource": 1

@@ -1,9 +1,9 @@
 {
     "name": "review_generator_historical",
-    "table": "cdc.hotel_reviews",
+    "table": "cdc.reviews",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 100
+        "maxEvents": 300
     },
     "varsOnce": {
         "currentTimeInMs": {
@@ -109,12 +109,12 @@
             "expr": "R~d",
             "pgHint": "VARCHAR(50) PRIMARY KEY"
         },
-        "booking_id": {
+        "hotel_id": {
             "_gen": "lookup",
-            "name": "booking_generator_historical",
+            "name": "hotel_generator_historical",
             "path": [
                 "row",
-                "booking_id"
+                "hotel_id"
             ],
             "pgHint": "VARCHAR(50)"
         },

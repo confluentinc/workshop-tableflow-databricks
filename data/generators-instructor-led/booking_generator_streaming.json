@@ -3,16 +3,18 @@
     "table": "cdc.bookings",
     "connection": "postgres",
     "localConfigs": {
-        "maxEvents": 5000,
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                180000,
-                300000
+                20000,
+                40000
             ]
         }
     },
     "vars": {
+        "booking_created_at": {
+            "_gen": "now"
+        },
         "days_until_checkin": {
             "_gen": "uniformDistribution",
             "bounds": [
@@ -33,9 +35,6 @@
                 432000000
             ],
             "decimals": 0
-        },
-        "booking_created_at": {
-            "_gen": "now"
         }
     },
     "row": {

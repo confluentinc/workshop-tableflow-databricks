@@ -1,9 +1,9 @@
 {
     "name": "review_generator_streaming",
-    "topic": "hotel_reviews",
+    "topic": "reviews",
     "connection": "confluent",
     "localConfigs": {
-        "maxEvents": 40,
+        "partitions": 1,
         "avroSchemaHint": {
             "value": {
                 "_gen": "loadJsonFile",
@@ -13,8 +13,8 @@
         "throttleMs": {
             "_gen": "uniformDistribution",
             "bounds": [
-                1200000,
-                1320000
+                20000,
+                40000
             ]
         }
     },
@@ -91,12 +91,12 @@
             "startingFrom": 560001000,
             "expr": "R~d"
         },
-        "booking_id": {
+        "hotel_id": {
             "_gen": "lookup",
-            "name": "booking_generator_streaming",
+            "name": "hotel_generator_historical",
             "path": [
-                "value",
-                "booking_id"
+                "row",
+                "hotel_id"
             ]
         },
         "review_rating": {

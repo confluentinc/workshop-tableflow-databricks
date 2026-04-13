@@ -70,7 +70,7 @@ variable "initial_wait_seconds" {
 }
 
 variable "table_include_list" {
-  description = "Comma-separated list of PostgreSQL tables to capture via CDC. Workshop mode adds cdc.bookings,cdc.clickstream,cdc.hotel_reviews."
+  description = "Comma-separated list of PostgreSQL tables to capture via CDC. Workshop mode adds cdc.bookings,cdc.clickstream,cdc.reviews."
   type        = string
   default     = "cdc.customer,cdc.hotel"
 }

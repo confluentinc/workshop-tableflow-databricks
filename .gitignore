@@ -1,9 +1,9 @@
 *.DS_Store
 storyboard.md
-shadow-traffic-license.env
 TODO.txt
 data/connections/*
 terraform/aws/generated/*
+terraform/aws-demo/generated/*
 tests
 agent
 
@@ -67,3 +67,5 @@ terraform.rc
 # Ignore contents but keep the .gitkeep placeholder
 terraform/aws-config/*
 !terraform/aws-config/.gitkeep
+terraform/aws-demo/aws-config/*
+!terraform/aws-demo/aws-config/.gitkeep

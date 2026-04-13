@@ -2,13 +2,13 @@
 # Shared Infrastructure Monitoring
 # ===============================
 # CloudWatch-based observability for the shared EC2 instance running
-# PostgreSQL and ShadowTraffic. Always enabled — shared infra should
+# PostgreSQL and the data generator. Always enabled — shared infra should
 # always be monitored, especially during production workshops.
 #
 # Components:
 #   - IAM role + instance profile for CloudWatch agent on EC2
 #   - CloudWatch agent (system metrics + log streaming)
-#   - Custom metrics cron script (PostgreSQL stats, Docker health, ShadowTraffic Prometheus)
+#   - Custom metrics cron script (PostgreSQL stats, Docker health, data generator Prometheus)
 #   - CloudWatch alarms with configurable thresholds
 #   - SNS topic for email alerts
 #   - CloudWatch dashboard
@@ -87,13 +87,13 @@ resource "null_resource" "monitoring_setup" {
 
   depends_on = [
     module.postgres,
-    null_resource.shadowtraffic_setup,
+    null_resource.datagen_setup,
   ]
 
   connection {
     type        = "ssh"
     host        = module.postgres.public_dns
-    user        = var.shadowtraffic_ssh_username
+    user        = var.datagen_ssh_username
     private_key = file(module.keypair.private_key_path)
     timeout     = "5m"
   }
@@ -314,16 +314,16 @@ resource "aws_cloudwatch_metric_alarm" "connections_high" {
   tags = local.common_tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "shadowtraffic_unhealthy" {
-  alarm_name          = "${var.prefix}-shadowtraffic-unhealthy-${local.resource_suffix}"
+resource "aws_cloudwatch_metric_alarm" "datagen_unhealthy" {
+  alarm_name          = "${var.prefix}-datagen-unhealthy-${local.resource_suffix}"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 2
-  metric_name         = "ContainerHealthy_shadowtraffic"
+  metric_name         = "ContainerHealthy_datagen"
   namespace           = local.monitoring_namespace
   period              = 60
   statistic           = "Minimum"
   threshold           = 1
-  alarm_description   = "ShadowTraffic container is unhealthy or stopped for 2+ minutes"
+  alarm_description   = "Data generator container is unhealthy or stopped for 2+ minutes"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
   treat_missing_data  = "breaching"
@@ -352,16 +352,16 @@ resource "aws_cloudwatch_metric_alarm" "postgres_down" {
   tags = local.common_tags
 }
 
-resource "aws_cloudwatch_metric_alarm" "shadowtraffic_errors" {
-  alarm_name          = "${var.prefix}-shadowtraffic-errors-${local.resource_suffix}"
+resource "aws_cloudwatch_metric_alarm" "datagen_errors" {
+  alarm_name          = "${var.prefix}-datagen-errors-${local.resource_suffix}"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
-  metric_name         = "ShadowTrafficWriteErrors"
+  metric_name         = "DatagenWriteErrors"
   namespace           = local.monitoring_namespace
   period              = 300
   statistic           = "Sum"
   threshold           = 0
-  alarm_description   = "ShadowTraffic write errors detected in the last 5 minutes"
+  alarm_description   = "Data generator write errors detected in the last 5 minutes"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
   treat_missing_data  = "notBreaching"
@@ -527,7 +527,7 @@ resource "aws_cloudwatch_dashboard" "shared_infra" {
           stacked = false
           region  = var.cloud_region
           metrics = [
-            [local.monitoring_namespace, "ContainerHealthy_shadowtraffic", "InstanceId", module.postgres.instance_id, { stat = "Minimum", label = "ShadowTraffic" }],
+            [local.monitoring_namespace, "ContainerHealthy_datagen", "InstanceId", module.postgres.instance_id, { stat = "Minimum", label = "Data Generator" }],
             [local.monitoring_namespace, "ContainerRunning_postgres", "InstanceId", module.postgres.instance_id, { stat = "Minimum", label = "PostgreSQL" }]
           ]
           yAxis = { left = { min = 0, max = 1.5 } }
@@ -540,12 +540,12 @@ resource "aws_cloudwatch_dashboard" "shared_infra" {
         width  = 8
         height = 6
         properties = {
-          title   = "ShadowTraffic — Write Errors"
+          title   = "Data Generator — Write Errors"
           view    = "timeSeries"
           stacked = false
           region  = var.cloud_region
           metrics = [
-            [local.monitoring_namespace, "ShadowTrafficWriteErrors", "InstanceId", module.postgres.instance_id, { stat = "Sum" }]
+            [local.monitoring_namespace, "DatagenWriteErrors", "InstanceId", module.postgres.instance_id, { stat = "Sum" }]
           ]
         }
       },
@@ -564,9 +564,9 @@ resource "aws_cloudwatch_dashboard" "shared_infra" {
             aws_cloudwatch_metric_alarm.instance_status.arn,
             aws_cloudwatch_metric_alarm.replication_lag.arn,
             aws_cloudwatch_metric_alarm.connections_high.arn,
-            aws_cloudwatch_metric_alarm.shadowtraffic_unhealthy.arn,
+            aws_cloudwatch_metric_alarm.datagen_unhealthy.arn,
             aws_cloudwatch_metric_alarm.postgres_down.arn,
-            aws_cloudwatch_metric_alarm.shadowtraffic_errors.arn,
+            aws_cloudwatch_metric_alarm.datagen_errors.arn,
           ]
         }
       }

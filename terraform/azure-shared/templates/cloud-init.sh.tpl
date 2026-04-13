@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS cdc.customer (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     birth_date VARCHAR(10),
+    rewards_points INTEGER,
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
@@ -83,9 +84,9 @@ CREATE TABLE IF NOT EXISTS cdc.clickstream (
     created_at TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS cdc.hotel_reviews (
+CREATE TABLE IF NOT EXISTS cdc.reviews (
     review_id VARCHAR(50) PRIMARY KEY,
-    booking_id VARCHAR(50),
+    hotel_id VARCHAR(50),
     review_rating INTEGER,
     review_text TEXT,
     created_at TIMESTAMP
@@ -103,7 +104,7 @@ ALTER TABLE cdc.customer OWNER TO debezium;
 ALTER TABLE cdc.hotel OWNER TO debezium;
 ALTER TABLE cdc.bookings OWNER TO debezium;
 ALTER TABLE cdc.clickstream OWNER TO debezium;
-ALTER TABLE cdc.hotel_reviews OWNER TO debezium;
+ALTER TABLE cdc.reviews OWNER TO debezium;
 
 GRANT USAGE ON SCHEMA public TO debezium;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO debezium;

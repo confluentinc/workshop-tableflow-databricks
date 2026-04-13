@@ -33,12 +33,12 @@ variable "resource_group_name" {
 # ---------------------
 
 variable "data_dir" {
-  description = "Absolute path to the data directory containing ShadowTraffic configs (injected by wsa via TF_VAR_data_dir)"
+  description = "Absolute path to the data directory containing data generator configs (injected by wsa via TF_VAR_data_dir)"
   type        = string
 }
 
 # ---------------------
-# Virtual Machine (PostgreSQL + ShadowTraffic)
+# Virtual Machine (PostgreSQL + Data Generator)
 # ---------------------
 
 variable "account_count" {

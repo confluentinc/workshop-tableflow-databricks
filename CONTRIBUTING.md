@@ -386,7 +386,7 @@ workshop-tableflow-databricks/
 │   ├── images/          # Screenshots and diagrams
 │   └── labs/            # Lab instruction files
 ├── data/
-│   ├── generators/      # ShadowTraffic data generators
+│   ├── generators/      # Java Datagen data generators
 │   ├── schemas/         # Avro schemas
 │   └── connections/     # Database connection configs
 ├── terraform/           # Infrastructure as Code

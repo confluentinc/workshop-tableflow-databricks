@@ -4,8 +4,13 @@
     "connection": "postgres",
     "op": "update",
     "localConfigs": {
-        "maxEvents": 3456,
-        "throttleMs": 120000
+        "throttleMs": {
+            "_gen": "uniformDistribution",
+            "bounds": [
+                20000,
+                40000
+            ]
+        }
     },
     "vars": {
         "room_capacity": {

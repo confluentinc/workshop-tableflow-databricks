@@ -155,7 +155,7 @@ output "databricks_integration" {
 
 output "next_steps" {
   description = "Workshop next steps"
-  value       = "🎉 Workshop Infrastructure Deployed!\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Check CDC Connector status in Confluent Console\n3. Run ShadowTraffic to generate data\n4. Proceed to LAB3 (Stream Processing)\n\n📚 Documentation: labs/README.md"
+  value       = "🎉 Workshop Infrastructure Deployed!\n\n📋 Next Steps:\n1. Verify PostgreSQL: ${local.effective_postgres_dns}:5432\n2. Check CDC Connector status in Confluent Console\n3. Data generator runs automatically on EC2\n4. Proceed to LAB3 (Tableflow)\n\n📚 Documentation: labs/README.md"
 }
 
 output "databricks_manual_step" {

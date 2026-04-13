@@ -1,6 +1,6 @@
 #!/bin/bash
 # Custom metrics collection for WSA shared infrastructure.
-# Pushes PostgreSQL stats, Docker container health, and ShadowTraffic
+# Pushes PostgreSQL stats, Docker container health, and data generator
 # Prometheus metrics to CloudWatch every 60 seconds via cron.
 
 REGION="${region}"
@@ -78,8 +78,8 @@ aws cloudwatch put-metric-data \
   --unit "None" \
   --timestamp "$TIMESTAMP" 2>/dev/null
 
-# ShadowTraffic container (has Docker health check via Prometheus endpoint)
-ST_CONTAINER="shadowtraffic"
+# Data generator container (has Docker health check via Prometheus endpoint)
+ST_CONTAINER="datagen"
 ST_HEALTH=$(sudo docker inspect --format '{{.State.Health.Status}}' $ST_CONTAINER 2>/dev/null || echo "none")
 ST_VALUE=0
 if [ "$ST_HEALTH" = "healthy" ]; then
@@ -95,37 +95,34 @@ fi
 aws cloudwatch put-metric-data \
   --region "$REGION" \
   --namespace "$NAMESPACE" \
-  --metric-name "ContainerHealthy_shadowtraffic" \
+  --metric-name "ContainerHealthy_datagen" \
   --dimensions "InstanceId=$INSTANCE_ID" \
   --value "$ST_VALUE" \
   --unit "None" \
   --timestamp "$TIMESTAMP" 2>/dev/null
 
-# --- ShadowTraffic Prometheus metrics ---
+# --- Data generator Prometheus metrics ---
 
 PROM_RESPONSE=$(curl -sf http://localhost:9400 2>/dev/null || echo "")
 
 if [ -n "$PROM_RESPONSE" ]; then
-  # Parse write errors from Prometheus text format
-  # ShadowTraffic exposes: shadowtraffic_events_failed_total
-  WRITE_ERRORS=$(echo "$PROM_RESPONSE" | grep '^shadowtraffic_events_failed_total' | awk '{sum += $2} END {print sum+0}')
+  WRITE_ERRORS=$(echo "$PROM_RESPONSE" | grep '^datagen_events_failed_total' | awk '{sum += $2} END {print sum+0}')
 
   aws cloudwatch put-metric-data \
     --region "$REGION" \
     --namespace "$NAMESPACE" \
-    --metric-name "ShadowTrafficWriteErrors" \
+    --metric-name "DatagenWriteErrors" \
     --dimensions "InstanceId=$INSTANCE_ID" \
     --value "$WRITE_ERRORS" \
     --unit "Count" \
     --timestamp "$TIMESTAMP" 2>/dev/null
 
-  # Total events generated
-  EVENTS_TOTAL=$(echo "$PROM_RESPONSE" | grep '^shadowtraffic_events_succeeded_total' | awk '{sum += $2} END {print sum+0}')
+  EVENTS_TOTAL=$(echo "$PROM_RESPONSE" | grep '^datagen_events_sent_total' | awk '{sum += $2} END {print sum+0}')
 
   aws cloudwatch put-metric-data \
     --region "$REGION" \
     --namespace "$NAMESPACE" \
-    --metric-name "ShadowTrafficEventsTotal" \
+    --metric-name "DatagenEventsTotal" \
     --dimensions "InstanceId=$INSTANCE_ID" \
     --value "$EVENTS_TOTAL" \
     --unit "Count" \

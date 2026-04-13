@@ -6,7 +6,7 @@ This lab transforms your raw data streams into enriched data products using Conf
 
 ### What You'll Accomplish
 
-![Architecture diagram for stream processing](./images/ss_architecture_stream_processing.jpg)
+![Architecture diagram for stream processing](../../shared/images/arch_diagram_stream_processing.jpg)
 
 By the end of this lab you will have:
 
@@ -72,8 +72,7 @@ SELECT * FROM `bookings` LIMIT 10;
    Some observations about this data stream:
 
    - The `check_in` and `check_out` fields have timestamp values that are not human friendly
-   - While you can see the values of `hotel_id`, it would be more informative to have more identifiable fields displayed as well, like its name and location
-   - It would be useful to know if a customer completed a review of their hotel stay
+   - While you can see the values of `hotel_id`, it would be more informative to have identifiable fields displayed as well, like its name and location
 
 4. Click the *Stop* button
 5. Click the *+* button in the in the narrow side panel at the top left of the
@@ -108,7 +107,7 @@ Your workshop infrastructure has already configured the source topics for use wi
 Your data comes from two sources:
 
 - **CDC topics** (`riverhotel.cdc.customer`, `riverhotel.cdc.hotel`): Data written to PostgreSQL and captured by the CDC connector. These are configured with `changelog.mode = 'upsert'`, compaction, and watermarks — ready to serve as dimension tables for temporal joins.
-- **Direct-to-Kafka topics** (`bookings`, `clickstream`, `hotel_reviews`): Data produced directly to Kafka by ShadowTraffic. These are configured with watermarks and retention by Terraform.
+- **Direct-to-Kafka topics** (`bookings`, `clickstream`, `reviews`): Data produced directly to Kafka by Java Datagen. These are configured with watermarks and retention by Terraform.
 
 Primary keys are automatically derived from the Kafka message key (which maps to the source table's primary key for CDC topics).
 
@@ -152,7 +151,8 @@ SELECT
   CAST(TO_TIMESTAMP_LTZ(b.`check_in`, 3) AS DATE) AS `check_in`,
   CAST(TO_TIMESTAMP_LTZ(b.`check_out`, 3) AS DATE) AS `check_out`,
   c.`email` AS `customer_email`,
-  c.`first_name` AS `customer_first_name`
+  c.`first_name` AS `customer_first_name`,
+  c.`rewards_points` AS `customer_rewards_points`
 FROM `bookings` b
   JOIN `riverhotel.cdc.customer` FOR SYSTEM_TIME AS OF b.`created_at` AS c
     ON c.`email` = b.`customer_email`
@@ -214,13 +214,12 @@ Click on `denormalized_hotel_bookings` to see its schema:
 
 #### Enrich Hotel Reviews with AI Sentiment Analysis
 
-Now create a table that enriches hotel reviews with AI-powered sentiment analysis. This table joins reviews with `denormalized_hotel_bookings` to add hotel context, then uses the [`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html) function to analyze each review across three aspects: cleanliness, amenities, and service. The sentiment scores are flattened into individual columns for clean downstream analytics.
+Now create a table that enriches hotel reviews with AI-powered sentiment analysis. This uses the [`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html) function to analyze each review across three aspects: cleanliness, amenities, and service. The sentiment scores are flattened into individual columns for clean downstream analytics.
 
 ```sql
-SET 'sql.state-ttl' = '7 d';
 SET 'client.statement-name' = 'hotel-reviews-with-sentiment';
 
-CREATE TABLE hotel_reviews_with_sentiment (
+CREATE TABLE reviews_with_sentiment (
   PRIMARY KEY (`review_id`) NOT ENFORCED,
   WATERMARK FOR `created_at` AS `created_at` - INTERVAL '30' SECOND
 ) WITH (
@@ -229,9 +228,7 @@ CREATE TABLE hotel_reviews_with_sentiment (
 ) AS
 SELECT
   review_id,
-  booking_id,
   hotel_id,
-  hotel_name,
   review_rating,
   review_text,
   created_at,
@@ -243,20 +240,16 @@ SELECT
   sentiment_result.sentiment[3].score AS service_score
 FROM (
   SELECT
-    hr.`review_id`,
-    hr.`booking_id`,
-    dhb.`hotel_id`,
-    dhb.`hotel_name`,
-    hr.`review_rating`,
-    hr.`review_text`,
-    hr.`created_at`,
+    `review_id`,
+    `hotel_id`,
+    `review_rating`,
+    `review_text`,
+    `created_at`,
     AI_SENTIMENT(
-      hr.`review_text`,
+      `review_text`,
       ARRAY['cleanliness', 'amenities', 'service']
     ) AS sentiment_result
-  FROM `hotel_reviews` hr
-  JOIN `denormalized_hotel_bookings` dhb
-    ON dhb.`booking_id` = hr.`booking_id`
+  FROM `reviews`
 );
 ```
 
@@ -273,7 +266,7 @@ FROM (
 
 **Why flatten?** `AI_SENTIMENT` returns a nested `ROW` type with an array of aspect results. The subquery calls `AI_SENTIMENT` once, and the outer query extracts the individual aspect labels and scores into flat columns (`cleanliness_label`, `amenities_label`, `service_label`, etc.). This produces a clean, flat schema in the Kafka topic that maps directly to simple Delta Lake columns via Tableflow — no nested struct navigation needed in Databricks.
 
-**State TTL**: The `SET 'sql.state-ttl' = '7 d'` ensures the join state for matching reviews to bookings is retained for 7 days.
+**No join needed**: This is a pure enrichment — each review is independently scored by `AI_SENTIMENT` without requiring any lookup against other tables. The `hotel_id` is carried through from the source topic so that reviews can be joined to hotel data later in Databricks.
 
 </details>
 
@@ -282,14 +275,14 @@ Verify the sentiment-enriched reviews:
 ```sql
 SELECT
   `review_id`,
-  `hotel_name`,
+  `hotel_id`,
   `review_rating`,
   SUBSTRING(`review_text`, 1, 50) AS `review_preview`,
   `cleanliness_label`,
   `amenities_label`,
   `service_label`,
   `service_score`
-FROM `hotel_reviews_with_sentiment`
+FROM `reviews_with_sentiment`
 LIMIT 10;
 ```
 
@@ -301,7 +294,7 @@ In this next section you will stream your topics as *Delta Lake* tables with *Ta
 
 ### Step 4: Enable Tableflow on Topics
 
-These steps guide you through enabling Tableflow for the `denormalized_hotel_bookings` and `hotel_reviews_with_sentiment` topics:
+These steps guide you through enabling Tableflow for the `denormalized_hotel_bookings` and `reviews_with_sentiment` topics:
 
 1. Navigate to [your workshop topics](https://confluent.cloud/go/topics)
 2. Select your workshop environment and cluster
@@ -341,14 +334,19 @@ These steps guide you through enabling Tableflow for the `denormalized_hotel_boo
 
     ![Tableflow Syncing](../../shared/images/confluent_tableflow_syncing.png)
 
+<details>
+<summary>Optional: Configure storage retention</summary>
+
 When enabling Tableflow, configure the **storage retention** for each topic to control how long historical data is kept in Delta Lake:
 
 | Topic | Storage Retention |
 |---|---|
 | `denormalized_hotel_bookings` | 2 weeks |
-| `hotel_reviews_with_sentiment` | 2 weeks |
+| `reviews_with_sentiment` | 2 weeks |
 
-17. Repeat steps 4-16 for the `hotel_reviews_with_sentiment` topic
+</details>
+
+17. Repeat steps 4-16 for the `reviews_with_sentiment` topic
 
 > [!IMPORTANT]
 > **Tableflow Sync Startup Time**
@@ -373,11 +371,11 @@ Follow these steps to verify that the integration between Tableflow and Unity Ca
 
 You have built a real-time streaming pipeline that transforms raw data into enriched data products ready for analytics. Your source topics were pre-configured by Terraform with primary keys, watermarks, and changelog modes, enabling direct temporal joins without intermediate snapshot tables.
 
-You created two Flink tables: `denormalized_hotel_bookings` (enriched bookings with customer and hotel details) and `hotel_reviews_with_sentiment` (AI-enriched reviews with aspect-based sentiment analysis). The `clickstream` topic is also ready for Tableflow in append mode.
+You created two Flink tables: `denormalized_hotel_bookings` (enriched bookings with customer and hotel details) and `reviews_with_sentiment` (AI-enriched reviews with aspect-based sentiment analysis). The `clickstream` topic is also ready for Tableflow in append mode.
 
 ## ➡️ What's Next
 
-Press forward on your journey with [LAB 5: Analytics and AI-Powered Marketing Automation](../LAB5_databricks/LAB5.md).
+Press forward on your journey with [LAB 5: Stream Lineage](../LAB5_stream_lineage/LAB5.md).
 
 ## 🔧 Troubleshooting
 
