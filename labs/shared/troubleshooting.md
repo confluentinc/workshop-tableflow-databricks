@@ -391,6 +391,42 @@ Since this is a transient error, the IAM configuration is correct - it just need
 
 ## 🧱 Databricks
 
+### SQL Warehouse Not Found During Terraform Apply
+
+**Issue:**
+
+When running `terraform apply`, you encounter an error like:
+
+```
+Error: cannot read sql warehouse: cannot read data sql warehouse: can't find SQL warehouse with the name 'Serverless Starter Warehouse'
+
+  with module.databricks.data.databricks_sql_warehouse.main[0],
+  on ../modules/databricks/main.tf line 186, in data "databricks_sql_warehouse" "main":
+ 186: data "databricks_sql_warehouse" "main" {
+```
+
+**Why This Happens:**
+
+Terraform tries to look up an existing SQL warehouse by name (`Serverless Starter Warehouse` by default). This fails when:
+
+1. **The warehouse doesn't exist yet** — Databricks auto-provisions the Serverless Starter Warehouse when a user first logs into the workspace UI. If you haven't logged in yet, it won't exist.
+2. **The warehouse has a different name** — Your workspace may use a different warehouse name (e.g., `Starter Warehouse`).
+3. **Serverless compute is not enabled** — The Databricks account admin hasn't enabled serverless compute for your workspace region.
+
+**Resolution:**
+
+1. **Log into the Databricks workspace UI first** — This triggers auto-provisioning of the default SQL warehouse. Then re-run `terraform apply`.
+
+2. **Override the warehouse name** — If your workspace uses a different warehouse name, uncomment or add the following to your `terraform.tfvars`:
+
+   ```hcl
+   databricks_sql_warehouse_name = "Your Warehouse Name"
+   ```
+
+   You can find available warehouse names in the Databricks workspace under **SQL Warehouses** in the left navigation.
+
+3. **Verify serverless is enabled** — Check with your Databricks account admin that serverless compute is enabled for your workspace region.
+
 ### Serverless Starter Warehouse — Not Authorized to Create Clusters
 
 **Issue:**

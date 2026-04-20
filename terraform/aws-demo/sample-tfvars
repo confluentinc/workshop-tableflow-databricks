@@ -19,3 +19,6 @@ databricks_account_id                      = ""  # Required for IAM trust policy
 databricks_user_email                      = ""  # Your Databricks user email for granting permissions
 databricks_service_principal_client_id     = ""  # Service Principal Application ID (created manually - see LAB1.md)
 databricks_service_principal_client_secret = ""  # Service Principal OAuth Secret (created manually - see LAB1.md)
+
+# Uncomment and set if your Databricks workspace uses a different SQL warehouse name:
+# databricks_sql_warehouse_name = "Serverless Starter Warehouse"

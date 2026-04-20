@@ -285,6 +285,7 @@ module "databricks" {
   sso_email                   = var.databricks_sso_email
   service_principal_client_id = var.databricks_service_principal_client_id
   kafka_cluster_id            = module.confluent_platform.kafka_cluster_id
+  sql_warehouse_name          = var.databricks_sql_warehouse_name
 }
 
 # ===============================
