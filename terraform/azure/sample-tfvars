@@ -31,6 +31,9 @@ databricks_user_email                      = ""
 databricks_service_principal_client_id     = ""
 databricks_service_principal_client_secret = ""
 
+# Uncomment and set if your Databricks workspace uses a different SQL warehouse name:
+# databricks_sql_warehouse_name = "Serverless Starter Warehouse"
+
 # ===============================
 # Optional: PostgreSQL Overrides
 # ===============================

@@ -282,6 +282,12 @@ variable "databricks_service_principal_client_secret" {
   }
 }
 
+variable "databricks_sql_warehouse_name" {
+  description = "Name of the Databricks SQL warehouse to look up (must already exist in the workspace)"
+  type        = string
+  default     = "Serverless Starter Warehouse"
+}
+
 variable "allowed_cidr_blocks" {
   description = "List of CIDR blocks allowed to access Oracle DB and SSH"
   type        = list(string)

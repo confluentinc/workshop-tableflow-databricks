@@ -186,6 +186,12 @@ variable "databricks_service_principal_client_secret" {
   sensitive   = true
 }
 
+variable "databricks_sql_warehouse_name" {
+  description = "Name of the Databricks SQL warehouse to look up (must already exist in the workspace)"
+  type        = string
+  default     = "Serverless Starter Warehouse"
+}
+
 # ---------------------
 # WSA integration variables (defaults preserve backward compatibility for self-service)
 # ---------------------

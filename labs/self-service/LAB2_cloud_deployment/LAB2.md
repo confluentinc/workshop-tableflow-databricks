@@ -122,6 +122,8 @@ docker-compose run --rm terraform -c "terraform output"
 > If you encounter a `500 Internal Server Error` when creating the Databricks external location, this is a transient error due to IAM propagation delays. The `terraform-apply-wrapper-with-retry.sh` script will automatically retry until successful.
 >
 > See [this section](../../shared/troubleshooting.md#transient-500-error-during-external-location-creation) of the Troubleshooting Guide for more details.
+>
+> If you see `can't find SQL warehouse with the name 'Serverless Starter Warehouse'`, see the [SQL Warehouse Not Found](../../shared/troubleshooting.md#sql-warehouse-not-found-during-terraform-apply) troubleshooting entry.
 
 ### Step 2: Verify Data Generation
 
