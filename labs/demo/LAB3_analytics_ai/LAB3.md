@@ -29,7 +29,7 @@ Completed **[LAB 2: Deploy and Observe](../LAB2_deploy_and_observe/LAB2.md)** wi
 > [!IMPORTANT]
 > **Tableflow Sync Time**
 >
-> If you do not see all three tables, Tableflow may still be syncing. Check the Tableflow status in Confluent Cloud. The `clickstream` table typically appears first (high throughput), followed by the CTAS-created tables.
+> If you do not see all three tables, Tableflow may still be syncing. Check the Tableflow status in Confluent Cloud. The `clickstream` table typically appears first (high throughput), followed by the Materialized Table topics.
 
 The `hotel_performance` SQL view was pre-created by Terraform. It aggregates booking metrics and sentiment analysis scores from `denormalized_hotel_bookings` and `reviews_with_sentiment`.
 

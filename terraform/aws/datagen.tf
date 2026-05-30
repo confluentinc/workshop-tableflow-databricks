@@ -344,5 +344,5 @@ output "datagen_enabled" {
 
 output "datagen_ssh_command" {
   description = "SSH command to check Data Generator logs"
-  value       = local.deploy_datagen ? "ssh -i ${module.keypair[0].private_key_path} ${var.datagen_ssh_username}@${module.postgres[0].public_dns} 'docker logs -f datagen'" : ""
+  value       = local.deploy_datagen ? "ssh -i ${module.keypair[0].private_key_path} ${var.datagen_ssh_username}@${module.postgres[0].public_dns} 'sudo docker logs -f datagen'" : ""
 }

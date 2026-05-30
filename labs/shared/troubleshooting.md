@@ -206,14 +206,20 @@ Temporal Table Join requires primary key in versioned table, but no primary key 
 Cannot apply '-' to arguments of type '<VARCHAR> - <INTERVAL SECOND>'
 ```
 
-**Solution: Create Versioned Tables with Proper Configuration**
+**Solution: Use pre-configured CDC topics (workshop approach)**
 
-For temporal joins with CDC sources, create versioned tables with:
-1. **Primary Key** declared
-2. **Watermark** on a timestamp column
-3. **Upsert changelog mode**
+In this workshop, the CDC dimension topics (`riverhotel.cdc.customer`, `riverhotel.cdc.hotel`) are already configured by Terraform `ALTER TABLE` statements with the required primary key, watermark, and upsert changelog mode. You can join against them directly in a Materialized Table — no intermediate snapshot table is needed.
+
+If you see these errors in the workshop, verify that the Terraform `confluent-flink-statements` module ran successfully and that the `SHOW CREATE TABLE` output for `riverhotel.cdc.customer` shows a primary key and watermark.
+
+> **Note**: The CDC connector uses `time.precision.mode = connect` with PostgreSQL `TIMESTAMP` columns, so timestamps arrive as `TIMESTAMP(3)` in Flink and can be used directly in watermark definitions.
+
+**Legacy pattern (reference only)**
+
+If you are working outside this workshop in an environment where CDC topics have not been pre-configured, you can create an intermediate versioned snapshot table manually:
 
 ```sql
+-- Legacy pattern: create a versioned snapshot table
 CREATE TABLE customer_with_watermark (
   PRIMARY KEY (`email`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '5' SECOND
@@ -233,9 +239,7 @@ SELECT
 FROM `riverhotel.cdc.customer`;
 ```
 
-> **Note**: The CDC connector uses `time.precision.mode = connect` with PostgreSQL `TIMESTAMP` columns, so timestamps arrive as `TIMESTAMP(3)` in Flink and can be used directly in watermark definitions.
-
-For more details on join patterns and changelog modes, see **[Stream Processing Insights](stream-processing-insights.md)**
+For more details on join patterns, the pre-configured vs. legacy approaches, and changelog modes, see **[Stream Processing Insights](stream-processing-insights.md)**
 
 ### Streaming Join State Management
 

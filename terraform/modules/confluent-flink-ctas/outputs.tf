@@ -1,13 +1,13 @@
 # ===============================
-# Confluent Flink CTAS Module Outputs
+# Confluent Flink Materialized Tables Module Outputs
 # ===============================
 
-output "denormalized_hotel_bookings_statement_name" {
-  description = "Statement name for denormalized_hotel_bookings CTAS"
-  value       = "denormalized-hotel-bookings"
+output "denormalized_hotel_bookings_table_name" {
+  description = "Display name of the denormalized_hotel_bookings materialized table"
+  value       = confluent_flink_materialized_table.denormalized_hotel_bookings.display_name
 }
 
-output "reviews_with_sentiment_statement_name" {
-  description = "Statement name for reviews_with_sentiment CTAS"
-  value       = "hotel-reviews-with-sentiment"
+output "reviews_with_sentiment_table_name" {
+  description = "Display name of the reviews_with_sentiment materialized table"
+  value       = confluent_flink_materialized_table.reviews_with_sentiment.display_name
 }

@@ -25,7 +25,7 @@ By the end of this lab, you will have:
 
 - **Where data came from** (for example, your PostgreSQL CDC source connector)
 - **Where it goes** (downstream topics, Flink processing, consumers such as Tableflow materialization)
-- **What sits in between** (topics, Flink SQL statements named with `client.statement-name`)
+- **What sits in between** (topics, Flink SQL Materialized Tables and other query nodes)
 
 The graph reflects **recent activity** (by default, roughly the last 10 minutes). That makes it a live operations and discovery tool, not a static architecture diagram.
 
@@ -76,14 +76,14 @@ Work through the following in your lineage graph (names may include your environ
 
 **Stream processing (Flink)**
 
-Your Flink statements used these `client.statement-name` values (they appear as query nodes when active):
+You created two Materialized Tables that appear as query nodes in Stream Lineage:
 
-| Statement name | Role |
-|----------------|------|
-| `denormalized-hotel-bookings` | Temporal joins from bookings + customer + hotel CDC topics into `denormalized_hotel_bookings` |
-| `hotel-reviews-with-sentiment` | `AI_SENTIMENT` enrichment of reviews into `reviews_with_sentiment` |
+| Materialized Table (display name) | Role |
+|-----------------------------------|------|
+| `denormalized_hotel_bookings` | Temporal joins from bookings + customer + hotel CDC topics into `denormalized_hotel_bookings` |
+| `reviews_with_sentiment` | `AI_SENTIMENT` enrichment of reviews into `reviews_with_sentiment` |
 
-Locate the **downstream Kafka topics** `denormalized_hotel_bookings` and `reviews_with_sentiment` and how they connect to those queries.
+Locate the **downstream Kafka topics** `denormalized_hotel_bookings` and `reviews_with_sentiment` and how they connect to those Materialized Tables.
 
 **Tableflow**
 
@@ -92,7 +92,7 @@ On topics where you enabled Tableflow (`clickstream`, `denormalized_hotel_bookin
 **Try this**
 
 1. Click `bookings` and review schema/partitions and throughput on the **Overview** (or equivalent) tab
-2. Click the **denormalized-hotel-bookings** Flink node and confirm inputs and outputs
+2. Click the **`denormalized_hotel_bookings`** Materialized Table node and confirm inputs and outputs
 3. Hover several **edges** and read bytes/messages for the selected time window
 
 ### Step 4: Hands-on exercises
@@ -104,7 +104,7 @@ Starting from the **`reviews_with_sentiment`** topic, trace **backward** through
 <details>
 <summary>Click to reveal one possible answer</summary>
 
-`reviews_with_sentiment` ← Flink `hotel-reviews-with-sentiment` ← `reviews` ← Java data generator
+`reviews_with_sentiment` ← Flink `reviews_with_sentiment` Materialized Table ← `reviews` ← Java data generator
 
 </details>
 
@@ -116,7 +116,7 @@ Suppose the PostgreSQL CDC connector stops or errors. Using Stream Lineage, whic
 <summary>Click to reveal discussion points</summary>
 
 - CDC dimension topics (`riverhotel.cdc.customer`, `riverhotel.cdc.hotel`) stop updating.
-- The `denormalized-hotel-bookings` Flink job depends on these dimension tables for temporal joins — new bookings would fail to enrich with stale customer/hotel data.
+- The `denormalized_hotel_bookings` Materialized Table depends on these dimension tables for temporal joins — new bookings would fail to enrich with stale customer/hotel data.
 - Direct-to-Kafka topics (`bookings`, `clickstream`, `reviews`) are unaffected since they come from the Java data generator, not CDC.
 - Tableflow on `clickstream` and `reviews_with_sentiment` continues; `denormalized_hotel_bookings` degrades due to stale dimension data.
 

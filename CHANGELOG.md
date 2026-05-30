@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-05-30
+
+### Changed
+
+- **Flink Materialized Tables**: Migrated `confluent-flink-ctas` Terraform module from `confluent_flink_statement` (CTAS) to `confluent_flink_materialized_table` resources; simplified module interface by replacing `environment_name`/`kafka_cluster_display_name` variables with `kafka_cluster_id`; renamed outputs from `*_statement_name` to `*_table_name`
+- **Lab Content**: Updated LAB3 (instructor-led) and LAB4 (self-service) stream processing labs to use `CREATE OR ALTER MATERIALIZED TABLE` SQL syntax with an explanatory callout; updated all CTAS references to Materialized Tables across demo, self-service, and shared docs
+- **Data Generators**: Pushed customer and hotel historical seed record timestamps back from 1 week to ~63 days ago to improve temporal join reliability; shifted customer/hotel update base time to 4 hours ago; removed `rewards_points` field from customer historical generator; corrected self-service LAB2 data volume counts to match actual generator `maxEvents` values (2,000 clickstream, 1,000 bookings, 300 reviews)
+- **Review Text Content**: Rewrote all five star-rating review text files with more natural, first-person narrative language
+
+### Removed
+
+- **Flink Table Explorer Image**: Removed `confluent_flink_table_explorer.png` (no longer referenced after lab updates)
+
+
 ## [0.12.1] - 2026-04-20
 
 ### Fixed

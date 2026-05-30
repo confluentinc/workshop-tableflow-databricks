@@ -1,9 +1,9 @@
 # ===============================
 # Confluent Flink Statements Module
 # ===============================
-# Runs ALTER TABLE statements on CDC topics to configure them for
-# direct use with Tableflow and Flink temporal joins, eliminating
-# the need for manual CTAS snapshot tables in LAB4.
+# Runs ALTER TABLE statements on CDC and source topics to configure
+# them for direct use with Tableflow and Flink temporal joins,
+# eliminating the need for intermediate snapshot tables.
 #
 # Requires the CDC connector to use after.state.only=true so topics
 # contain flat Avro records (no Debezium envelope).
@@ -261,7 +261,7 @@ resource "confluent_flink_statement" "clickstream_set_retention" {
 # ===============================
 # Reviews: watermark + 2-week retention
 # ===============================
-# Watermark required for reviews_with_sentiment CTAS.
+# Watermark required for reviews_with_sentiment materialized table.
 
 resource "confluent_flink_statement" "reviews_add_watermark" {
   organization {

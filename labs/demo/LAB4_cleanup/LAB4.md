@@ -39,7 +39,7 @@ docker-compose run --rm terraform -c "terraform destroy -auto-approve"
 
 Terraform will destroy resources in the correct order:
 1. Tableflow topic enablement (disables Tableflow on all three topics)
-2. Flink CTAS statements (stops the running Flink jobs)
+2. Flink Materialized Tables (stops the running Flink queries)
 3. Unity Catalog integration
 4. Databricks notebook, catalog, external location, storage credential
 5. CDC connector, Flink statements, Flink compute pool

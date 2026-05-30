@@ -4,7 +4,7 @@
 # Orchestrates all modules for the Tableflow Databricks Workshop in demo mode.
 # Provisions everything that self-service mode requires PLUS:
 #   - Unity Catalog integration (confluent_catalog_integration)
-#   - Flink CTAS statements (denormalized_hotel_bookings, reviews_with_sentiment)
+#   - Flink Materialized Tables (denormalized_hotel_bookings, reviews_with_sentiment)
 #   - Tableflow topic enablement (clickstream, denormalized_hotel_bookings, reviews_with_sentiment)
 #   - Databricks notebook import (marketing agent)
 #
@@ -620,24 +620,23 @@ module "catalog_integration" {
 }
 
 # ===============================
-# Flink CTAS Statements
+# Flink Materialized Tables
 # ===============================
 # Creates denormalized_hotel_bookings and reviews_with_sentiment via
-# persistent Flink CTAS. These are the statements users run manually
-# in self-service LAB4.
+# persistent Flink Materialized Tables. These are the statements users
+# run manually in self-service LAB4.
 
 module "flink_ctas" {
   source = "../modules/confluent-flink-ctas"
 
-  organization_id            = module.confluent_platform.organization_id
-  environment_id             = module.confluent_platform.environment_id
-  environment_name           = module.confluent_platform.environment_name
-  kafka_cluster_display_name = module.confluent_platform.kafka_cluster_display_name
-  compute_pool_id            = module.flink.compute_pool_id
-  service_account_id         = module.confluent_platform.service_account_id
-  flink_api_key              = module.flink.flink_api_key
-  flink_api_secret           = module.flink.flink_api_secret
-  flink_rest_endpoint        = module.flink.flink_rest_endpoint
+  organization_id    = module.confluent_platform.organization_id
+  environment_id     = module.confluent_platform.environment_id
+  kafka_cluster_id   = module.confluent_platform.kafka_cluster_id
+  compute_pool_id    = module.flink.compute_pool_id
+  service_account_id = module.confluent_platform.service_account_id
+  flink_api_key      = module.flink.flink_api_key
+  flink_api_secret   = module.flink.flink_api_secret
+  flink_rest_endpoint = module.flink.flink_rest_endpoint
 
   bookings_topic = "bookings"
   reviews_topic  = "reviews"
@@ -649,8 +648,8 @@ module "flink_ctas" {
 # Tableflow Topic Enablement
 # ===============================
 # Enables Tableflow on clickstream, denormalized_hotel_bookings, and
-# reviews_with_sentiment. The CTAS-created topics need a delay before
-# Tableflow can be enabled (handled by time_sleep inside the module).
+# reviews_with_sentiment. The materialized table topics need a delay
+# before Tableflow can be enabled (handled by time_sleep inside the module).
 
 module "tableflow_topics" {
   source = "../modules/confluent-tableflow-topics"
