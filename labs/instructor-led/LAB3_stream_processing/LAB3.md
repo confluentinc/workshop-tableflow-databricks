@@ -12,7 +12,7 @@ By the end of this lab you will have:
 2. **Created Enriched Data Products**: Built denormalized bookings combining customer and hotel data using temporal joins
 3. **Created AI-Enriched Reviews**: Used `AI_SENTIMENT` to analyze hotel reviews by cleanliness, amenities, and service
 
-![Architecture diagram for stream processing](./images/arch_diagram_flink.jpg)
+![Architecture diagram for stream processing](../../shared/images/arch_diagram_stream_processing.jpg)
 
 ### Prerequisites
 
@@ -106,21 +106,17 @@ You should see a primary key on `email` (from the Kafka key), a watermark on `up
 
 Your CDC topics are already configured with primary keys, watermarks, and changelog modes. You will now process them into denormalized datasets useful for analytics.
 
+> **What are Materialized Tables?**
+>
+> In this lab you will use [Materialized Tables](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html), a Confluent Cloud feature that combines a table definition with a continuous query in a single persistent, evolvable object. Unlike a traditional `CREATE TABLE ... AS SELECT` (CTAS), a Materialized Table can be updated in place using `CREATE OR ALTER MATERIALIZED TABLE` — Flink stops the old query and starts the new one on the same output topic, so downstream consumers (Tableflow, Databricks) are unaffected. Each Materialized Table is backed by a Kafka topic and a Schema Registry subject, and the `START_MODE` clause controls how much historical data is reprocessed on creation or evolution.
+
 ### Create Denormalized Table
 
-This query creates a denormalized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
+This query creates a materialized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
 
 ```sql
-SET 'sql.state-ttl' = '1 d';
-SET 'client.statement-name' = 'denormalized-hotel-bookings';
-
-CREATE TABLE denormalized_hotel_bookings (
-  PRIMARY KEY (`booking_id`) NOT ENFORCED,
-  WATERMARK FOR `booking_date` AS `booking_date` - INTERVAL '30' SECOND
-) WITH (
-  'changelog.mode' = 'upsert',
-  'kafka.cleanup-policy' = 'compact'
-) AS
+CREATE MATERIALIZED TABLE denormalized_hotel_bookings
+AS
 SELECT
   b.`booking_id`,
   h.`hotel_id`,
@@ -132,8 +128,8 @@ SELECT
   b.`price` AS `booking_amount`,
   b.`occupants` AS `guest_count`,
   b.`created_at` AS `booking_date`,
-  b.`check_in`,
-  b.`check_out`,
+  CAST(TO_TIMESTAMP_LTZ(b.`check_in`, 3) AS DATE) AS `check_in`,
+  CAST(TO_TIMESTAMP_LTZ(b.`check_out`, 3) AS DATE) AS `check_out`,
   c.`email` AS `customer_email`,
   c.`first_name` AS `customer_first_name`,
   c.`rewards_points` AS `customer_rewards_points`
@@ -147,7 +143,7 @@ FROM `bookings` b
 <details>
 <summary>Expand for details on this Flink statement</summary>
 
-This **[CREATE TABLE AS SELECT (CTAS)](https://docs.confluent.io/cloud/current/flink/reference/statements/create-table-as.html)** statement creates a real-time **denormalized fact table** by joining streaming tables using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins).
+This **[CREATE MATERIALIZED TABLE](https://docs.confluent.io/cloud/current/flink/reference/statements/create-materialized-table.html)** statement creates a persistent **denormalized fact table** by joining streaming tables using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). The materialized table automatically creates a backing Kafka topic, registers the schema in Schema Registry, and starts a continuous query that keeps the table populated.
 
 **Understanding Temporal Joins**
 
@@ -166,6 +162,10 @@ Temporal joins allow you to join a streaming fact table (bookings) with dimensio
 3. **Upsert Mode**: Dimension tables use `changelog.mode = 'upsert'` to maintain current state
 4. **Historical Versions**: The dimension topic must retain historical record versions — compaction cannot remove them before the temporal join reads them. This workshop uses `min.compaction.lag.ms = 7 days` to preserve versions during the workshop window.
 
+**Why Materialized Tables?**
+
+Unlike a CTAS, a materialized table is a first-class object that you can evolve in place. If you need to add a column or change the query logic, run `CREATE OR ALTER MATERIALIZED TABLE` and Flink handles the migration — no need to drop the table, lose the output topic, or reconfigure downstream consumers. See the [Materialized Tables documentation](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html) for details.
+
 </details>
 
 ### Verify Denormalization Results
@@ -183,9 +183,7 @@ Some observations:
 - Each booking is enriched with **customer** and **hotel** details via temporal joins
 - The `booking_date` watermark enables downstream analytics and time-based filtering
 
-You can also verify the table in the left navigation panel:
-
-![List of tables](../../shared/images/confluent_flink_table_explorer.png)
+You can also verify the table in the left navigation panel.
 
 > **Tip**: Hover over the *Tables* left menu item to reveal a sync icon. Click it to refresh any new tables into the UI.
 >
@@ -200,15 +198,8 @@ Click on `denormalized_hotel_bookings` to see its schema:
 Now create a table that enriches hotel reviews with AI-powered sentiment analysis. This uses the [`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html) function to analyze each review across three aspects: cleanliness, amenities, and service. The sentiment scores are flattened into individual columns for clean downstream analytics.
 
 ```sql
-SET 'client.statement-name' = 'hotel-reviews-with-sentiment';
-
-CREATE TABLE reviews_with_sentiment (
-  PRIMARY KEY (`review_id`) NOT ENFORCED,
-  WATERMARK FOR `created_at` AS `created_at` - INTERVAL '30' SECOND
-) WITH (
-  'changelog.mode' = 'upsert',
-  'kafka.cleanup-policy' = 'compact'
-) AS
+CREATE MATERIALIZED TABLE reviews_with_sentiment
+AS
 SELECT
   review_id,
   hotel_id,
@@ -257,14 +248,7 @@ Verify the sentiment-enriched reviews:
 
 ```sql
 SELECT
-  `review_id`,
-  `hotel_id`,
-  `review_rating`,
-  SUBSTRING(`review_text`, 1, 50) AS `review_preview`,
-  `cleanliness_label`,
-  `amenities_label`,
-  `service_label`,
-  `service_score`
+  *
 FROM `reviews_with_sentiment`
 LIMIT 10;
 ```
@@ -273,7 +257,7 @@ LIMIT 10;
 
 You have built a real-time streaming pipeline that transforms streaming data into enriched data products ready for Tableflow materialization and analytics. Your CDC dimension topics were pre-configured by Terraform with primary keys, watermarks, and changelog modes, enabling direct temporal joins without intermediate snapshot tables.
 
-You created two Flink tables: `denormalized_hotel_bookings` (enriched bookings with customer and hotel details) and `reviews_with_sentiment` (AI-enriched reviews with aspect-based sentiment analysis). The `clickstream` topic is also ready for Tableflow in append mode.
+You created two [Materialized Tables](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html): `denormalized_hotel_bookings` (enriched bookings with customer and hotel details) and `reviews_with_sentiment` (AI-enriched reviews with aspect-based sentiment analysis). These are persistent, evolvable objects that can be updated in place using `CREATE OR ALTER MATERIALIZED TABLE`. The `clickstream` topic is also ready for Tableflow in append mode.
 
 ## What's Next
 

@@ -37,15 +37,9 @@
             "expr": "#{Date.birthday 'yyyy-MM-dd'}",
             "pgHint": "VARCHAR(10)"
         },
-        "rewards_points": {
-            "_gen": "uniformDistribution",
-            "bounds": [100, 2000],
-            "decimals": 0,
-            "pgHint": "INTEGER"
-        },
         "created_at": {
             "_gen": "math",
-            "expr": "currentTimeInMs - 604800000",
+            "expr": "currentTimeInMs - 5443200000",
             "serialize": {
                 "type": "postgresTimestamp"
             },
@@ -53,7 +47,7 @@
         },
         "updated_at": {
             "_gen": "math",
-            "expr": "currentTimeInMs - 604800000",
+            "expr": "currentTimeInMs - 5443200000",
             "serialize": {
                 "type": "postgresTimestamp"
             },

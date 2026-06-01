@@ -6,17 +6,15 @@ This directory contains the complete Java Datagen data configuration for the Riv
 
 ```sh
 data/
-├── java-datagen-configuration.json           # Main configuration (e.g. self-service / per-account path)
+├── java-datagen-configuration.json           # Main configuration (three-stage orchestration)
 ├── java-datagen-configuration-workshop.json  # Entry config for shared workshop VM (instructor-led)
-├── generators/                               # Data generator configurations
-│   ├── customer_generator.json
-│   ├── hotel_generator.json
-│   ├── clickstream_generator_historical.json
-│   ├── clickstream_generator_streaming.json
-│   ├── booking_generator_historical.json
-│   ├── booking_generator_streaming.json
-│   ├── review_generator_historical.json
-│   ├── review_generator_streaming.json
+├── generators-shared/                        # Shared generator configurations (used by demo mode)
+│   ├── customer_generator_historical.json
+│   ├── customer_generator_streaming.json
+│   ├── customer_updates_historical.json
+│   ├── hotel_generator_historical.json
+│   ├── hotel_generator_streaming.json
+│   ├── hotel_updates_historical.json
 │   └── content/                       # Text content for generators
 │       ├── hotel_descriptions_airport.json
 │       ├── hotel_descriptions_economy.json
@@ -28,6 +26,13 @@ data/
 │       ├── review_text_choices_3_star.json
 │       ├── review_text_choices_4_star.json
 │       └── review_text_choices_5_star.json
+├── generators-self-service/                  # Per-participant generators (self-service mode)
+│   ├── booking_generator_historical.json
+│   ├── booking_generator_streaming.json
+│   ├── clickstream_generator_historical.json
+│   ├── clickstream_generator_streaming.json
+│   ├── review_generator_historical.json
+│   └── review_generator_streaming.json
 ├── schemas/                           # Avro schema definitions
 │   ├── booking_schema.avsc
 │   ├── clickstream_schema.avsc
@@ -68,8 +73,8 @@ This approach eliminates manual configuration errors and ensures the Java Datage
 
 #### PostgreSQL Database Generators
 
-- **`customer_generator.json`** - Generates 1,000 customer records with contact information
-- **`hotel_generator.json`** - Generates 30 hotel properties across 9 countries with category-based descriptions
+- **`customer_generator_historical.json`** - Generates 1,000 customer records with contact information
+- **`hotel_generator_historical.json`** - Generates 30 hotel properties across 9 countries with category-based descriptions
 
 ##### Hotel Categories
 
@@ -87,26 +92,26 @@ Each hotel is randomly assigned a category, and the description is selected from
 
 #### Kafka Topic Generators
 
-- **`clickstream_generator_historical.json`** - Generates 3,000 historical website interaction events over the past 8 weeks
-- **`clickstream_generator_streaming.json`** - Produces real-time clickstream events every 10-15 seconds
-- **`booking_generator_historical.json`** - Generates 400 historical booking records with realistic date relationships
-- **`booking_generator_streaming.json`** - Produces streaming booking events every 45-60 seconds
-- **`review_generator_historical.json`** - Generates 200 historical hotel reviews linked to hotels via `hotel_id` lookup
-- **`review_generator_streaming.json`** - Produces streaming reviews every 100-150 seconds linked to hotels via `hotel_id` lookup
+- **`clickstream_generator_historical.json`** - Generates 2,000 historical website interaction events over the past week
+- **`clickstream_generator_streaming.json`** - Produces real-time clickstream events every 10-20 seconds
+- **`booking_generator_historical.json`** - Generates 1,000 historical booking records with realistic date relationships
+- **`booking_generator_streaming.json`** - Produces streaming booking events every 20-40 seconds
+- **`review_generator_historical.json`** - Generates 300 historical hotel reviews linked to hotels via `hotel_id` lookup
+- **`review_generator_streaming.json`** - Produces streaming reviews every 20-40 seconds linked to hotels via `hotel_id` lookup
 
 ### Content Resources
 
-The `generators/content/` directory contains text content used by generators:
+The `generators-shared/content/` directory contains text content used by generators:
 
 #### Review Text Files
 
 Rating-specific review text files ensure sentiment matches numeric ratings:
 
-- **`review_text_choices_1_star.json`** - Very bad experiences (10% frequency)
-- **`review_text_choices_2_star.json`** - Somewhat bad experiences (20% frequency)
-- **`review_text_choices_3_star.json`** - OK experiences (30% frequency)
-- **`review_text_choices_4_star.json`** - Pretty good experiences (25% frequency)
-- **`review_text_choices_5_star.json`** - Great experiences (15% frequency)
+- **`review_text_choices_1_star.json`** - Very bad experiences (5% frequency)
+- **`review_text_choices_2_star.json`** - Somewhat bad experiences (10% frequency)
+- **`review_text_choices_3_star.json`** - OK experiences (20% frequency)
+- **`review_text_choices_4_star.json`** - Pretty good experiences (35% frequency)
+- **`review_text_choices_5_star.json`** - Great experiences (30% frequency)
 
 #### Hotel Description Files
 
@@ -190,7 +195,7 @@ resource "local_file" "postgres_connection" {
 
 - **Variable-based Date Logic**: Booking generators ensure `CHECK_OUT` is 2-5 days after `CHECK_IN`
 - **Realistic Booking Patterns**: Historical bookings created 2-21 days before `CHECK_IN`
-- **Unique Booking References**: Reviews use sequential booking ID references to ensure no duplicate reviews per booking
+- **Hotel-Linked Reviews**: Reviews reference hotels directly via `hotel_id` lookup, independent of bookings
 - **Customer Behavior Modeling**: 80% of activities/bookings from repeat customers
 - **Timestamp Formatting**: All date fields use proper formatting with `decimals: 0`
 - **Category-Based Content**: Hotel descriptions are matched to property categories (Economy, Extended Stay, Luxury, Resort, Airport)
@@ -202,7 +207,7 @@ Reviews are linked directly to hotels via `hotel_id` using a lookup against `hot
 This approach:
 
 - Simplifies the data model by removing the booking-to-review dependency
-- Allows the `reviews_with_sentiment` Flink CTAS to join reviews directly with the hotel dimension table via a temporal join on `hotel_id`, avoiding the need to route through `denormalized_hotel_bookings`
+- Allows the `reviews_with_sentiment` Materialized Table to enrich reviews with `AI_SENTIMENT` independently, without routing through `denormalized_hotel_bookings`
 - Enables multiple reviews per hotel (realistic for hospitality industry)
 - Eliminates the race condition where streaming reviews would need to wait for concurrent booking data
 
@@ -220,16 +225,16 @@ The review generators implement a sophisticated rating-based text selection syst
 
 | Rating | Sentiment | Frequency | Example Language |
 |--------|-----------|-----------|------------------|
-| 1 Star | Very bad experiences | 10% | "absolutely dreadful", "complete disaster", "appalling standards" |
-| 2 Stars | Somewhat bad experiences | 20% | "disappointing aspects", "didn't quite match expectations" |
-| 3 Stars | OK experiences | 30% | "perfectly adequate", "met basic expectations" |
-| 4 Stars | Pretty good experiences | 25% | "very pleasant stay", "exceeded expectations" |
-| 5 Stars | Great experiences | 15% | "exceptional", "outstanding", "exceeded all expectations" |
+| 1 Star | Very bad experiences | 5% | "absolutely dreadful", "complete disaster", "appalling standards" |
+| 2 Stars | Somewhat bad experiences | 10% | "disappointing aspects", "didn't quite match expectations" |
+| 3 Stars | OK experiences | 20% | "perfectly adequate", "met basic expectations" |
+| 4 Stars | Pretty good experiences | 35% | "very pleasant stay", "exceeded expectations" |
+| 5 Stars | Great experiences | 30% | "exceptional", "outstanding", "exceeded all expectations" |
 
 #### Distribution Notes
 
 - **Consistent across generators**: Both historical and streaming use identical frequency distributions
-- **Realistic pattern**: 4-star reviews (25%) more common than perfect 5-star reviews (15%)
+- **Positive skew**: 4-star (35%) and 5-star (30%) reviews dominate, reflecting real-world hospitality patterns
 - **Balanced spectrum**: Covers full range from very negative to exceptional experiences
 
 ### Technical Implementation
@@ -248,24 +253,24 @@ The review generators implement a sophisticated rating-based text selection syst
     }
 },
 "varsOnce": {
-    "oneStarTexts": { "_gen": "loadJsonFile", "file": "/home/data/generators/content/review_text_choices_1_star.json" },
-    "twoStarTexts": { "_gen": "loadJsonFile", "file": "/home/data/generators/content/review_text_choices_2_star.json" }
+    "oneStarTexts": { "_gen": "loadJsonFile", "file": "/home/data/generators-shared/content/review_text_choices_1_star.json" },
+    "twoStarTexts": { "_gen": "loadJsonFile", "file": "/home/data/generators-shared/content/review_text_choices_2_star.json" }
     // ... (3-5 star text files loaded once)
 },
 "value": {
     "REVIEW_RATING": {
         "_gen": "weightedOneOf",
         "choices": [
-            { "weight": 10, "value": 1 },
-            { "weight": 20, "value": 2 }
-            // ... (weights 30, 25, 15 for ratings 3, 4, 5)
+            { "weight": 5, "value": 1 },
+            { "weight": 10, "value": 2 }
+            // ... (weights 20, 35, 30 for ratings 3, 4, 5)
         ]
     },
     "REVIEW_TEXT": {
         "_gen": "weightedOneOf",
         "choices": [
-            { "weight": 10, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "oneStarTexts" }}},
-            { "weight": 20, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "twoStarTexts" }}}
+            { "weight": 5, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "oneStarTexts" }}},
+            { "weight": 10, "value": { "_gen": "oneOf", "choices": { "_gen": "var", "var": "twoStarTexts" }}}
             // ... (matching weights for 3-5 star texts)
         ]
     }
@@ -278,19 +283,19 @@ The review generators implement a sophisticated rating-based text selection syst
    1. The `java-datagen-configuration.json` file contains a three-sequential-stage approach to generate both a batch of historical data and periodic ongoing streaming data
    2. Connections to PostgreSQL and Confluent Cloud are prebuilt
 2. **Stage 1: Seed Data (PostgreSQL Database)**
-   1. The `customer_generator` creates 1,000 customer records with timestamps of ~10 weeks ago
-   2. The `hotel_generator` creates 30 hotel records across 9 countries with category-based descriptions and timestamps of ~10 weeks ago
+   1. The `customer_generator_historical` creates 1,000 customer records with contact information and timestamps of ~9 weeks ago (the `rewards_points` field is populated later by `customer_generator_streaming`)
+   2. The `hotel_generator_historical` creates 30 hotel records across 9 countries with category-based descriptions and timestamps of ~9 weeks ago
 3. **Stage 2: Historical Data (Kafka Topics)**
-   1. **Clickstream Generator (Historical)** - Generates 3,000 clickstream events with random timestamps over the past ~8 weeks
-   2. **Booking Generator (Historical)** - Generates 400 booking records with random timestamps over the past ~8 weeks
-   3. **Review Generator (Historical)** - Generates 200 hotel reviews linked to hotels via `hotel_id` lookup, with timestamps over the past ~8 weeks
+   1. **Clickstream Generator (Historical)** - Generates 2,000 clickstream events with random timestamps over the past week
+   2. **Booking Generator (Historical)** - Generates 1,000 booking records with random timestamps over the past week
+   3. **Review Generator (Historical)** - Generates 300 hotel reviews linked to hotels via `hotel_id` lookup, with timestamps over the past week
 4. **Stage 3: Streaming Data (Kafka Topics)**
-   1. **Clickstream Generator (Streaming)** - Produces messages every 10-15 seconds to the `clickstream` topic with a maximum of 125 events
+   1. **Clickstream Generator (Streaming)** - Produces messages every 10-20 seconds to the `clickstream` topic
       - References customer emails and hotel IDs from PostgreSQL data
       - 80% of clickstream activity come from existing customers, 20% from anonymous users
-   2. **Booking Generator (Streaming)** - Produces messages every 45-60 seconds to the `bookings` topic with a maximum of 20 events
+   2. **Booking Generator (Streaming)** - Produces messages every 20-40 seconds to the `bookings` topic
       - References customer emails and hotel IDs from PostgreSQL data
-   3. **Review Generator (Streaming)** - Produces messages every 100-150 seconds to the `reviews` topic up to a max of 10 events
+   3. **Review Generator (Streaming)** - Produces messages every 20-40 seconds to the `reviews` topic
       - Includes all review ratings from 1-5 stars with weighted distribution
       - References hotels via `hotel_id` lookup from `hotel_generator_historical`
 

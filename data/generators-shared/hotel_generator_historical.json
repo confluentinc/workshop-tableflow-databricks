@@ -349,7 +349,7 @@
         },
         "created_at": {
             "_gen": "math",
-            "expr": "currentTimeInMs - 604800000",
+            "expr": "currentTimeInMs - 5443200000",
             "serialize": {
                 "type": "postgresTimestamp"
             },
@@ -357,7 +357,7 @@
         },
         "updated_at": {
             "_gen": "math",
-            "expr": "currentTimeInMs - 604800000",
+            "expr": "currentTimeInMs - 5443200000",
             "serialize": {
                 "type": "postgresTimestamp"
             },

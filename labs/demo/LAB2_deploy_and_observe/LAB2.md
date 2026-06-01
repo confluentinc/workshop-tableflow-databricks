@@ -14,7 +14,7 @@ By the end of this lab, `terraform apply` will have provisioned:
 | **Confluent Cloud** | Environment, Standard Kafka cluster, Schema Registry, Flink compute pool, service account, API keys |
 | **CDC Pipeline** | PostgreSQL CDC connector (Debezium), producing `riverhotel.cdc.customer` and `riverhotel.cdc.hotel` topics |
 | **Data Generator** | Produces `clickstream`, `bookings`, and `reviews` directly to Kafka with Avro schemas |
-| **Flink Statements** | ALTER TABLE statements (watermarks, changelog modes, retention) + CTAS for `denormalized_hotel_bookings` and `reviews_with_sentiment` |
+| **Flink Statements** | ALTER TABLE statements (watermarks, changelog modes, retention) + Materialized Tables for `denormalized_hotel_bookings` and `reviews_with_sentiment` |
 | **Data Contracts** | Clickstream schema with CEL data quality rule (`validateClickstreamAction`), DLQ topic (`invalid_clickstream_events`) |
 | **Tableflow** | S3 provider integration, Unity Catalog integration, Tableflow enabled on `clickstream`, `denormalized_hotel_bookings`, and `reviews_with_sentiment` |
 | **Databricks** | Storage credential, external location, Unity Catalog, marketing agent notebook imported |
@@ -47,8 +47,8 @@ Complete **[LAB 1: Account Setup](../LAB1_account_setup/LAB1.md)** with all cred
 > - EC2 instance provisioning and data generator startup (~5 min)
 > - CDC connector creation and initial snapshot (~3 min)
 > - IAM trust policy propagation (2x sleep: 60s + 30s)
-> - Flink CTAS statement startup (~2 min)
-> - Wait for CTAS topic creation (120s sleep)
+> - Flink Materialized Table creation (~2 min)
+> - Wait for Materialized Table topic creation (120s sleep)
 > - Tableflow topic enablement (~1 min)
 
 ### Step 2: Review Terraform Outputs
@@ -61,7 +61,7 @@ docker-compose run --rm terraform -c "terraform output demo_status"
 
 This shows:
 - **Catalog integration** name
-- **Flink CTAS** statement names
+- **Flink Materialized Table** names
 - **Tableflow** topic IDs
 - **Notebook** path in Databricks
 - **Direct links** to Confluent Cloud Tableflow, Flink workspace, and Databricks catalog
@@ -83,8 +83,8 @@ Now explore what Terraform created in the Confluent Cloud UI:
 3. Verify you see these topics:
    - `riverhotel.cdc.customer` and `riverhotel.cdc.hotel` (CDC from PostgreSQL)
    - `clickstream`, `bookings`, `reviews` (direct from data generator)
-   - `denormalized_hotel_bookings` (created by Flink CTAS)
-   - `reviews_with_sentiment` (created by Flink CTAS)
+   - `denormalized_hotel_bookings` (created by Flink Materialized Table)
+   - `reviews_with_sentiment` (created by Flink Materialized Table)
 
 #### CDC Connector
 
@@ -95,7 +95,7 @@ Now explore what Terraform created in the Confluent Cloud UI:
 
 1. Navigate to [your Flink compute pool](https://confluent.cloud/go/flink)
 2. Select your workshop environment and click **Continue**
-3. Look at the **Statements** tab to see the running ALTER TABLE and CTAS statements
+3. Look at the **Statements** tab to see the running ALTER TABLE statements and Materialized Tables
 
 #### Tableflow
 
@@ -109,7 +109,7 @@ Now explore what Terraform created in the Confluent Cloud UI:
 > [!IMPORTANT]
 > **Tableflow Sync Startup Time**
 >
-> It takes 10-15 minutes for Tableflow to fully sync data to S3 and register tables in Unity Catalog. The `clickstream` topic (high throughput) typically syncs first. The CTAS-created topics may take a few extra minutes since they need data from the Flink statements.
+> It takes 10-15 minutes for Tableflow to fully sync data to S3 and register tables in Unity Catalog. The `clickstream` topic (high throughput) typically syncs first. The Materialized Table topics may take a few extra minutes since they need data from the continuous Flink queries.
 >
 > You can proceed to explore Confluent Cloud while waiting, but you will need the sync to complete before LAB 3.
 
@@ -121,19 +121,19 @@ Here is a summary of what demo mode automated compared to self-service:
 |-----------|-------------|-----------|
 | **Unity Catalog Integration** | Manual wizard in CC UI (LAB3) | `confluent_catalog_integration` Terraform resource |
 | **Tableflow on clickstream** | Manual enable in CC UI (LAB3) | `confluent_tableflow_topic` Terraform resource |
-| **denormalized_hotel_bookings** | Manual Flink CTAS SQL (LAB4) | `confluent_flink_statement` Terraform resource |
-| **reviews_with_sentiment** | Manual Flink CTAS SQL (LAB4) | `confluent_flink_statement` Terraform resource |
-| **Tableflow on CTAS topics** | Manual enable in CC UI (LAB4) | `confluent_tableflow_topic` Terraform resource |
+| **denormalized_hotel_bookings** | Manual Flink Materialized Table SQL (LAB4) | `confluent_flink_materialized_table` Terraform resource |
+| **reviews_with_sentiment** | Manual Flink Materialized Table SQL (LAB4) | `confluent_flink_materialized_table` Terraform resource |
+| **Tableflow on Materialized Table topics** | Manual enable in CC UI (LAB4) | `confluent_tableflow_topic` Terraform resource |
 | **Notebook import** | Manual import from URL (LAB5) | `databricks_notebook` Terraform resource |
 
 <details>
-<summary>How the Flink CTAS statements work</summary>
+<summary>How the Flink Materialized Tables work</summary>
 
 **`denormalized_hotel_bookings`** uses temporal joins to combine streaming bookings with point-in-time lookups against customer and hotel dimension tables. The `FOR SYSTEM_TIME AS OF` clause retrieves the dimension record as it existed at the time of each booking event.
 
 **`reviews_with_sentiment`** enriches hotel reviews with aspect-based sentiment analysis using Confluent's built-in `AI_SENTIMENT` function. It evaluates each review across three aspects (cleanliness, amenities, service) and flattens the scores into individual columns for clean downstream analytics.
 
-Both statements run continuously as persistent Flink jobs.
+Both materialized tables run continuous queries as persistent Flink jobs.
 
 </details>
 

@@ -4,20 +4,30 @@
 
 This document provides guidance on joining streaming data with CDC (Change Data Capture) dimension tables in Confluent Cloud Flink, using **temporal joins** for point-in-time lookups.
 
+> **Note**: The workshop labs use [Materialized Tables](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html) and pre-configured CDC topics (via `ALTER TABLE` statements in Terraform) instead of the intermediate CTAS snapshot tables shown in some examples below. The patterns in this appendix remain valid for understanding temporal join mechanics, but the labs no longer require manually creating `*_with_watermark` snapshot tables.
+
 ## ✅ Recommended Approach: Temporal Joins
 
 Temporal joins allow you to join a streaming fact table (e.g., bookings) with versioned dimension tables (e.g., customers, hotels) using point-in-time lookups.
 
-### Creating Versioned Tables for Temporal Joins
+### Pre-configured CDC Topics (Workshop Approach)
 
-To use temporal joins with CDC sources, create versioned tables with:
+In this workshop, the CDC dimension topics (`riverhotel.cdc.customer`, `riverhotel.cdc.hotel`) are pre-configured by Terraform `ALTER TABLE` statements with:
 
-1. **Primary Key** - Identifies the dimension record
-2. **Watermark** - Enables event-time semantics
-3. **Upsert changelog mode** - Maintains current state per key
+1. **Primary Key** - Automatically derived from the Kafka message key (source table PK)
+2. **Watermark** - Added via `ALTER TABLE ... MODIFY WATERMARK`
+3. **Upsert changelog mode** - Set via `ALTER TABLE ... SET ('changelog.mode' = 'upsert')`
+
+This eliminates the need to create intermediate CTAS snapshot tables (like `customer_with_watermark`).
+
+> **Note**: The CDC connector uses `time.precision.mode = connect` with PostgreSQL `TIMESTAMP` columns, so timestamps arrive as `TIMESTAMP(3)` in Flink and can be used directly in watermark definitions.
+
+### Legacy Pattern: CTAS Snapshot Tables
+
+Before the `ALTER TABLE` approach, you would create explicit versioned tables via CTAS:
 
 ```sql
--- Create versioned customer table with watermark for temporal joins
+-- Legacy pattern: create a versioned snapshot table
 CREATE TABLE customer_with_watermark (
   PRIMARY KEY (`email`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '5' SECOND
@@ -37,18 +47,18 @@ SELECT
 FROM `riverhotel.cdc.customer`;
 ```
 
-> **Note**: The CDC connector uses `time.precision.mode = connect` with PostgreSQL `TIMESTAMP` columns, so timestamps arrive as `TIMESTAMP(3)` in Flink and can be used directly in watermark definitions.
-
 ### Using Temporal Joins
+
+With pre-configured CDC topics, you can join directly against the source topics:
 
 ```sql
 SELECT
   b.*,
   c.first_name,
   c.last_name
-FROM bookings_with_watermark b
-  JOIN customer_with_watermark FOR SYSTEM_TIME AS OF b.event_time AS c
-    ON c.email = b.customer_email
+FROM `bookings` b
+  JOIN `riverhotel.cdc.customer` FOR SYSTEM_TIME AS OF b.`created_at` AS c
+    ON c.`email` = b.`customer_email`
 ```
 
 The `FOR SYSTEM_TIME AS OF` clause retrieves the dimension record as it existed at the specified event time.
@@ -113,42 +123,41 @@ The `bookings_with_watermark` table uses `append` mode because:
 - **No updates expected** - A booking doesn't get "updated" after creation; it's a historical record
 
 ```sql
--- Fact table: append mode (each booking is a new event)
+-- Legacy pattern: fact table snapshot with watermark
 CREATE TABLE bookings_with_watermark (
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '30' SECOND
 ) AS
 SELECT
   *,
   `created_at` AS `event_time`
-FROM `riverhotel.kafka.bookings`;
+FROM `bookings`;
 ```
 
-#### Why Upsert for Denormalized Result Tables?
+> **Workshop approach**: The `bookings` topic is pre-configured with a watermark on `created_at` via Terraform, so no snapshot table is needed.
 
-The `denormalized_hotel_bookings` table uses `upsert` mode because:
+#### Why Append for Denormalized Result Tables?
 
-- **One row per booking** - Using `booking_id` as primary key ensures a clean data model with exactly one row per booking
-- **Temporal join updates** - If a dimension record (customer, hotel) is updated, the denormalized row reflects the latest enrichment
-- **Downstream simplicity** - Consumers querying by `booking_id` get the latest complete state without needing to deduplicate
+The `denormalized_hotel_bookings` table uses `append` mode because:
+
+- **Event log semantics** - Each booking is a write-once event, making append a natural fit without the overhead of key-based compaction
+- **No compaction overhead** - Using `delete` cleanup policy avoids the cost of topic compaction, relying on time-based retention instead
+- **Temporal join enrichment** - The temporal join enriches each booking at event time; since bookings are immutable events, there is no need to overwrite previous records
 
 ```sql
--- Result table: upsert mode (one row per booking, enriched with dimensions)
-CREATE TABLE denormalized_hotel_bookings (
-  PRIMARY KEY (`booking_id`) NOT ENFORCED,
-  WATERMARK FOR `booking_date` AS `booking_date` - INTERVAL '30' SECOND
-) WITH (
-  'changelog.mode' = 'upsert',
-  'kafka.cleanup-policy' = 'compact'
-) AS
+-- Workshop approach: Materialized Table (enriched booking events)
+CREATE MATERIALIZED TABLE denormalized_hotel_bookings
+AS
 SELECT
   b.`booking_id`,
   -- ... booking, customer, hotel fields ...
-FROM `bookings_with_watermark` b
-  JOIN `customer_with_watermark` FOR SYSTEM_TIME AS OF b.`event_time` AS c
+FROM `bookings` b
+  JOIN `riverhotel.cdc.customer` FOR SYSTEM_TIME AS OF b.`created_at` AS c
     ON c.`email` = b.`customer_email`
-  JOIN `hotel_with_watermark` FOR SYSTEM_TIME AS OF b.`event_time` AS h
+  JOIN `riverhotel.cdc.hotel` FOR SYSTEM_TIME AS OF b.`created_at` AS h
     ON h.`hotel_id` = b.`hotel_id`;
 ```
+
+> **Materialized Tables** combine table definition + continuous query into a single persistent object. Unlike CTAS, they can be evolved in place with `CREATE OR ALTER MATERIALIZED TABLE`. See the [Materialized Tables documentation](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html).
 
 ---
 
@@ -290,9 +299,9 @@ GROUP BY hotel_id;
 
 > **Note:** Non-windowed aggregations require `sql.state-ttl` to prevent unbounded state growth. The TTL expires state after N time units of **inactivity** — if keys keep receiving events, state grows until events stop for TTL duration. See [A5: State TTL and Kafka Compaction](#a5-state-ttl-and-kafka-compaction) for details.
 
-#### Watermarks Don't Propagate Through CTAS
+#### Watermarks Don't Propagate Through CTAS / Materialized Tables
 
-When you create a table via CTAS, watermark attributes from source columns **do not automatically propagate** to output columns. If you later try to use a windowed aggregation on the output table, you'll get this error:
+When you create a table via CTAS (or a Materialized Table), watermark attributes from source columns **do not automatically propagate** to output columns. If you later try to use a windowed aggregation on the output table, you'll get this error:
 
 > The window function requires the timecol is a time attribute type, but is TIMESTAMP(3).
 
@@ -446,6 +455,8 @@ Windowed aggregations naturally have bounded state because each window is indepe
 ---
 
 ### A6: Temporal Join Pitfall - Dimension Updates Cause Join Failures
+
+> **Note**: The examples below use `hotel_with_watermark` and `bookings_with_watermark` snapshot tables from the legacy CTAS pattern. In this workshop, the same pitfall applies when joining directly against the pre-configured CDC topics (`riverhotel.cdc.hotel`, `riverhotel.cdc.customer`).
 
 When using temporal joins with dimensions that receive streaming updates, you may encounter a scenario where many fact records fail to join—even though the data appears correct.
 

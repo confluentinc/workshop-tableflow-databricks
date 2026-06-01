@@ -24,10 +24,10 @@ terraform {
 }
 
 # ===============================
-# Wait for CTAS topics to be created
+# Wait for Materialized Table topics to be created
 # ===============================
 # The denormalized_hotel_bookings and reviews_with_sentiment Kafka
-# topics are created asynchronously by Flink CTAS statements. This
+# topics are created asynchronously by Flink Materialized Tables. This
 # sleep ensures they exist before Tableflow tries to enable on them.
 
 resource "time_sleep" "wait_for_ctas_topics" {

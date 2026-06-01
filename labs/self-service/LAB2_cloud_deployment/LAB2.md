@@ -160,9 +160,9 @@ You now have a live, streaming data pipeline consisting of:
 
 - **1,000 customer profiles** with realistic contact information and preferences
 - **30 hotel properties** across 9 countries with detailed amenities and descriptions
-- **3,000+ historical clickstream events** showing authentic customer browsing behavior
-- **400+ booking transactions** with realistic customer-hotel relationships
-- **200+ hotel reviews** with ratings and feedback that reflect actual guest experiences
+- **2,000 historical clickstream events** showing authentic customer browsing behavior
+- **1,000+ booking transactions** with realistic customer-hotel relationships
+- **300+ hotel reviews** with ratings and feedback that reflect actual guest experiences
 - **Continuous streaming data** with realistic throttling patterns that simulate real-world usage
 
 </details>

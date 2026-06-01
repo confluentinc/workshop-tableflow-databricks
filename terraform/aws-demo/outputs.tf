@@ -32,9 +32,9 @@ output "demo_status" {
   value = {
     mode = "demo"
     catalog_integration = module.catalog_integration.display_name
-    flink_ctas_statements = {
-      denormalized_hotel_bookings = module.flink_ctas.denormalized_hotel_bookings_statement_name
-      reviews_with_sentiment      = module.flink_ctas.reviews_with_sentiment_statement_name
+    flink_materialized_tables = {
+      denormalized_hotel_bookings = module.flink_ctas.denormalized_hotel_bookings_table_name
+      reviews_with_sentiment      = module.flink_ctas.reviews_with_sentiment_table_name
     }
     tableflow_topics = {
       clickstream                 = module.tableflow_topics.clickstream_tableflow_id

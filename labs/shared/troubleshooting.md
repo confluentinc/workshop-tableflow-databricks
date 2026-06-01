@@ -206,14 +206,20 @@ Temporal Table Join requires primary key in versioned table, but no primary key 
 Cannot apply '-' to arguments of type '<VARCHAR> - <INTERVAL SECOND>'
 ```
 
-**Solution: Create Versioned Tables with Proper Configuration**
+**Solution: Use pre-configured CDC topics (workshop approach)**
 
-For temporal joins with CDC sources, create versioned tables with:
-1. **Primary Key** declared
-2. **Watermark** on a timestamp column
-3. **Upsert changelog mode**
+In this workshop, the CDC dimension topics (`riverhotel.cdc.customer`, `riverhotel.cdc.hotel`) are already configured by Terraform `ALTER TABLE` statements with the required primary key, watermark, and upsert changelog mode. You can join against them directly in a Materialized Table — no intermediate snapshot table is needed.
+
+If you see these errors in the workshop, verify that the Terraform `confluent-flink-statements` module ran successfully and that the `SHOW CREATE TABLE` output for `riverhotel.cdc.customer` shows a primary key and watermark.
+
+> **Note**: The CDC connector uses `time.precision.mode = connect` with PostgreSQL `TIMESTAMP` columns, so timestamps arrive as `TIMESTAMP(3)` in Flink and can be used directly in watermark definitions.
+
+**Legacy pattern (reference only)**
+
+If you are working outside this workshop in an environment where CDC topics have not been pre-configured, you can create an intermediate versioned snapshot table manually:
 
 ```sql
+-- Legacy pattern: create a versioned snapshot table
 CREATE TABLE customer_with_watermark (
   PRIMARY KEY (`email`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '5' SECOND
@@ -233,9 +239,7 @@ SELECT
 FROM `riverhotel.cdc.customer`;
 ```
 
-> **Note**: The CDC connector uses `time.precision.mode = connect` with PostgreSQL `TIMESTAMP` columns, so timestamps arrive as `TIMESTAMP(3)` in Flink and can be used directly in watermark definitions.
-
-For more details on join patterns and changelog modes, see **[Stream Processing Insights](stream-processing-insights.md)**
+For more details on join patterns, the pre-configured vs. legacy approaches, and changelog modes, see **[Stream Processing Insights](stream-processing-insights.md)**
 
 ### Streaming Join State Management
 
@@ -555,3 +559,55 @@ Try these solutions in order:
 > **Manual External Location Setup**
 >
 > For additional context on manual external location configuration, see the [Confluent TableFlow Delta Lake documentation](https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-delta-lake.html#create-and-query-an-external-delta-lake-table).
+
+---
+
+### Tableflow Sync Stops: "Delta table may have been modified outside of Tableflow"
+
+**Issue:**
+
+A topic that was syncing correctly suddenly stops, and the Confluent Cloud UI shows an error like:
+
+```
+Tableflow is not syncing.
+
+Tableflow detected that the Delta table may have been modified outside of Tableflow.
+A version file s3://<bucket>/.../_delta_log/00000000000000000004.json appears to have
+been created externally. To resume Delta publishing, revert the external changes or
+fully clean the Delta log directory at s3://<bucket>/.../_delta_log, then re-enable
+Tableflow for the topic to republish the table.
+```
+
+**Why This Happens:**
+
+Tableflow is the **sole owner** of the Delta transaction log (`_delta_log/`) for every table it publishes, and it expects to be the only writer. Any change made to the table from **Databricks / Unity Catalog** commits a new version to the Delta log, which Tableflow sees as a foreign write and stops to avoid corrupting the table.
+
+The most common trigger in this workshop is **accepting a Databricks prompt to add or update a table/column description** (the AI-generated comment / "certify" feature). Applying it issues an `ALTER TABLE … COMMENT` / `COMMENT ON` DDL that writes a new commit to `_delta_log`. Other Databricks-side operations that cause the same failure include `OPTIMIZE`, `VACUUM`, column tags, and any other DDL against the synced table.
+
+> [!IMPORTANT]
+> **Treat Tableflow-managed Delta tables as read-only in Databricks.** Tableflow owns the table's storage and transaction log. Querying is fine; any write or metadata mutation from the Databricks side will break the sync.
+
+**Resolution:**
+
+Repeat for each affected topic (e.g. `denormalized_hotel_bookings`, `reviews_with_sentiment`, `clickstream`):
+
+1. **Disable Tableflow** on the topic in the Confluent Cloud UI (Topics → *topic* → Tableflow → Disable).
+2. **Clean the stale Delta log in S3.** Verify the path first, then remove the table root so it republishes from a blank slate:
+
+   ```bash
+   # Inspect first
+   aws s3 ls "s3://<bucket>/<table-root-path>/_delta_log/"
+
+   # Remove the table root (recursive)
+   aws s3 rm "s3://<bucket>/<table-root-path>/" --recursive
+   ```
+
+3. **Re-enable Tableflow** on the topic. It rebuilds the Delta table and `_delta_log` from scratch.
+
+**Prevention:**
+
+To document or annotate these tables without breaking the sync:
+
+- Add descriptions **upstream** where Tableflow can carry them through (Flink schema / Schema Registry field docs), or
+- Create a **Databricks view** on top of the synced table and document the view, leaving the underlying Tableflow table untouched, or
+- Avoid applying Databricks "update description / certify" prompts directly to Tableflow-managed tables.

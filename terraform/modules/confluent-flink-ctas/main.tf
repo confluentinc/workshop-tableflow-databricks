@@ -1,11 +1,12 @@
 # ===============================
-# Confluent Flink CTAS Module
+# Confluent Flink Materialized Tables Module
 # ===============================
-# Creates persistent Flink CTAS statements that produce enriched
-# data products for Tableflow. Used by demo mode to automate what
-# self-service users run manually in LAB4.
+# Creates persistent Flink Materialized Tables that produce enriched
+# data products for Tableflow. Materialized Tables combine a table
+# definition with a continuous query in a single evolvable object.
+# See: https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html
 #
-# Statements created:
+# Tables created:
 #   1. denormalized_hotel_bookings — temporal joins of bookings + customer + hotel
 #   2. reviews_with_sentiment     — AI_SENTIMENT enrichment on raw reviews
 
@@ -19,24 +20,13 @@ terraform {
 }
 
 # ===============================
-# Common Flink SQL Properties
-# ===============================
-
-locals {
-  flink_properties = {
-    "sql.current-catalog"  = var.environment_name
-    "sql.current-database" = var.kafka_cluster_display_name
-  }
-}
-
-# ===============================
 # Denormalized Hotel Bookings (temporal joins)
 # ===============================
 # Joins bookings with customer and hotel dimension tables using
 # temporal joins. Produces a denormalized fact table ready for
 # Tableflow and analytics.
 
-resource "confluent_flink_statement" "denormalized_hotel_bookings" {
+resource "confluent_flink_materialized_table" "denormalized_hotel_bookings" {
   organization {
     id = var.organization_id
   }
@@ -50,14 +40,12 @@ resource "confluent_flink_statement" "denormalized_hotel_bookings" {
     id = var.service_account_id
   }
 
-  statement = <<-SQL
-    CREATE TABLE denormalized_hotel_bookings (
-      PRIMARY KEY (`booking_id`) NOT ENFORCED,
-      WATERMARK FOR `booking_date` AS `booking_date` - INTERVAL '30' SECOND
-    ) WITH (
-      'changelog.mode' = 'upsert',
-      'kafka.cleanup-policy' = 'compact'
-    ) AS
+  display_name = "denormalized_hotel_bookings"
+  kafka_cluster {
+    id = var.kafka_cluster_id
+  }
+
+  query = <<-SQL
     SELECT
       b.`booking_id`,
       h.`hotel_id`,
@@ -78,12 +66,8 @@ resource "confluent_flink_statement" "denormalized_hotel_bookings" {
       JOIN `${var.customer_topic}` FOR SYSTEM_TIME AS OF b.`created_at` AS c
         ON c.`email` = b.`customer_email`
       JOIN `${var.hotel_topic}` FOR SYSTEM_TIME AS OF b.`created_at` AS h
-        ON h.`hotel_id` = b.`hotel_id`;
+        ON h.`hotel_id` = b.`hotel_id`
   SQL
-
-  properties = merge(local.flink_properties, {
-    "client.statement-name" = "denormalized-hotel-bookings"
-  })
 
   rest_endpoint = var.flink_rest_endpoint
 
@@ -103,7 +87,7 @@ resource "confluent_flink_statement" "denormalized_hotel_bookings" {
 # Enriches hotel reviews with aspect-based sentiment analysis using
 # the AI_SENTIMENT built-in function. Pure enrichment — no join.
 
-resource "confluent_flink_statement" "reviews_with_sentiment" {
+resource "confluent_flink_materialized_table" "reviews_with_sentiment" {
   organization {
     id = var.organization_id
   }
@@ -117,14 +101,12 @@ resource "confluent_flink_statement" "reviews_with_sentiment" {
     id = var.service_account_id
   }
 
-  statement = <<-SQL
-    CREATE TABLE reviews_with_sentiment (
-      PRIMARY KEY (`review_id`) NOT ENFORCED,
-      WATERMARK FOR `created_at` AS `created_at` - INTERVAL '30' SECOND
-    ) WITH (
-      'changelog.mode' = 'upsert',
-      'kafka.cleanup-policy' = 'compact'
-    ) AS
+  display_name = "reviews_with_sentiment"
+  kafka_cluster {
+    id = var.kafka_cluster_id
+  }
+
+  query = <<-SQL
     SELECT
       review_id,
       hotel_id,
@@ -149,12 +131,8 @@ resource "confluent_flink_statement" "reviews_with_sentiment" {
           ARRAY['cleanliness', 'amenities', 'service']
         ) AS sentiment_result
       FROM `${var.reviews_topic}`
-    );
+    )
   SQL
-
-  properties = merge(local.flink_properties, {
-    "client.statement-name" = "hotel-reviews-with-sentiment"
-  })
 
   rest_endpoint = var.flink_rest_endpoint
 

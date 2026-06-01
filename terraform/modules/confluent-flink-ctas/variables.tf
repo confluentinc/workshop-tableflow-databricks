@@ -1,5 +1,5 @@
 # ===============================
-# Confluent Flink CTAS Module Variables
+# Confluent Flink Materialized Tables Module Variables
 # ===============================
 
 variable "organization_id" {
@@ -12,13 +12,8 @@ variable "environment_id" {
   type        = string
 }
 
-variable "environment_name" {
-  description = "Confluent environment display name (Flink SQL catalog)"
-  type        = string
-}
-
-variable "kafka_cluster_display_name" {
-  description = "Kafka cluster display name (Flink SQL database)"
+variable "kafka_cluster_id" {
+  description = "Kafka cluster ID hosting the materialized table backing topics (e.g. lkc-abc123)"
   type        = string
 }
 

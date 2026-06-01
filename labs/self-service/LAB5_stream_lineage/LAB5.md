@@ -10,7 +10,7 @@ By the end of this lab, you will have:
 
 1. **Understood Stream Lineage**: What the graph represents, how it supports governance and operations, and why it matters for booking and customer data
 2. **Navigated the UI**: Opened Stream Lineage from your cluster and used search, time window, and drill-downs
-3. **Mapped your workshop topology**: CDC to `riverhotel.cdc.*`, Java Datagen on `bookings` / `reviews` / `clickstream`, Flink snapshots and CTAS, and Tableflow-related flows
+3. **Mapped your workshop topology**: CDC to `riverhotel.cdc.*`, Java Datagen on `bookings` / `reviews` / `clickstream`, Flink Materialized Tables, and Tableflow-related flows
 4. **Practiced exercises**: Traced `reviews_with_sentiment` upstream, reasoned about connector/producer failure impact, and exported the diagram
 
 ### Prerequisites
@@ -61,12 +61,12 @@ You can also enter lineage from a **topic** (**See in Stream Lineage**) or **con
 
 **Flink**
 
-You used statement names such as:
+You created two Materialized Tables that appear as query nodes in Stream Lineage:
 
-| `client.statement-name` | Output topic (typical) |
-|-------------------------|-------------------------|
-| `denormalized-hotel-bookings` | `denormalized_hotel_bookings` |
-| `hotel-reviews-with-sentiment` | `reviews_with_sentiment` |
+| Materialized Table (display name) | Output topic |
+|-----------------------------------|--------------|
+| `denormalized_hotel_bookings` | `denormalized_hotel_bookings` |
+| `reviews_with_sentiment` | `reviews_with_sentiment` |
 
 
 **Tableflow**
@@ -81,7 +81,7 @@ toward Tableflow materialization and your Unity Catalog integration.
 **Try this**
 
 1. Search for **`bookings`** in the lineage graph and trace how it enters from the Java data generator producer node
-2. Open the **`denormalized-hotel-bookings`** node and list its inputs and outputs
+2. Open the **`denormalized_hotel_bookings`** Materialized Table node and list its inputs and outputs
 3. Hover edges into **`reviews_with_sentiment`** and note throughput in the current window
 
 ### Step 4: Hands-on exercises
@@ -93,9 +93,7 @@ From the **`reviews_with_sentiment`** topic, walk **upstream** through the graph
 <details>
 <summary>Click to reveal one possible answer (default workshop layout)</summary>
 
-`reviews_with_sentiment` ← Flink `hotel-reviews-with-sentiment` ← **`reviews`** (Kafka) ← **producers** on `reviews`
-
-Your exact graph may show dimension topics feeding the join directly or through snapshot tables.
+`reviews_with_sentiment` ← Flink `reviews_with_sentiment` Materialized Table ← **`reviews`** (Kafka) ← **producers** on `reviews`
 
 </details>
 

@@ -12,7 +12,7 @@
         },
         "baseTimeInMs": {
             "_gen": "math",
-            "expr": "currentTimeInMs - 604800000"
+            "expr": "currentTimeInMs - 14400000"
         }
     },
     "vars": {
