@@ -199,6 +199,9 @@ Click on `denormalized_hotel_bookings` to see its schema:
 
 ### Enrich Hotel Reviews with AI Sentiment Analysis
 
+> [!WARNING]
+> **Azure attendees: skip this section.** `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions (as of June 2026). Skip the `reviews_with_sentiment` materialized table here; you will also skip enabling Tableflow on this topic in LAB 4 and the sentiment-driven analytics in LAB 6. Track availability in the [Confluent Cloud Flink AI release notes](https://docs.confluent.io/cloud/current/release-notes/index.html).
+
 Now create a table that enriches hotel reviews with AI-powered sentiment analysis. This uses the [`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html) function to analyze each review across three aspects: cleanliness, amenities, and service. The sentiment scores are flattened into individual columns for clean downstream analytics.
 
 ```sql

@@ -12,6 +12,9 @@ By the end of this lab, you will have:
 2. **Tableflow-enabled Topics**: Streamed your `riverhotel.cdc.clickstream`, `denormalized_hotel_bookings`, and `reviews_with_sentiment` topics as Delta Lake tables
 3. **Verified Unity Catalog Sync**: Confirmed that Tableflow is syncing data to your Databricks Unity Catalog
 
+> [!WARNING]
+> **Azure attendees:** `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions (as of June 2026), so `reviews_with_sentiment` was not created in LAB 3. Enable Tableflow on only the `clickstream` and `denormalized_hotel_bookings` topics in this lab. Track availability in the [Confluent Cloud Flink AI release notes](https://docs.confluent.io/cloud/current/release-notes/index.html).
+
 ![Architecture diagram with focus on Tableflow and Delta Lake](./images/arch_diagram_tableflow.jpg)
 
 ### Prerequisites
@@ -122,6 +125,9 @@ graph LR
     ![Tableflow Syncing](./images/clickstream_tableflow_enabled.png)
 
 ### Step 3: Enable Tableflow on `denormalized_hotel_bookings` and `reviews_with_sentiment`
+
+> [!WARNING]
+> **Azure participants: enable Tableflow on `denormalized_hotel_bookings` only.** Skip `reviews_with_sentiment` — that topic was not created in LAB 3 because `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions (as of June 2026). The sentiment-driven analytics in LAB 6 will also be skipped.
 
 Repeat the steps you just completed for the `riverhotel.cdc.clickstream` topic above for the `denormalized_hotel_bookings` and `reviews_with_sentiment` topics.
 
