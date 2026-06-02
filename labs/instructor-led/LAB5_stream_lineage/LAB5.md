@@ -69,10 +69,9 @@ Work through the following in your lineage graph (names may include your environ
 - Confirm CDC dimension topics:
   - `riverhotel.cdc.customer`
   - `riverhotel.cdc.hotel`
-- Confirm direct-to-Kafka event topics (produced by the Java data generator):
-  - `bookings`
-  - `clickstream`
-  - `reviews`
+  - `riverhotel.cdc.bookings`
+  - `riverhotel.cdc.clickstream`
+  - `riverhotel.cdc.reviews`
 
 **Stream processing (Flink)**
 

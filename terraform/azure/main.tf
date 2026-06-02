@@ -286,6 +286,11 @@ module "databricks" {
   service_principal_client_id = var.databricks_service_principal_client_id
   kafka_cluster_id            = module.confluent_platform.kafka_cluster_id
   sql_warehouse_name          = var.databricks_sql_warehouse_name
+
+  # WSA mode (shared infra): create users via SCIM and skip admins membership.
+  # Self-service mode: look up the existing user who owns the workspace.
+  lookup_existing_users = !local.use_shared
+  add_user_to_admins    = !local.use_shared
 }
 
 # ===============================
@@ -419,6 +424,15 @@ resource "databricks_grants" "catalog" {
 module "data_contracts" {
   source = "../modules/confluent-data-contracts"
 
+  # Skip in WSA / instructor-led (shared infra) mode.
+  # Reason: pre-registering ClickstreamEvent under riverhotel.cdc.clickstream-value
+  # collides with the postgres_cdc connector's Debezium-generated schema for the
+  # same subject. The CEL DQR + DLQ pattern this module sets up is also a no-op
+  # in CDC mode (Debezium produces directly; there is no separate clickstream
+  # producer for the rule to gate). LAB_data_governance is marked Optional and
+  # is meaningful only on the self-service path.
+  count = local.use_shared ? 0 : 1
+
   environment_id             = module.confluent_platform.environment_id
   kafka_cluster_id           = module.confluent_platform.kafka_cluster_id
   kafka_rest_endpoint        = module.confluent_platform.kafka_rest_endpoint
@@ -455,7 +469,7 @@ module "connectors" {
   ssh_key_path         = ""
   initial_wait_seconds = local.use_shared ? 0 : 90
 
-  depends_on = [module.postgres, module.confluent_platform, module.data_contracts, confluent_access_point.postgres]
+  depends_on = [module.postgres, module.confluent_platform, confluent_access_point.postgres]
 }
 
 # ===============================
@@ -479,9 +493,14 @@ module "flink_statements" {
   flink_api_secret           = module.flink.flink_api_secret
   flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
-  clickstream_topic   = "clickstream"
-  bookings_topic      = "bookings"
-  reviews_topic       = "reviews"
+  # In WSA / instructor-led (shared infra) mode, all 5 tables come from
+  # Debezium CDC of the shared Postgres (cdc.* tables -> riverhotel.cdc.*
+  # topics). In self-service mode, only customer/hotel come from CDC;
+  # clickstream, bookings, and reviews are written directly to Kafka by
+  # the per-account Java data generator.
+  clickstream_topic = local.use_shared ? "riverhotel.cdc.clickstream" : "clickstream"
+  bookings_topic    = local.use_shared ? "riverhotel.cdc.bookings" : "bookings"
+  reviews_topic     = local.use_shared ? "riverhotel.cdc.reviews" : "reviews"
 
   depends_on = [module.connectors, module.flink]
 }

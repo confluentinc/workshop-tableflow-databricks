@@ -219,6 +219,11 @@ module "databricks" {
   kafka_cluster_id            = module.confluent_platform.kafka_cluster_id
   sql_warehouse_name          = var.databricks_sql_warehouse_name
 
+  # WSA mode (shared infra): create users via SCIM and skip admins membership.
+  # Self-service mode: look up the existing user who owns the workspace.
+  lookup_existing_users = !local.use_shared
+  add_user_to_admins    = !local.use_shared
+
   depends_on = [module.iam, module.s3, module.tableflow]
 }
 

@@ -299,7 +299,7 @@ variable "allowed_cidr_blocks" {
 # ---------------------
 
 variable "account_email" {
-  description = "WSA: per-account email (overrides var.email when set)"
+  description = "WSA: per-account email (overrides var.confluent_cloud_email when set)"
   type        = string
   default     = ""
 }

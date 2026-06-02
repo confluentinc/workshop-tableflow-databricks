@@ -11,7 +11,7 @@ By the end of this lab, you will have:
 1. **AI-Powered Business Intelligence**: Used Databricks Genie to generate natural language insights about customer behavior, booking patterns, and hotel performance
 2. **Intelligent Marketing Automation**: Deployed an AI agent that identifies underperforming hotels with good customer satisfaction, generates social media campaigns based on reviews, and creates targeted customer lists
 
-![Architecture Diagram for Databricks](./images/arch_diagram_databricks.png)
+![Architecture Diagram for Databricks](./images/arch_diagram_databricks.jpg)
 
 ### Prerequisites
 

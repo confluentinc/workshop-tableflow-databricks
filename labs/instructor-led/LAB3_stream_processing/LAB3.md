@@ -2,17 +2,17 @@
 
 ## Overview
 
-This lab transforms your streaming data into enriched data products using Confluent Cloud's Flink SQL. You will build real-time processing pipelines that create denormalized datasets and analytical aggregations.
+This lab transforms your raw CDC data streams into enriched data products using Confluent Cloud's Flink SQL. You will build real-time processing pipelines that create denormalized and model-enriched datasets.
 
 ### What You'll Accomplish
 
 By the end of this lab you will have:
 
-1. **Explored Streaming Data**: Queried real-time topics with Flink SQL
-2. **Created Enriched Data Products**: Built denormalized bookings combining customer and hotel data using temporal joins
-3. **Created AI-Enriched Reviews**: Used `AI_SENTIMENT` to analyze hotel reviews by cleanliness, amenities, and service
+1. **Explored Streaming CDC Data**: Queried real-time CDC topics with Flink SQL
+2. **Created Enriched Data Products**: Built denormalized bookings combining customer, hotel, and review data using temporal joins
+3. **Built Streaming Aggregations**: Used `AI_SENTIMENT` to analyze hotel reviews by cleanliness, amenities, and service
 
-![Architecture diagram for stream processing](../../shared/images/arch_diagram_stream_processing.jpg)
+![Architecture diagram for stream processing](./images/arch_diagram_flink.jpg)
 
 ### Prerequisites
 
@@ -46,15 +46,15 @@ By the end of this lab you will have:
 
 6. Drill down in the left navigation to see the tables in your environment and cluster
 
-### Explore Streaming Data
+### Explore CDC Data
 
-Your workshop has two data sources: **PostgreSQL CDC** for dimension tables (`riverhotel.cdc.customer`, `riverhotel.cdc.hotel`) and the **Java data generator** which produces `bookings`, `clickstream`, and `reviews` directly to Kafka. All use flat Avro records that you can query directly in Flink.
+All of your data comes through PostgreSQL CDC connectors and uses the `riverhotel.cdc.` topic prefix. The connector is configured with `after.state.only = true`, which produces flat Avro records that you can query directly in Flink.
 
-> **Tip**: Click the *+* button in the narrow side panel at the top left of the cell to create new cells. Create ~6 new cells as you will need them throughout this lab. Delete the current cell by clicking the trash icon below the *+*.
+> **Tip**: Click the *+* button in the narrow side panel at the top left of the cell to create new cells. Create ~5 new cells as you will need them throughout this lab. Delete the current cell by clicking the trash icon below the *+*.
 >
 > ![Trash icon to delete cell](../../shared/images/confluent_flink_delete_cell.png)
 
-Start by reviewing data from the CDC dimension tables:
+Start by reviewing data from the CDC topics:
 
 ```sql
 -- View customer data from CDC
@@ -65,11 +65,11 @@ Click the *Run* button and review the results. You should see customer records w
 
 ![A table with CDC results](../../shared/images/confluent_flink_bookings.png)
 
-Now explore booking data (produced directly to Kafka by the data generator):
+Now explore booking data:
 
 ```sql
--- View bookings data
-SELECT * FROM `bookings` LIMIT 10;
+-- View bookings data from CDC
+SELECT * FROM `riverhotel.cdc.bookings` LIMIT 10;
 ```
 
 Some observations about this data:
@@ -83,14 +83,14 @@ Execute this query to see the live count of booking data:
 
 ```sql
 -- See streaming count of bookings data
-SELECT COUNT(*) AS `TOTAL_BOOKINGS` FROM `bookings`;
+SELECT COUNT(*) AS `TOTAL_BOOKINGS` FROM `riverhotel.cdc.bookings`;
 ```
 
 Watch the count increase gradually as new booking data is produced.
 
-## Step 2: Understand the Pre-configured CDC Dimension Topics
+## Step 2: Understand the Pre-configured CDC Topics
 
-Your workshop infrastructure has already configured the CDC dimension topics (`riverhotel.cdc.customer`, `riverhotel.cdc.hotel`) for use with Flink temporal joins. The connector uses `after.state.only = true` to produce flat Avro records (no Debezium envelope).
+Your workshop infrastructure has already configured the CDC topics for use with Flink temporal joins and Tableflow. The connector uses `after.state.only = true` to produce flat Avro records (no Debezium envelope).
 
 Primary keys are automatically derived from the Kafka message key (which maps to the source table's primary key).
 
@@ -112,9 +112,13 @@ Your CDC topics are already configured with primary keys, watermarks, and change
 
 ### Create Denormalized Table
 
-This query creates a materialized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
+This query creates a materialized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables.
+
+The `SET 'client.statement-name'` line gives the long-running Flink statement a human-friendly identifier so you can find it later in **Flink → Statements** for troubleshooting and lifecycle operations (`STOP`, `RESUME`, `CREATE OR ALTER`). Run both lines as a single cell:
 
 ```sql
+SET 'client.statement-name' = 'create-denormalized-hotel-bookings';
+
 CREATE MATERIALIZED TABLE denormalized_hotel_bookings
 AS
 SELECT
@@ -128,12 +132,12 @@ SELECT
   b.`price` AS `booking_amount`,
   b.`occupants` AS `guest_count`,
   b.`created_at` AS `booking_date`,
-  CAST(TO_TIMESTAMP_LTZ(b.`check_in`, 3) AS DATE) AS `check_in`,
-  CAST(TO_TIMESTAMP_LTZ(b.`check_out`, 3) AS DATE) AS `check_out`,
+  b.`check_in`,
+  b.`check_out`,
   c.`email` AS `customer_email`,
   c.`first_name` AS `customer_first_name`,
   c.`rewards_points` AS `customer_rewards_points`
-FROM `bookings` b
+FROM `riverhotel.cdc.bookings` b
   JOIN `riverhotel.cdc.customer` FOR SYSTEM_TIME AS OF b.`created_at` AS c
     ON c.`email` = b.`customer_email`
   JOIN `riverhotel.cdc.hotel` FOR SYSTEM_TIME AS OF b.`created_at` AS h
@@ -185,19 +189,21 @@ Some observations:
 
 You can also verify the table in the left navigation panel.
 
-> **Tip**: Hover over the *Tables* left menu item to reveal a sync icon. Click it to refresh any new tables into the UI.
+> **Tip**: Hover over the *Materialized Tables* left menu item to reveal a sync icon. Click it to refresh any new tables into the UI.
 >
-> ![Menu item with a refresh](../../shared/images/confluent_flink_tables_refresh.png)
+> ![Menu item with a refresh](../../shared/images/flink_materialized_tables.png)
 
 Click on `denormalized_hotel_bookings` to see its schema:
 
-![Table schema](../../shared/images/confluent_flink_table_schema.png)
+![Table schema](../../shared/images/flink_dhb_schema.png)
 
 ### Enrich Hotel Reviews with AI Sentiment Analysis
 
 Now create a table that enriches hotel reviews with AI-powered sentiment analysis. This uses the [`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html) function to analyze each review across three aspects: cleanliness, amenities, and service. The sentiment scores are flattened into individual columns for clean downstream analytics.
 
 ```sql
+SET 'client.statement-name' = 'create-reviews-with-sentiment';
+
 CREATE MATERIALIZED TABLE reviews_with_sentiment
 AS
 SELECT
@@ -223,7 +229,7 @@ FROM (
       `review_text`,
       ARRAY['cleanliness', 'amenities', 'service']
     ) AS sentiment_result
-  FROM `reviews`
+  FROM `riverhotel.cdc.reviews`
 );
 ```
 
@@ -253,9 +259,25 @@ FROM `reviews_with_sentiment`
 LIMIT 10;
 ```
 
+### Verify Running Statements
+
+Each materialized table you created is backed by a long-running Flink statement. Confirm both are healthy before moving on.
+
+1. Navigate to [Flink → Statements](https://confluent.cloud/go/flink) for your workshop environment.
+2. Look for the two statements you named in this lab:
+
+   | Statement name | Backs table |
+   |---|---|
+   | `create-denormalized-hotel-bookings` | `denormalized_hotel_bookings` |
+   | `create-reviews-with-sentiment` | `reviews_with_sentiment` |
+
+3. Both should show status **`RUNNING`**. If either shows `FAILED`, click the statement to see error details and check the [Troubleshooting](../../shared/troubleshooting.md) guide.
+
+> **Why named statements?** A materialized table and its backing Flink statement are two distinct objects: the table shows up under **Catalog → Tables**, the statement shows up under **Flink → Statements**. Setting `client.statement-name` before each `CREATE MATERIALIZED TABLE` gives the backing statement a memorable identifier so you can find it quickly to inspect logs, `STOP`/`RESUME` it, or evolve it with `CREATE OR ALTER MATERIALIZED TABLE`.
+
 ## Conclusion
 
-You have built a real-time streaming pipeline that transforms streaming data into enriched data products ready for Tableflow materialization and analytics. Your CDC dimension topics were pre-configured by Terraform with primary keys, watermarks, and changelog modes, enabling direct temporal joins without intermediate snapshot tables.
+You have built a real-time streaming pipeline that transforms CDC data into enriched data products ready for Tableflow materialization and analytics. Your CDC topics were pre-configured by Terraform with primary keys, watermarks, and changelog modes, enabling direct temporal joins without intermediate snapshot tables.
 
 You created two [Materialized Tables](https://docs.confluent.io/cloud/current/flink/concepts/materialized-tables.html): `denormalized_hotel_bookings` (enriched bookings with customer and hotel details) and `reviews_with_sentiment` (AI-enriched reviews with aspect-based sentiment analysis). These are persistent, evolvable objects that can be updated in place using `CREATE OR ALTER MATERIALIZED TABLE`. The `clickstream` topic is also ready for Tableflow in append mode.
 
