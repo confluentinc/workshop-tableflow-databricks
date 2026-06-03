@@ -11,7 +11,10 @@ By the end of this lab, you will have:
 1. **AI-Powered Business Intelligence**: Used Databricks Genie to generate natural language insights about customer behavior, booking patterns, and hotel performance
 2. **Intelligent Marketing Automation**: Deployed an AI agent that identifies underperforming hotels with good customer satisfaction, generates social media campaigns based on reviews, and creates targeted customer lists
 
-![Architecture Diagram for Databricks](./images/arch_diagram_databricks.png)
+> [!WARNING]
+> **Azure attendees:** several sections of this lab depend on the `reviews_with_sentiment` Delta table, which was not created in LAB 3 because `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions (as of June 2026). Specifically, the `hotel_performance` view (step 9) and the top-hotels-by-sentiment query (step 10) will not work. Read through them for context, but expect to skip execution. Genie and the marketing-agent notebook still demonstrate value using `denormalized_hotel_bookings` and `clickstream`. Track availability in the [Confluent Cloud Flink AI release notes](https://docs.confluent.io/cloud/current/release-notes/index.html).
+
+![Architecture Diagram for Databricks](./images/arch_diagram_databricks.jpg)
 
 ### Prerequisites
 
@@ -49,6 +52,9 @@ Verify that data is flowing from Confluent via Tableflow into Databricks Unity C
     ![Two dropdown selectors for catalog and schema](../../shared/images/databricks_query_dropdowns.png)
 
 9. Run this statement to create an analytics view that aggregates booking metrics and sentiment scores:
+
+> [!WARNING]
+> **Azure attendees: skip steps 9 and 10.** This view joins `reviews_with_sentiment`, which doesn't exist on Azure because `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions (as of June 2026). Continue to step "Set Up Genie Workspace" below.
 
 ```sql
 CREATE OR REPLACE VIEW hotel_performance AS

@@ -39,6 +39,9 @@ These resources and connections were created through web interfaces and need to 
 5. Copy and paste the topic name into the field and click **Confirm**
 6. Repeat steps 1-5 for the `clickstream` and `reviews_with_sentiment` topics
 
+> [!NOTE]
+> **Azure attendees:** skip `reviews_with_sentiment` — that topic was not created on Azure because `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions (as of June 2026). Disable Tableflow on `clickstream` only.
+
 #### Databricks
 
 ##### Remove Workspace Resources

@@ -129,9 +129,13 @@ Your source topics are already configured with primary keys, watermarks, and cha
 
 #### Create Denormalized Table
 
-This query creates a materialized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables:
+This query creates a materialized table combining booking data with customer information and hotel details using [temporal joins](https://docs.confluent.io/cloud/current/flink/concepts/joins.html#temporal-joins). Because the CDC topics are pre-configured with primary keys and watermarks, you can join them directly without creating separate snapshot tables.
+
+The `SET 'client.statement-name'` line gives the long-running Flink statement a human-friendly identifier so you can find it later in **Flink → Statements** for troubleshooting and lifecycle operations (`STOP`, `RESUME`, `CREATE OR ALTER`). Run both lines as a single cell:
 
 ```sql
+SET 'client.statement-name' = 'create-denormalized-hotel-bookings';
+
 CREATE MATERIALIZED TABLE denormalized_hotel_bookings
 AS
 SELECT
@@ -213,9 +217,14 @@ Click on `denormalized_hotel_bookings` to see its schema:
 
 #### Enrich Hotel Reviews with AI Sentiment Analysis
 
+> [!WARNING]
+> **Azure attendees: skip this section.** `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions (as of June 2026). Skip the `reviews_with_sentiment` materialized table here; you will also skip enabling Tableflow on this topic in LAB 5 and the sentiment-driven analytics in LAB 6. Track availability in the [Confluent Cloud Flink AI release notes](https://docs.confluent.io/cloud/current/release-notes/index.html).
+
 Now create a table that enriches hotel reviews with AI-powered sentiment analysis. This uses the [`AI_SENTIMENT`](https://docs.confluent.io/cloud/current/ai/builtin-functions/sentiment.html) function to analyze each review across three aspects: cleanliness, amenities, and service. The sentiment scores are flattened into individual columns for clean downstream analytics.
 
 ```sql
+SET 'client.statement-name' = 'create-reviews-with-sentiment';
+
 CREATE MATERIALIZED TABLE reviews_with_sentiment
 AS
 SELECT
@@ -270,6 +279,22 @@ SELECT
 FROM `reviews_with_sentiment`
 LIMIT 10;
 ```
+
+#### Verify Running Statements
+
+Each materialized table you created is backed by a long-running Flink statement. Confirm both are healthy before moving on.
+
+1. Navigate to [Flink → Statements](https://confluent.cloud/go/flink) for your workshop environment.
+2. Look for the two statements you named in this lab:
+
+   | Statement name | Backs table |
+   |---|---|
+   | `create-denormalized-hotel-bookings` | `denormalized_hotel_bookings` |
+   | `create-reviews-with-sentiment` | `reviews_with_sentiment` |
+
+3. Both should show status **`RUNNING`**. If either shows `FAILED`, click the statement to see error details and check the [Troubleshooting](../../shared/troubleshooting.md) guide.
+
+> **Why named statements?** A materialized table and its backing Flink statement are two distinct objects: the table shows up under **Catalog → Tables**, the statement shows up under **Flink → Statements**. Setting `client.statement-name` before each `CREATE MATERIALIZED TABLE` gives the backing statement a memorable identifier so you can find it quickly to inspect logs, `STOP`/`RESUME` it, or evolve it with `CREATE OR ALTER MATERIALIZED TABLE`.
 
 **Time for Analytics:**
 

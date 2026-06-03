@@ -58,7 +58,7 @@ Your credentials email will contain the following information:
 | **SP Client ID** | Service principal application (client) ID |
 | **SP Client Secret** | Service principal OAuth secret |
 | **Unity Catalog Name** | Your Databricks Unity Catalog name |
-| **S3 Bucket Name** | Your dedicated S3 bucket for Tableflow |
+| **S3 Bucket/Storage Container Name** | Your dedicated storage for Tableflow |
 | **Schema Name** | Your Databricks Unity Catalog schema (Kafka cluster ID) |
 | **SQL Warehouse ID** | Your Databricks SQL Warehouse ID |
 

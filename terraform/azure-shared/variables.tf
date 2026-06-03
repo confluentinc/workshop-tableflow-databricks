@@ -54,9 +54,9 @@ variable "vm_size" {
 }
 
 variable "vm_zone" {
-  description = "Azure availability zone for the VM (v7 SKUs in eastus2 require zone 1)"
+  description = "Azure availability zone for the VM. On the Confluent TMM WSA PAYG subscription, D-series v7 SKU capacity in eastus2 is currently only available in zone 2; zone 1 returns OverconstrainedZonalAllocationRequest. Override per subscription if capacity shifts."
   type        = string
-  default     = "1"
+  default     = "2"
 }
 
 variable "vm_disk_size_gb" {
