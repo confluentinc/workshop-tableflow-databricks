@@ -28,7 +28,7 @@ shared_infra_path: terraform/azure-shared/ # Shared infrastructure Terraform dir
 # directory and injects TF_VAR_data_dir so shared infra Terraform can
 # reference data files without hardcoded relative paths.
 data_generation:
-  engine: datagen
+  engine: custom 
   data_path: data/ # copied to run directory (relative to this spec file)
   config_file: java-datagen-configuration-workshop.json # entrypoint config (relative to data_path)
 
