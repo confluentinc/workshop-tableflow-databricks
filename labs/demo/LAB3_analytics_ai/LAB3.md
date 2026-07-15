@@ -8,13 +8,16 @@ Your streaming pipeline is fully operational -- data is flowing from PostgreSQL 
 
 By the end of this lab, you will have:
 
-1. **Explored Hotel Performance Analytics**: Verified Tableflow tables in Unity Catalog and queried the `hotel_performance` view for sentiment-ranked hotel insights
-2. **AI-Powered Business Intelligence**: Used Databricks Genie to generate natural language insights about sentiment and performance
+1. **Explored Hotel Performance Analytics**: Verified Tableflow tables in Unity Catalog and queried analytics (on AWS: `hotel_performance` / sentiment; on Azure: `clickstream` and `denormalized_hotel_bookings`)
+2. **AI-Powered Business Intelligence**: Used Databricks Genie to generate natural language insights
 3. **Intelligent Marketing Automation**: Configured and ran a pre-imported AI agent notebook that identifies underperforming hotels and generates targeted marketing campaigns
 
 ### Prerequisites
 
 Completed **[LAB 2: Deploy and Observe](../LAB2_deploy_and_observe/LAB2.md)** with Tableflow sync complete (tables visible in Unity Catalog).
+
+> [!WARNING]
+> **Azure attendees:** several sections of this lab depend on the `reviews_with_sentiment` Delta table and the `hotel_performance` view, which are not created in `azure-demo` because `AI_SENTIMENT` is not yet available in Confluent Cloud Azure regions. Read through the sentiment steps for context, but expect to skip execution. Genie and the marketing-agent notebook still demonstrate value using `denormalized_hotel_bookings` and `clickstream`. Track availability in the [Confluent Cloud Flink AI release notes](https://docs.confluent.io/cloud/current/release-notes/index.html).
 
 ## Steps
 
@@ -24,14 +27,19 @@ Completed **[LAB 2: Deploy and Observe](../LAB2_deploy_and_observe/LAB2.md)** wi
 2. Click on **Catalog** in the left menu
 3. Expand your Tableflow catalog (name from `terraform output databricks_integration`)
 4. Expand the Confluent cluster schema (matches your Kafka cluster ID)
-5. Verify you see three Tableflow tables: `clickstream`, `denormalized_hotel_bookings`, and `reviews_with_sentiment`
+5. Verify Tableflow tables:
+   - **AWS**: `clickstream`, `denormalized_hotel_bookings`, and `reviews_with_sentiment`
+   - **Azure**: `clickstream` and `denormalized_hotel_bookings`
 
 > [!IMPORTANT]
 > **Tableflow Sync Time**
 >
-> If you do not see all three tables, Tableflow may still be syncing. Check the Tableflow status in Confluent Cloud. The `clickstream` table typically appears first (high throughput), followed by the Materialized Table topics.
+> If you do not see the expected tables, Tableflow may still be syncing. Check the Tableflow status in Confluent Cloud. The `clickstream` table typically appears first (high throughput), followed by the Materialized Table topics.
 
-The `hotel_performance` SQL view was pre-created by Terraform. It aggregates booking metrics and sentiment analysis scores from `denormalized_hotel_bookings` and `reviews_with_sentiment`.
+On **AWS**, the `hotel_performance` SQL view was pre-created by Terraform. It aggregates booking metrics and sentiment analysis scores from `denormalized_hotel_bookings` and `reviews_with_sentiment`.
+
+> [!NOTE]
+> **Azure attendees: skip the `hotel_performance` query below.** Continue to Genie using `clickstream` and `denormalized_hotel_bookings`.
 
 6. Click the **Create** dropdown and select **Query**
 7. Select your catalog and schema from the dropdowns
@@ -63,7 +71,9 @@ Databricks Genie provides a chat interface where you ask questions about your da
 1. Click on **Genie** under the *SQL* section in the left sidebar
 2. Click **+ New** to create a new Genie space
 3. Click **All** and navigate to your workshop catalog and database
-4. Select the `clickstream`, `denormalized_hotel_bookings`, `reviews_with_sentiment`, and `hotel_performance` tables
+4. Select tables for your cloud:
+   - **AWS**: `clickstream`, `denormalized_hotel_bookings`, `reviews_with_sentiment`, and `hotel_performance`
+   - **Azure**: `clickstream` and `denormalized_hotel_bookings`
 5. Click **Create**
 6. Rename your space to something like *River Hotel BI*
 
@@ -73,7 +83,9 @@ Toggle the **Agent** mode and try prompts like:
 
 > Show me customer satisfaction metrics by country
 
-> Which hotels have the highest positive sentiment across cleanliness, amenities, and service?
+> Which hotels have the highest booking volume by city? *(Azure-friendly)*
+
+> Which hotels have the highest positive sentiment across cleanliness, amenities, and service? *(AWS — requires `reviews_with_sentiment`)*
 
 > Which category of hotel had the lowest interest from customers?
 

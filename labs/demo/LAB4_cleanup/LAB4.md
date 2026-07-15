@@ -38,13 +38,15 @@ docker-compose run --rm terraform -c "terraform destroy -auto-approve"
 ```
 
 Terraform will destroy resources in the correct order:
-1. Tableflow topic enablement (disables Tableflow on all three topics)
+1. Tableflow topic enablement
 2. Flink Materialized Tables (stops the running Flink queries)
 3. Unity Catalog integration
 4. Databricks notebook, catalog, external location, storage credential
 5. CDC connector, Flink statements, Flink compute pool
 6. Confluent environment and cluster
-7. AWS resources (EC2, S3, VPC, IAM)
+7. Cloud resources:
+   - **AWS**: EC2, S3, VPC, IAM
+   - **Azure**: Flexible Server, ADLS Gen2, Resource Group, related RBAC
 
 > [!NOTE]
 > **Expected Duration**
@@ -55,7 +57,7 @@ Terraform will destroy resources in the correct order:
 
 Verify resources are removed from:
 
-- **AWS Console**: EC2 instances, S3 buckets, IAM roles
+- **Cloud console**: AWS (EC2, S3, IAM) or Azure (Resource Group, storage, PostgreSQL)
 - **Confluent Cloud**: Environments, clusters, compute pools
 - **Databricks**: External locations, storage credentials, catalogs
 
