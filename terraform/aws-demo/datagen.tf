@@ -24,7 +24,7 @@ variable "datagen_ssh_username" {
 }
 
 locals {
-  deploy_datagen = var.enable_datagen
+  deploy_datagen = var.enable_datagen && !local.use_shared
   data_dir       = "${path.module}/../../data"
 }
 
@@ -62,17 +62,17 @@ resource "local_file" "datagen_confluent_connection" {
     kind     = "kafka"
     logLevel = "ERROR"
     producerConfigs = {
-      "bootstrap.servers"              = module.confluent_platform.bootstrap_endpoint_url
-      "schema.registry.url"            = module.confluent_platform.schema_registry_endpoint
-      "basic.auth.user.info"           = "${module.confluent_platform.schema_registry_api_key}:${module.confluent_platform.schema_registry_api_secret}"
-      "basic.auth.credentials.source"  = "USER_INFO"
-      "key.serializer"                 = "org.apache.kafka.common.serialization.StringSerializer"
-      "value.serializer"               = "io.confluent.kafka.serializers.KafkaAvroSerializer"
-      "sasl.jaas.config"               = "org.apache.kafka.common.security.plain.PlainLoginModule required username='${module.confluent_platform.kafka_api_key}' password='${module.confluent_platform.kafka_api_secret}';"
-      "sasl.mechanism"                 = "PLAIN"
-      "security.protocol"              = "SASL_SSL"
-      "auto.register.schemas"          = "false"
-      "use.latest.version"             = "true"
+      "bootstrap.servers"             = module.confluent_platform.bootstrap_endpoint_url
+      "schema.registry.url"           = module.confluent_platform.schema_registry_endpoint
+      "basic.auth.user.info"          = "${module.confluent_platform.schema_registry_api_key}:${module.confluent_platform.schema_registry_api_secret}"
+      "basic.auth.credentials.source" = "USER_INFO"
+      "key.serializer"                = "org.apache.kafka.common.serialization.StringSerializer"
+      "value.serializer"              = "io.confluent.kafka.serializers.KafkaAvroSerializer"
+      "sasl.jaas.config"              = "org.apache.kafka.common.security.plain.PlainLoginModule required username='${module.confluent_platform.kafka_api_key}' password='${module.confluent_platform.kafka_api_secret}';"
+      "sasl.mechanism"                = "PLAIN"
+      "security.protocol"             = "SASL_SSL"
+      "auto.register.schemas"         = "false"
+      "use.latest.version"            = "true"
     }
   })
 
@@ -88,7 +88,7 @@ resource "null_resource" "datagen_setup" {
   count = local.deploy_datagen ? 1 : 0
 
   triggers = {
-    instance_id    = module.postgres.instance_id
+    instance_id    = module.postgres[0].instance_id
     pg_config_hash = md5(local_file.datagen_postgres_connection[0].content)
     cc_config_hash = md5(local_file.datagen_confluent_connection[0].content)
   }
@@ -103,9 +103,9 @@ resource "null_resource" "datagen_setup" {
 
   connection {
     type        = "ssh"
-    host        = module.postgres.public_dns
+    host        = module.postgres[0].public_dns
     user        = var.datagen_ssh_username
-    private_key = file(module.keypair.private_key_path)
+    private_key = file(module.keypair[0].private_key_path)
     timeout     = "10m"
   }
 
@@ -333,5 +333,5 @@ output "datagen_enabled" {
 
 output "datagen_ssh_command" {
   description = "SSH command to check Data Generator logs"
-  value       = local.deploy_datagen ? "ssh -i ${module.keypair.private_key_path} ${var.datagen_ssh_username}@${module.postgres.public_dns} 'docker logs -f datagen'" : ""
+  value       = local.deploy_datagen ? "ssh -i ${module.keypair[0].private_key_path} ${var.datagen_ssh_username}@${module.postgres[0].public_dns} 'docker logs -f datagen'" : ""
 }

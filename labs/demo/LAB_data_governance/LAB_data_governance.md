@@ -2,15 +2,20 @@
 
 ## Overview
 
-Your demo environment (`aws-demo`) was deployed with a pre-configured data quality rule on the clickstream topic. This lab walks through observing the rule, demonstrating live enforcement via the `/test-dqr` endpoint, and exploring governance features.
+Your demo environment was deployed with a pre-configured data quality rule on the clickstream topic. This lab walks through observing the rule, demonstrating live enforcement (on **AWS** via the `/test-dqr` endpoint on EC2), and exploring governance features.
 
 Since demo mode is fully automated by Terraform, all rules and the DLQ topic are already deployed — this lab is observation and demonstration only.
 
 ### What You'll Explore
 
 - **Pre-deployed DQR**: A CEL rule validating the `action` field on the clickstream schema
-- **Live DQR Demo**: Trigger rule enforcement via the data generator's `/test-dqr` HTTP endpoint
+- **Live DQR Demo** (AWS): Trigger rule enforcement via the data generator's `/test-dqr` HTTP endpoint on the EC2 instance
 - **DLQ Observation**: See invalid events routed to the `invalid_clickstream_events` topic
+
+> [!NOTE]
+> **Azure**
+>
+> Schema Registry rules and the DLQ topic are still provisioned on Azure. The interactive `/test-dqr` curl demo below is AWS-specific (EC2-hosted data generator). On Azure, observe the rule in Schema Registry and invalid events that the generator routes to the DLQ during normal streaming (~5% invalid actions).
 
 ### Prerequisites
 
@@ -35,7 +40,9 @@ The **On failure** action is `DLQ`, routing invalid events to `invalid_clickstre
 
 **What Terraform Deployed:** The `data_contracts` module registered this schema with the CEL rule and created the DLQ topic. This happened automatically during `terraform apply`, before the CDC connector and data generator started.
 
-### Step 2: Demonstrate Live DQR Enforcement
+### Step 2: Demonstrate Live DQR Enforcement (AWS)
+
+> Skip this step on Azure — continue to Step 3 and inspect DLQ messages from normal streaming traffic.
 
 SSH to the EC2 instance running the data generator and trigger the test endpoint:
 

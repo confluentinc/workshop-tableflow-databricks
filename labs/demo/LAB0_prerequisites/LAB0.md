@@ -10,7 +10,9 @@ If you want to learn more about why or when you would want to use **demo** mode,
 
 - **Confluent Cloud account** with admin privileges - [sign up for a free trial](https://www.confluent.io/confluent-cloud/tryfree?utm_campaign=tm.fm-ams_cd.Build-an-AI-Pipeline-Workshop-2025-Q2&utm_term=workshop&campaign_id=701Uz00000fEQeEIAW&utm_source=zoom&utm_medium=workshop)
 - **Databricks account** and existing workspace - paid or [free edition account](https://login.databricks.com/?intent=SIGN_UP&provider=DB_FREE_TIER) are strongly recommended. [Free trial account](https://docs.databricks.com/aws/en/getting-started/express-setup) sometimes experience data syncing issues with this workshop, so we recommend that you use **paid** or **free edition** accounts instead.
-- **AWS account** with permissions to create cloud resources (EC2, S3, VPC, IAM)
+- **Cloud account** for the demo you choose:
+  - **AWS**: permissions to create EC2, S3, VPC, and IAM resources (`terraform/aws-demo`)
+  - **Azure**: permissions to create Resource Groups, Storage (ADLS Gen2), PostgreSQL Flexible Server, and related RBAC (`terraform/azure-demo`)
 
 > [!IMPORTANT]
 > **Payment Method or Promo Code Required for Confluent Cloud**
@@ -135,12 +137,23 @@ sudo usermod -aG docker $USER
 
 ## Step 2: Build Terraform Docker Image
 
-Navigate into the workshop's demo Terraform directory and build the container:
+Choose your cloud demo directory, then build the container:
+
+**AWS:**
 
 ```sh
 cd workshop-tableflow-databricks/terraform/aws-demo
 docker-compose build
 ```
+
+**Azure:**
+
+```sh
+cd workshop-tableflow-databricks/terraform/azure-demo
+docker-compose build
+```
+
+Use the same directory for the rest of the demo labs (`LAB 1`–`LAB 4`).
 
 You should see output showing the container being built:
 
@@ -155,6 +168,11 @@ You should see output showing the container being built:
 > **First-Time Build**
 >
 > The initial build may take a few minutes. Subsequent uses leverage cached layers and should complete in seconds.
+
+> [!NOTE]
+> **Azure and AI sentiment**
+>
+> Azure demo skips `reviews_with_sentiment` and the `hotel_performance` view because `AI_SENTIMENT` is currently AWS-only. See the [Confluent Cloud release notes](https://docs.confluent.io/cloud/current/release-notes/index.html#march-19-2026).
 
 ## What's Next
 

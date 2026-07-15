@@ -184,6 +184,12 @@ variable "databricks_service_principal_client_secret" {
   }
 }
 
+variable "databricks_sql_warehouse_name" {
+  description = "Name of the Databricks SQL warehouse to look up (must already exist in the workspace)"
+  type        = string
+  default     = "Serverless Starter Warehouse"
+}
+
 variable "allowed_cidr_blocks" {
   description = "List of CIDR blocks allowed to access PostgreSQL and SSH"
   type        = list(string)
@@ -194,4 +200,135 @@ variable "table_include_list" {
   description = "Comma-separated PostgreSQL tables for CDC"
   type        = string
   default     = "cdc.customer,cdc.hotel"
+}
+
+# ---------------------
+# WSA integration variables (defaults preserve backward compatibility for self-service)
+# ---------------------
+
+variable "account_email" {
+  description = "WSA: per-account email (overrides var.confluent_cloud_email when set)"
+  type        = string
+  default     = ""
+}
+
+variable "account_number" {
+  description = "WSA: account number for this run"
+  type        = number
+  default     = 0
+}
+
+variable "cc_environment_name" {
+  description = "WSA: pre-created Confluent Cloud environment name"
+  type        = string
+  default     = ""
+}
+
+variable "dbx_workspace_url" {
+  description = "WSA: Databricks workspace URL for CSV output"
+  type        = string
+  default     = ""
+}
+
+variable "dbx_schema_name" {
+  description = "WSA: Databricks schema name (per-user isolation)"
+  type        = string
+  default     = ""
+}
+
+variable "dbx_catalog_name" {
+  description = "WSA: Databricks catalog name (per-user isolation)"
+  type        = string
+  default     = ""
+}
+
+variable "databricks_sso_email" {
+  description = "WSA: Azure AD UPN for the participant (e.g., wp2@tenant.onmicrosoft.com). When set, catalog and storage credential grants are added for this identity in addition to databricks_user_email."
+  type        = string
+  default     = ""
+}
+
+variable "aws_account_tag" {
+  description = "WSA: tag value for per-account resource identification"
+  type        = string
+  default     = ""
+}
+
+# ---------------------
+# Shared infrastructure variables (set by wsa when using terraform/aws-shared/)
+# ---------------------
+
+variable "shared_vpc_id" {
+  description = "WSA: shared VPC ID (skips networking module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_subnet_id" {
+  description = "WSA: shared subnet ID (skips networking module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_s3_bucket_name" {
+  description = "WSA: shared S3 bucket name (skips S3 module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_s3_bucket_arn" {
+  description = "WSA: shared S3 bucket ARN (skips S3 module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_s3_bucket_url" {
+  description = "WSA: shared S3 bucket URL (skips S3 module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_key_name" {
+  description = "WSA: shared SSH key name (skips keypair module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_postgres_hostname" {
+  description = "WSA: shared PostgreSQL hostname (skips postgres module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_postgres_public_ip" {
+  description = "WSA: shared PostgreSQL public IP (skips postgres module when set)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_postgres_db_password" {
+  description = "WSA: shared PostgreSQL admin password (from shared infra output)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "shared_postgres_debezium_password" {
+  description = "WSA: shared PostgreSQL debezium password (from shared infra output)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "shared_dbx_sp_client_id" {
+  description = "WSA: Databricks SP client ID from shared infra (for credentials email)"
+  type        = string
+  default     = ""
+}
+
+variable "shared_dbx_sp_client_secret" {
+  description = "WSA: Ephemeral Databricks SP secret from shared infra (for credentials email)"
+  type        = string
+  sensitive   = true
+  default     = ""
 }

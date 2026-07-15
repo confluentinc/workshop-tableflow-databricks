@@ -98,13 +98,13 @@ By the end of this workshop, you will have constructed a sophisticated data pipe
 
 1. **Captures Real-Time Customer Behavior**: Set up PostgreSQL CDC to capture customer and hotel data changes, plus generate realistic clickstream, booking, and review data using Java Datagen
 2. **Processes Streaming Data with AI**: Use Confluent Cloud for Apache Flink SQL to denormalize bookings with temporal joins and enrich hotel reviews with aspect-based sentiment analysis (`AI_SENTIMENT` for cleanliness, amenities, and service)
-3. **Streams to Delta Lake**: Leverage Confluent Tableflow to automatically sync processed data streams as Delta tables in AWS S3
+3. **Streams to Delta Lake**: Leverage Confluent Tableflow to automatically sync processed data streams as Delta tables in AWS S3 or Azure ADLS2
 4. **Generates AI-Driven Insights**: Use Databricks Genie to analyze booking patterns, customer preferences, and hotel performance metrics
 5. **Creates Personalized Campaigns**: Deploy AI agents in Databricks that identify underperforming hotels with good customer satisfaction, generate targeted social media content based on customer review analysis, and create lists of potential customers for marketing outreach
 
 ### 🎓 Key Learning Outcomes
 
-- **Infrastructure as Code**: Deploy complex multi-cloud resources (AWS, Confluent Cloud, Databricks) using Terraform
+- **Infrastructure as Code**: Deploy complex multi-cloud resources (AWS or Azure, Confluent Cloud, Databricks) using Terraform
 - **Change Data Capture**: Implement PostgreSQL CDC Connector for real-time database change streaming
 - **Stream Processing**: Build sophisticated Flink SQL queries for real-time data enrichment and AI model integration
 - **Data Lake Integration**: Use Tableflow to seamlessly bridge streaming data and analytics platforms
@@ -212,7 +212,7 @@ erDiagram
 ### Cloud Platforms
 
 - **[Confluent Cloud](https://confluent.io/)**: Fully managed Apache Kafka service
-- **[AWS](https://aws.amazon.com/)**: Primary cloud provider (EC2, S3, VPC, Bedrock)
+- **[AWS](https://aws.amazon.com/)** / **[Azure](https://azure.microsoft.com/)**: Cloud providers for compute, networking, and Delta Lake storage (S3 or ADLS Gen2)
 - **[Databricks](https://databricks.com/)**: Unified analytics platform for big data and ML
 
 ### AI/ML Services
@@ -276,15 +276,19 @@ This workshop supports three modes. Choose the path that matches your situation:
 > This builds on the self-service mode by automating almost all of the manual steps that enable the real-time AI marketing pipeline. This **demo** mode can be used for short-term, long-term, and even "always-on" demos.
 >
 > Use it to show quick and immediate value with minimal in-product (Confluent Cloud, Databricks) set up.
+>
+> Demo Terraform roots: [`terraform/aws-demo`](./terraform/aws-demo) (AWS) and [`terraform/azure-demo`](./terraform/azure-demo) (Azure). For automated multi-account provisioning, use [`wsa-spec-aws-demo.yaml`](./wsa-spec-aws-demo.yaml) or [`wsa-spec-azure-demo.yaml`](./wsa-spec-azure-demo.yaml) with WSA.
+>
+> **Azure note:** `AI_SENTIMENT` / `reviews_with_sentiment` and the `hotel_performance` view are AWS-only today. Azure demo still provisions denormalized bookings, clickstream Tableflow, Unity Catalog integration, and the marketing notebook.
 
 | Lab | Duration | Details |
 |-----|----------|-------------|
-| [LAB 0: Prerequisites](./labs/demo/LAB0_prerequisites/LAB0.md) | ~10 min | **Set up prerequisites**: create cloud accounts, install Git and Docker, clone the repo, build Docker images. |
-| [LAB 1: Account Setup](./labs/demo/LAB1_account_setup/LAB1.md) | ~15 min | **Configure cloud platform accounts**: set up Confluent Cloud API keys, configure Databricks service principal, establish AWS credentials. |
-| [LAB 2: Deploy and Observe](./labs/demo/LAB2_deploy_and_observe/LAB2.md) | ~25 min | **Deploy everything with Terraform**: one `terraform apply` provisions AWS, Confluent Cloud, Flink CTAS, Tableflow, Unity Catalog integration, and Databricks notebook. Guided tour of the pipeline. |
-| [LAB 3: Analytics & AI](./labs/demo/LAB3_analytics_ai/LAB3.md) | ~30 min | **Generate insights**: explore pre-created hotel performance and sentiment analytics, use Databricks Genie, run the pre-imported marketing agent notebook. |
+| [LAB 0: Prerequisites](./labs/demo/LAB0_prerequisites/LAB0.md) | ~10 min | **Set up prerequisites**: create cloud accounts, install Git and Docker, clone the repo, build Docker images (AWS or Azure). |
+| [LAB 1: Account Setup](./labs/demo/LAB1_account_setup/LAB1.md) | ~15 min | **Configure cloud platform accounts**: set up Confluent Cloud API keys, configure Databricks service principal, establish AWS or Azure credentials. |
+| [LAB 2: Deploy and Observe](./labs/demo/LAB2_deploy_and_observe/LAB2.md) | ~25 min | **Deploy everything with Terraform**: one `terraform apply` provisions cloud infra, Confluent Cloud, Flink Materialized Tables, Tableflow, Unity Catalog integration, and Databricks notebook. Guided tour of the pipeline. |
+| [LAB 3: Analytics & AI](./labs/demo/LAB3_analytics_ai/LAB3.md) | ~30 min | **Generate insights**: explore pre-created analytics (sentiment / `hotel_performance` on AWS), use Databricks Genie, run the pre-imported marketing agent notebook. |
 | [LAB 4: Cleanup](./labs/demo/LAB4_cleanup/LAB4.md) | ~5 min | **Clean up resources**: `terraform destroy` handles everything including Tableflow. |
-| [Optional: Data Governance](./labs/demo/LAB_data_governance/LAB_data_governance.md) | ~10 min | **Demonstrate data quality rules**: observe pre-deployed CEL rules, live DQR demo with `/test-dqr` on EC2, DLQ observation. |
+| [Optional: Data Governance](./labs/demo/LAB_data_governance/LAB_data_governance.md) | ~10 min | **Demonstrate data quality rules**: observe pre-deployed CEL rules, live DQR demo with `/test-dqr` on AWS EC2, DLQ observation. |
 
 ### Additional Resources
 
@@ -294,8 +298,7 @@ This workshop supports three modes. Choose the path that matches your situation:
 
 ## 🏁 Conclusion
 
-Congratulations, you have completed this hands-on workshop on creating a streaming AI agent on AWS with Confluent and Databricks!
-
+Congratulations, you have completed this hands-on workshop on creating a streaming AI agent on AWS or Azure with Confluent and Databricks!
 > [!IMPORTANT]
 > **Your Feedback Helps!**
 >

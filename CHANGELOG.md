@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-07-15
+
+### Added
+
+- **Azure Demo Mode**: New `terraform/azure-demo/` root that mirrors AWS demo automation on Azure (catalog integration, `denormalized_hotel_bookings` Flink Materialized Table, Tableflow topic enablement, marketing notebook), with shared-infra / WSA support
+- **WSA Demo Specs**: Added `wsa-spec-aws-demo.yaml` and `wsa-spec-azure-demo.yaml` pointing at the demo Terraform roots while keeping shared infra, isolation, and credential output patterns from the workshop specs
+- **Tableflow Topics (Azure)**: Extended `confluent-tableflow-topics` with Azure ADLS Gen2 (`azure_data_lake_storage_gen_2`) and an `enable_reviews_with_sentiment` flag
+- **Flink CTAS options**: Added `enable_reviews_with_sentiment` to `confluent-flink-ctas` so Azure can skip `AI_SENTIMENT` (AWS-only since 2026-03-19)
+
+### Changed
+
+- **AWS Demo Mode (WSA)**: Upgraded `terraform/aws-demo/` for shared-infra mode (`shared_*` vars, CDC topic wiring, WSA credential outputs) so it works with `wsa build`
+- **Flink Materialized Tables**: `confluent-flink-ctas` now fully qualifies source tables as `` `env`.`cluster`.`topic` `` (materialized tables lack `sql.current-catalog` / `sql.current-database`) and selects `check_in`/`check_out` casting by source — `TO_TIMESTAMP_LTZ` for Avro epoch millis (self-service) vs `CAST AS DATE` for CDC `TIMESTAMP_LTZ` (WSA / instructor-led)
+- **Docs**: README and `labs/demo` updated for AWS + Azure demo roots (`aws-demo` / `azure-demo`), Azure auth, resource differences, and `AI_SENTIMENT` / `hotel_performance` skip on Azure
+
 ## [0.13.1] - 2026-06-02
 
 ### Fixed

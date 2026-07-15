@@ -1,5 +1,5 @@
 # ===============================
-# Root Outputs — Demo Mode
+# Root Outputs — Azure Demo Mode
 # ===============================
 
 # ===============================
@@ -9,15 +9,16 @@
 output "workshop_summary" {
   description = "Complete workshop environment summary"
   value = {
-    postgres_public_dns          = local.effective_postgres_dns
-    postgres_connection          = "postgresql://postgres:***@${local.effective_postgres_dns}:5432/${var.postgres_db_name}"
+    postgres_host                = local.effective_postgres_host
+    postgres_connection          = "postgresql://${var.postgres_db_username}:***@${local.effective_postgres_host}:5432/${var.postgres_db_name}"
     environment_id               = module.confluent_platform.environment_id
     kafka_cluster_id             = module.confluent_platform.kafka_cluster_id
     flink_compute_pool           = module.flink.compute_pool_id
     schema_registry_url          = module.confluent_platform.schema_registry_endpoint
     databricks_catalog           = databricks_catalog.main.name
-    databricks_external_location = local.use_shared ? "shared (aws-shared)" : databricks_external_location.main[0].name
-    s3_bucket                    = local.effective_s3_bucket_name
+    databricks_external_location = local.use_shared ? "shared (azure-shared)" : databricks_external_location.main[0].name
+    storage_account              = local.effective_storage_account_name
+    storage_container            = local.effective_storage_container_name
     confluent_console            = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}"
     connector_url                = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/clusters/${module.confluent_platform.kafka_cluster_id}/connectors"
   }
@@ -34,59 +35,48 @@ output "demo_status" {
     catalog_integration = module.catalog_integration.display_name
     flink_materialized_tables = {
       denormalized_hotel_bookings = module.flink_ctas.denormalized_hotel_bookings_table_name
-      reviews_with_sentiment      = module.flink_ctas.reviews_with_sentiment_table_name
     }
     tableflow_topics = {
       clickstream                 = module.tableflow_topics.clickstream_tableflow_id
       denormalized_hotel_bookings = module.tableflow_topics.denormalized_hotel_bookings_tableflow_id
-      reviews_with_sentiment      = module.tableflow_topics.reviews_with_sentiment_tableflow_id
     }
     notebook_path = databricks_notebook.marketing_agent.path
+    notes         = "reviews_with_sentiment Tableflow skipped — AI_SENTIMENT is AWS-only (https://docs.confluent.io/cloud/current/release-notes/index.html#march-19-2026)"
     links = {
       confluent_tableflow = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/clusters/${module.confluent_platform.kafka_cluster_id}/tableflow"
       confluent_flink     = "https://confluent.cloud/environments/${module.confluent_platform.environment_id}/flink/compute-pools/${module.flink.compute_pool_id}"
-      databricks_catalog  = "${var.databricks_host}#/catalog/${databricks_catalog.main.name}"
+      databricks_catalog  = "${local.databricks_workspace_url}#/catalog/${databricks_catalog.main.name}"
     }
   }
 }
 
 # ===============================
-# AWS Outputs
+# Azure Outputs
 # ===============================
 
-output "aws_networking" {
-  description = "AWS networking resources"
-  value = {
-    vpc_id           = local.effective_vpc_id
-    public_subnet_id = local.effective_subnet_id
-    aws_account_id   = local.effective_aws_account
-  }
+output "resource_group_name" {
+  description = "Azure Resource Group name"
+  value       = local.effective_resource_group_name
 }
 
-output "aws_postgres" {
-  description = "PostgreSQL instance details"
-  value = {
-    public_ip  = local.effective_postgres_ip
-    public_dns = local.effective_postgres_dns
-    connection = "postgresql://postgres:***@${local.effective_postgres_dns}:5432/${var.postgres_db_name}"
-  }
+output "storage_account_name" {
+  description = "ADLS Gen2 Storage Account name"
+  value       = local.effective_storage_account_name
 }
 
-output "aws_s3" {
-  description = "S3 bucket details"
-  value = {
-    bucket_name = local.effective_s3_bucket_name
-    bucket_arn  = local.effective_s3_bucket_arn
-    bucket_url  = local.effective_s3_bucket_url
-  }
+output "storage_container_name" {
+  description = "ADLS Gen2 container name"
+  value       = local.effective_storage_container_name
 }
 
-output "aws_iam" {
-  description = "IAM role details"
-  value = {
-    role_arn  = module.iam.role_arn
-    role_name = module.iam.role_name
-  }
+output "storage_abfss_url" {
+  description = "ADLS Gen2 abfss:// URL"
+  value       = local.effective_abfss_url
+}
+
+output "postgres_fqdn" {
+  description = "PostgreSQL hostname (Flexible Server FQDN or shared VM IP)"
+  value       = local.effective_postgres_host
 }
 
 # ===============================
@@ -122,8 +112,6 @@ output "confluent_tableflow" {
   description = "Tableflow provider integration details"
   value = {
     integration_id = module.tableflow.integration_id
-    iam_role_arn   = module.tableflow.iam_role_arn
-    external_id    = module.tableflow.external_id
   }
 }
 
@@ -154,10 +142,21 @@ output "confluent_credentials" {
 # Databricks Outputs
 # ===============================
 
+output "databricks_workspace_url" {
+  description = "Databricks workspace URL"
+  value       = local.databricks_workspace_url
+}
+
+output "databricks_catalog_name" {
+  description = "Databricks Unity Catalog name"
+  value       = databricks_catalog.main.name
+}
+
 output "databricks_integration" {
   description = "Databricks Unity Catalog integration details"
   value = {
-    s3_bucket_name         = local.effective_s3_bucket_name
+    storage_account_name   = local.effective_storage_account_name
+    storage_container_name = local.effective_storage_container_name
     catalog_name           = databricks_catalog.main.name
     databricks_schema_name = module.databricks.databricks_schema_name
     sql_warehouse_id       = module.databricks.sql_warehouse_id
@@ -171,32 +170,14 @@ output "databricks_integration" {
 output "next_steps" {
   description = "Workshop next steps"
   value       = <<-EOT
-    Demo Mode Deployment Complete!
+    Azure Demo Mode Deployment Complete!
 
     Next Steps:
     1. Wait 10-15 minutes for Tableflow to sync data to Delta Lake
-    2. Verify tables in Databricks: ${var.databricks_host}#/catalog/${databricks_catalog.main.name}
-    3. Verify the hotel_performance view: SELECT * FROM hotel_performance LIMIT 10
+    2. Verify tables in Databricks: ${local.databricks_workspace_url}#/catalog/${databricks_catalog.main.name}
+    3. Explore denormalized_hotel_bookings and clickstream (reviews_with_sentiment skipped — AI_SENTIMENT is AWS-only; see Confluent Cloud release notes 2026-03-19)
     4. Explore with Genie and run the pre-imported notebook at: /Shared/workshop/river_hotel_marketing_agent
     5. When done: terraform destroy -auto-approve
-  EOT
-}
-
-output "databricks_manual_step" {
-  description = "Manual step required for Databricks external data access"
-  value       = <<-EOT
-    MANUAL STEP REQUIRED
-
-    A metastore admin must enable "External data access" on your Unity Catalog metastore.
-
-    Steps (requires metastore admin privileges):
-    1. In Databricks workspace: ${var.databricks_host}
-    2. Click "Catalog" in the left navigation
-    3. Click the gear icon at the top of the Catalog pane
-    4. Select "Metastore"
-    5. On the "Details" tab, enable "External data access"
-
-    Reference: https://docs.databricks.com/aws/en/external-access/admin
   EOT
 }
 
@@ -211,7 +192,7 @@ output "cc_environment_url" {
 
 output "dbx_workspace_url" {
   description = "WSA: Databricks workspace URL"
-  value       = var.dbx_workspace_url != "" ? var.dbx_workspace_url : var.databricks_host
+  value       = var.dbx_workspace_url != "" ? var.dbx_workspace_url : local.databricks_workspace_url
 }
 
 output "dbx_sp_client_id" {
@@ -220,7 +201,7 @@ output "dbx_sp_client_id" {
 }
 
 output "dbx_sp_client_secret" {
-  description = "WSA: Databricks SP secret (ephemeral in workshop mode, original in self-service)"
+  description = "WSA: Databricks SP secret (for Tableflow Unity Catalog integration)"
   value       = var.shared_dbx_sp_client_secret != "" ? var.shared_dbx_sp_client_secret : var.databricks_service_principal_client_secret
   sensitive   = true
 }
@@ -228,11 +209,6 @@ output "dbx_sp_client_secret" {
 output "dbx_catalog_name" {
   description = "WSA: Databricks Unity Catalog name"
   value       = databricks_catalog.main.name
-}
-
-output "s3_bucket_name" {
-  description = "WSA: S3 bucket name (for Tableflow storage)"
-  value       = local.effective_s3_bucket_name
 }
 
 output "dbx_schema_name" {
