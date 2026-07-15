@@ -69,3 +69,6 @@ terraform/aws-config/*
 !terraform/aws-config/.gitkeep
 terraform/aws-demo/aws-config/*
 !terraform/aws-demo/aws-config/.gitkeep
+
+# Local testing directory
+terraform-wsa-test/*

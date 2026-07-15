@@ -8,6 +8,11 @@
 #   - Tableflow topic enablement (clickstream, denormalized_hotel_bookings, reviews_with_sentiment)
 #   - Databricks notebook import (marketing agent)
 #
+# Supports two modes:
+#   Self-service: all resources created per-account (shared_* vars empty)
+#   WSA mode:     shared infra provided via shared_* vars (networking, S3,
+#                 keypair, and PostgreSQL modules are skipped)
+#
 # Users run `terraform apply` once and get the entire pipeline.
 
 # ===============================
@@ -25,7 +30,49 @@ resource "random_id" "env_display_id" {
 locals {
   prefix          = "${var.prefix}-${var.project_name}"
   resource_suffix = random_id.env_display_id.hex
-  effective_email = var.confluent_cloud_email
+
+  # WSA: use per-account email when provided, fall back to self-service email
+  effective_email = var.account_email != "" ? var.account_email : var.confluent_cloud_email
+
+  # When shared_* vars are set, use them; otherwise use per-account module outputs.
+  use_shared = var.shared_vpc_id != ""
+
+  effective_vpc_id                     = local.use_shared ? var.shared_vpc_id : module.networking[0].vpc_id
+  effective_subnet_id                  = local.use_shared ? var.shared_subnet_id : module.networking[0].public_subnet_id
+  effective_aws_account                = local.use_shared ? data.aws_caller_identity.current[0].account_id : module.networking[0].aws_account_id
+  effective_s3_bucket_name             = local.use_shared ? var.shared_s3_bucket_name : module.s3[0].bucket_name
+  effective_s3_bucket_arn              = local.use_shared ? var.shared_s3_bucket_arn : module.s3[0].bucket_arn
+  effective_s3_bucket_url              = local.use_shared ? var.shared_s3_bucket_url : module.s3[0].bucket_url
+  effective_key_name                   = local.use_shared ? var.shared_key_name : module.keypair[0].key_name
+  effective_postgres_dns               = local.use_shared ? var.shared_postgres_hostname : module.postgres[0].public_dns
+  effective_postgres_ip                = local.use_shared ? var.shared_postgres_public_ip : module.postgres[0].public_ip
+  effective_postgres_db_password       = local.use_shared && var.shared_postgres_db_password != "" ? var.shared_postgres_db_password : var.postgres_db_password
+  effective_postgres_debezium_password = local.use_shared && var.shared_postgres_debezium_password != "" ? var.shared_postgres_debezium_password : var.postgres_debezium_password
+
+  common_tags = merge(
+    {
+      Project     = "Hospitality AI Agent"
+      Environment = var.environment
+      Created_by  = "Terraform"
+      owner_email = local.effective_email
+      mode        = "demo"
+    },
+    var.aws_account_tag != "" ? { workshop_account = var.aws_account_tag } : {}
+  )
+
+  iam_role_name = "${local.prefix}-unified-role-${local.resource_suffix}"
+
+  # Topic names: WSA/shared uses CDC-prefixed topics; standalone demo uses plain names
+  clickstream_topic = local.use_shared ? "riverhotel.cdc.clickstream" : "clickstream"
+  bookings_topic    = local.use_shared ? "riverhotel.cdc.bookings" : "bookings"
+  reviews_topic     = local.use_shared ? "riverhotel.cdc.reviews" : "reviews"
+  customer_topic    = "riverhotel.cdc.customer"
+  hotel_topic       = "riverhotel.cdc.hotel"
+}
+
+# AWS account ID lookup (only needed in shared mode where networking module is skipped)
+data "aws_caller_identity" "current" {
+  count = local.use_shared ? 1 : 0
 }
 
 # ===============================
@@ -33,6 +80,7 @@ locals {
 # ===============================
 
 module "networking" {
+  count  = local.use_shared ? 0 : 1
   source = "../aws/modules/aws-networking"
 
   prefix      = local.prefix
@@ -44,6 +92,7 @@ module "networking" {
 # ===============================
 
 module "keypair" {
+  count  = local.use_shared ? 0 : 1
   source = "../aws/modules/aws-keypair"
 
   prefix          = local.prefix
@@ -57,27 +106,12 @@ module "keypair" {
 # ===============================
 
 module "s3" {
+  count  = local.use_shared ? 0 : 1
   source = "../aws/modules/aws-s3"
 
   prefix          = local.prefix
   resource_suffix = local.resource_suffix
   common_tags     = local.common_tags
-}
-
-# ===============================
-# Common Tags
-# ===============================
-
-locals {
-  common_tags = {
-    Project     = "Hospitality AI Agent"
-    Environment = var.environment
-    Created_by  = "Terraform"
-    owner_email = local.effective_email
-    mode        = "demo"
-  }
-
-  iam_role_name = "${local.prefix}-unified-role-${local.resource_suffix}"
 }
 
 # ===============================
@@ -107,7 +141,7 @@ module "tableflow" {
   environment_id  = module.confluent_platform.environment_id
   cloud_provider  = "aws"
 
-  customer_iam_role_arn = "arn:aws:iam::${module.networking.aws_account_id}:role/${local.iam_role_name}"
+  customer_iam_role_arn = "arn:aws:iam::${local.effective_aws_account}:role/${local.iam_role_name}"
 
   depends_on = [module.confluent_platform]
 }
@@ -136,18 +170,19 @@ module "flink" {
 # ===============================
 
 module "postgres" {
+  count  = local.use_shared ? 0 : 1
   source = "../aws/modules/aws-postgres"
 
   prefix              = local.prefix
-  vpc_id              = module.networking.vpc_id
-  subnet_id           = module.networking.public_subnet_id
-  key_name            = module.keypair.key_name
+  vpc_id              = local.effective_vpc_id
+  subnet_id           = local.effective_subnet_id
+  key_name            = local.effective_key_name
   instance_type       = var.postgres_instance_type
   allowed_cidr_blocks = var.allowed_cidr_blocks
   db_name             = var.postgres_db_name
   db_username         = var.postgres_db_username
-  db_password         = var.postgres_db_password
-  debezium_password   = var.postgres_debezium_password
+  db_password         = local.effective_postgres_db_password
+  debezium_password   = local.effective_postgres_debezium_password
   common_tags         = local.common_tags
 
   depends_on = [module.networking, module.keypair]
@@ -162,9 +197,9 @@ module "iam" {
 
   prefix                                    = local.prefix
   resource_suffix                           = local.resource_suffix
-  aws_account_id                            = module.networking.aws_account_id
-  s3_bucket_arn                             = module.s3.bucket_arn
-  s3_bucket_id                              = module.s3.bucket_name
+  aws_account_id                            = local.effective_aws_account
+  s3_bucket_arn                             = local.effective_s3_bucket_arn
+  s3_bucket_id                              = local.effective_s3_bucket_name
   confluent_iam_role_arn                    = module.tableflow.iam_role_arn
   confluent_external_id                     = module.tableflow.external_id
   databricks_account_id                     = var.databricks_account_id
@@ -189,20 +224,27 @@ module "databricks" {
   resource_suffix             = local.resource_suffix
   cloud_provider              = "aws"
   iam_role_arn                = module.iam.role_arn
-  s3_bucket_url               = module.s3.bucket_url
+  s3_bucket_url               = local.effective_s3_bucket_url
   user_email                  = var.databricks_user_email
-  sso_email                   = ""
+  sso_email                   = var.databricks_sso_email
   service_principal_client_id = var.databricks_service_principal_client_id
   kafka_cluster_id            = module.confluent_platform.kafka_cluster_id
+  sql_warehouse_name          = var.databricks_sql_warehouse_name
+
+  # WSA mode (shared infra): create users via SCIM and skip admins membership.
+  lookup_existing_users = !local.use_shared
+  add_user_to_admins    = !local.use_shared
 
   depends_on = [module.iam, module.s3, module.tableflow]
 }
 
 # ===============================
-# AWS IAM Trust Policy Update - PHASE 1
+# AWS IAM Trust Policy Update - PHASE 1 (self-service only)
 # ===============================
 
 resource "null_resource" "update_iam_trust_policy_phase1" {
+  count = local.use_shared ? 0 : 1
+
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
@@ -229,7 +271,7 @@ resource "null_resource" "update_iam_trust_policy_phase1" {
               "Effect": "Allow",
               "Action": "sts:AssumeRole",
               "Principal": {
-                "AWS": "arn:aws:iam::${module.networking.aws_account_id}:root"
+                "AWS": "arn:aws:iam::${local.effective_aws_account}:root"
               }
             }
           ]
@@ -251,6 +293,8 @@ resource "null_resource" "update_iam_trust_policy_phase1" {
 # ===============================
 
 resource "null_resource" "wait_for_trust_policy_phase1" {
+  count = local.use_shared ? 0 : 1
+
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
@@ -268,6 +312,8 @@ resource "null_resource" "wait_for_trust_policy_phase1" {
 # ===============================
 
 resource "null_resource" "update_iam_trust_policy_phase2" {
+  count = local.use_shared ? 0 : 1
+
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
@@ -340,6 +386,8 @@ resource "null_resource" "update_iam_trust_policy_phase2" {
 # ===============================
 
 resource "null_resource" "wait_for_trust_policy_phase2" {
+  count = local.use_shared ? 0 : 1
+
   provisioner "local-exec" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<-EOT
@@ -357,10 +405,11 @@ resource "null_resource" "wait_for_trust_policy_phase2" {
 # ===============================
 
 resource "databricks_external_location" "main" {
+  count    = local.use_shared ? 0 : 1
   provider = databricks.workspace
 
   name            = "${local.prefix}-external-location-${local.resource_suffix}"
-  url             = module.s3.bucket_url
+  url             = local.effective_s3_bucket_url
   credential_name = module.databricks.storage_credential_name
   comment         = "External location for Unity Catalog and Tableflow S3 access"
   force_destroy   = true
@@ -374,9 +423,10 @@ resource "databricks_external_location" "main" {
 # ===============================
 
 resource "databricks_grants" "external_location" {
+  count    = local.use_shared ? 0 : 1
   provider = databricks.workspace
 
-  external_location = databricks_external_location.main.name
+  external_location = databricks_external_location.main[0].name
 
   grant {
     principal = var.databricks_user_email
@@ -418,7 +468,7 @@ resource "databricks_catalog" "main" {
 
   name          = "${local.prefix}-${local.resource_suffix}"
   comment       = "Dedicated catalog for Confluent Tableflow integration"
-  storage_root  = "${module.s3.bucket_url}${local.prefix}/catalog/"
+  storage_root  = "${local.effective_s3_bucket_url}${local.prefix}/catalog/"
   force_destroy = true
 
   depends_on = [module.databricks, databricks_external_location.main]
@@ -456,18 +506,33 @@ resource "databricks_grants" "catalog" {
     ]
   }
 
+  dynamic "grant" {
+    for_each = var.databricks_sso_email != "" ? [var.databricks_sso_email] : []
+    content {
+      principal = grant.value
+      privileges = [
+        "ALL_PRIVILEGES",
+        "USE_CATALOG",
+        "CREATE_SCHEMA",
+        "USE_SCHEMA",
+        "EXTERNAL_USE_SCHEMA"
+      ]
+    }
+  }
+
   depends_on = [databricks_catalog.main]
 }
 
 # ===============================
 # Data Quality Rules (Data Contracts)
 # ===============================
-# Pre-registers all schemas with CEL rules and creates DLQ topic.
-# Demo path uses self-service generators (direct Kafka), so needs
-# all schemas registered and no topic prefix.
+# Demo standalone path registers all schemas with no topic prefix.
+# Skip in WSA/shared mode to avoid CDC schema subject collisions.
 
 module "data_contracts" {
   source = "../modules/confluent-data-contracts"
+
+  count = local.use_shared ? 0 : 1
 
   environment_id             = module.confluent_platform.environment_id
   kafka_cluster_id           = module.confluent_platform.kafka_cluster_id
@@ -496,14 +561,14 @@ module "connectors" {
   environment_id       = module.confluent_platform.environment_id
   kafka_cluster_id     = module.confluent_platform.kafka_cluster_id
   service_account_id   = module.confluent_platform.service_account_id
-  postgres_hostname    = module.postgres.public_dns
+  postgres_hostname    = local.effective_postgres_dns
   postgres_port        = var.postgres_db_port
   database_name        = var.postgres_db_name
   debezium_username    = var.postgres_debezium_username
-  debezium_password    = var.postgres_debezium_password
+  debezium_password    = local.effective_postgres_debezium_password
   table_include_list   = var.table_include_list
-  ssh_key_path         = module.keypair.private_key_path
-  initial_wait_seconds = 90
+  ssh_key_path         = local.use_shared ? "" : module.keypair[0].private_key_path
+  initial_wait_seconds = local.use_shared ? 0 : 90
 
   depends_on = [module.postgres, module.confluent_platform, module.keypair, module.data_contracts, null_resource.datagen_setup]
 }
@@ -525,9 +590,9 @@ module "flink_statements" {
   flink_api_secret           = module.flink.flink_api_secret
   flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
-  clickstream_topic = "clickstream"
-  bookings_topic    = "bookings"
-  reviews_topic     = "reviews"
+  clickstream_topic = local.clickstream_topic
+  bookings_topic    = local.bookings_topic
+  reviews_topic     = local.reviews_topic
 
   depends_on = [module.connectors, module.flink]
 }
@@ -537,13 +602,14 @@ module "flink_statements" {
 # ===============================
 
 module "data_generator" {
+  count  = local.use_shared ? 0 : 1
   source = "../modules/data-generator"
 
   output_path                = "../../data/connections"
-  postgres_hostname          = module.postgres.public_ip
+  postgres_hostname          = local.effective_postgres_ip
   postgres_port              = var.postgres_db_port
   postgres_username          = var.postgres_db_username
-  postgres_password          = var.postgres_db_password
+  postgres_password          = local.effective_postgres_db_password
   postgres_database          = var.postgres_db_name
   kafka_bootstrap_endpoint   = module.confluent_platform.bootstrap_endpoint_url
   kafka_api_key              = module.confluent_platform.kafka_api_key
@@ -598,9 +664,9 @@ resource "confluent_api_key" "tableflow" {
 module "catalog_integration" {
   source = "../modules/confluent-catalog-integration"
 
-  prefix          = local.prefix
-  resource_suffix = local.resource_suffix
-  environment_id  = module.confluent_platform.environment_id
+  prefix           = local.prefix
+  resource_suffix  = local.resource_suffix
+  environment_id   = module.confluent_platform.environment_id
   kafka_cluster_id = module.confluent_platform.kafka_cluster_id
 
   databricks_workspace_url    = var.databricks_host
@@ -629,19 +695,24 @@ module "catalog_integration" {
 module "flink_ctas" {
   source = "../modules/confluent-flink-ctas"
 
-  organization_id    = module.confluent_platform.organization_id
-  environment_id     = module.confluent_platform.environment_id
-  kafka_cluster_id   = module.confluent_platform.kafka_cluster_id
-  compute_pool_id    = module.flink.compute_pool_id
-  service_account_id = module.confluent_platform.service_account_id
-  flink_api_key      = module.flink.flink_api_key
-  flink_api_secret   = module.flink.flink_api_secret
-  flink_rest_endpoint = module.flink.flink_rest_endpoint
+  organization_id            = module.confluent_platform.organization_id
+  environment_id             = module.confluent_platform.environment_id
+  environment_name           = module.confluent_platform.environment_name
+  kafka_cluster_id           = module.confluent_platform.kafka_cluster_id
+  kafka_cluster_display_name = module.confluent_platform.kafka_cluster_display_name
+  compute_pool_id            = module.flink.compute_pool_id
+  service_account_id         = module.confluent_platform.service_account_id
+  flink_api_key              = module.flink.flink_api_key
+  flink_api_secret           = module.flink.flink_api_secret
+  flink_rest_endpoint        = module.flink.flink_rest_endpoint
 
-  bookings_topic = "bookings"
-  reviews_topic  = "reviews"
+  bookings_topic = local.bookings_topic
+  reviews_topic  = local.reviews_topic
+  customer_topic = local.customer_topic
+  hotel_topic    = local.hotel_topic
 
-  depends_on = [module.flink_statements]
+  # flink_statements configures changelog/watermark; connectors ensure CDC topics exist
+  depends_on = [module.flink_statements, module.connectors]
 }
 
 # ===============================
@@ -656,9 +727,10 @@ module "tableflow_topics" {
 
   environment_id          = module.confluent_platform.environment_id
   kafka_cluster_id        = module.confluent_platform.kafka_cluster_id
-  s3_bucket_name          = module.s3.bucket_name
+  cloud_provider          = "aws"
+  s3_bucket_name          = local.effective_s3_bucket_name
   provider_integration_id = module.tableflow.integration_id
-  clickstream_topic       = "clickstream"
+  clickstream_topic       = local.clickstream_topic
 
   api_key    = confluent_api_key.tableflow.id
   api_secret = confluent_api_key.tableflow.secret

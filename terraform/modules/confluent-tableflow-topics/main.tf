@@ -2,13 +2,14 @@
 # Confluent Tableflow Topics Module
 # ===============================
 # Enables Tableflow on workshop topics to stream them as Delta Lake
-# tables to S3 via the provider integration. Used by demo mode to
-# automate what self-service users do manually in the CC UI.
+# tables via the provider integration (AWS S3 or Azure ADLS Gen2).
+# Used by demo mode to automate what self-service users do manually
+# in the CC UI.
 #
 # Topics:
-#   1. clickstream                 — raw append-mode data (8-week retention)
-#   2. denormalized_hotel_bookings — enriched bookings (2-week retention)
-#   3. reviews_with_sentiment      — AI-enriched reviews (2-week retention)
+#   1. clickstream                 — raw append-mode data
+#   2. denormalized_hotel_bookings — enriched bookings
+#   3. reviews_with_sentiment      — AI-enriched reviews (optional; AWS only today)
 
 terraform {
   required_providers {
@@ -21,6 +22,11 @@ terraform {
       version = ">= 0.9"
     }
   }
+}
+
+locals {
+  is_aws   = var.cloud_provider == "aws"
+  is_azure = var.cloud_provider == "azure"
 }
 
 # ===============================
@@ -37,7 +43,7 @@ resource "time_sleep" "wait_for_ctas_topics" {
 # ===============================
 # Clickstream — Tableflow
 # ===============================
-# Exists immediately (created by data generator). No wait needed.
+# Exists immediately (created by data generator / CDC). No wait needed.
 
 resource "confluent_tableflow_topic" "clickstream" {
   environment {
@@ -50,9 +56,21 @@ resource "confluent_tableflow_topic" "clickstream" {
   display_name  = var.clickstream_topic
   table_formats = ["DELTA"]
 
-  byob_aws {
-    bucket_name             = var.s3_bucket_name
-    provider_integration_id = var.provider_integration_id
+  dynamic "byob_aws" {
+    for_each = local.is_aws ? [1] : []
+    content {
+      bucket_name             = var.s3_bucket_name
+      provider_integration_id = var.provider_integration_id
+    }
+  }
+
+  dynamic "azure_data_lake_storage_gen_2" {
+    for_each = local.is_azure ? [1] : []
+    content {
+      provider_integration_id = var.provider_integration_id
+      container_name          = var.container_name
+      storage_account_name    = var.storage_account_name
+    }
   }
 
   credentials {
@@ -80,9 +98,21 @@ resource "confluent_tableflow_topic" "denormalized_hotel_bookings" {
   display_name  = "denormalized_hotel_bookings"
   table_formats = ["DELTA"]
 
-  byob_aws {
-    bucket_name             = var.s3_bucket_name
-    provider_integration_id = var.provider_integration_id
+  dynamic "byob_aws" {
+    for_each = local.is_aws ? [1] : []
+    content {
+      bucket_name             = var.s3_bucket_name
+      provider_integration_id = var.provider_integration_id
+    }
+  }
+
+  dynamic "azure_data_lake_storage_gen_2" {
+    for_each = local.is_azure ? [1] : []
+    content {
+      provider_integration_id = var.provider_integration_id
+      container_name          = var.container_name
+      storage_account_name    = var.storage_account_name
+    }
   }
 
   credentials {
@@ -100,8 +130,11 @@ resource "confluent_tableflow_topic" "denormalized_hotel_bookings" {
 # ===============================
 # Reviews with Sentiment — Tableflow
 # ===============================
+# Optional: requires AI_SENTIMENT (not available on Azure as of June 2026).
 
 resource "confluent_tableflow_topic" "reviews_with_sentiment" {
+  count = var.enable_reviews_with_sentiment ? 1 : 0
+
   environment {
     id = var.environment_id
   }
@@ -112,9 +145,21 @@ resource "confluent_tableflow_topic" "reviews_with_sentiment" {
   display_name  = "reviews_with_sentiment"
   table_formats = ["DELTA"]
 
-  byob_aws {
-    bucket_name             = var.s3_bucket_name
-    provider_integration_id = var.provider_integration_id
+  dynamic "byob_aws" {
+    for_each = local.is_aws ? [1] : []
+    content {
+      bucket_name             = var.s3_bucket_name
+      provider_integration_id = var.provider_integration_id
+    }
+  }
+
+  dynamic "azure_data_lake_storage_gen_2" {
+    for_each = local.is_azure ? [1] : []
+    content {
+      provider_integration_id = var.provider_integration_id
+      container_name          = var.container_name
+      storage_account_name    = var.storage_account_name
+    }
   }
 
   credentials {

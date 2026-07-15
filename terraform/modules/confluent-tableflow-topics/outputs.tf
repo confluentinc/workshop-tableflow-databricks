@@ -13,6 +13,6 @@ output "denormalized_hotel_bookings_tableflow_id" {
 }
 
 output "reviews_with_sentiment_tableflow_id" {
-  description = "Tableflow topic ID for reviews_with_sentiment"
-  value       = confluent_tableflow_topic.reviews_with_sentiment.id
+  description = "Tableflow topic ID for reviews_with_sentiment (null when disabled)"
+  value       = var.enable_reviews_with_sentiment ? confluent_tableflow_topic.reviews_with_sentiment[0].id : null
 }
