@@ -12,7 +12,7 @@ terraform {
     }
     databricks = {
       source  = "databricks/databricks"
-      version = "~> 1.79.1"
+      version = "~> 1.132.0"
     }
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -28,7 +28,7 @@ terraform {
     }
     time = {
       source  = "hashicorp/time"
-      version = "~> 0.9"
+      version = "~> 0.14"
     }
     null = {
       source  = "hashicorp/null"
